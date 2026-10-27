@@ -68,6 +68,12 @@ export class JobsService implements OnModuleDestroy {
     await job?.remove().catch(() => undefined);
   }
 
+  /** Registers (or updates) a cron-scheduled job. Only the worker calls this. */
+  async schedule(name: string, pattern: string, data: Record<string, unknown> = {}): Promise<void> {
+    if (!this.queue) return;
+    await this.queue.upsertJobScheduler(`schedule:${name}`, { pattern }, { name, data, opts: { removeOnComplete: 100, removeOnFail: 500 } });
+  }
+
   /** Called only by the worker entrypoint. */
   startWorker(): void {
     if (!this.enabled || this.worker) return;
