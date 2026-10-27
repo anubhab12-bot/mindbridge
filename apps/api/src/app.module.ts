@@ -22,6 +22,7 @@ import { DoctorsModule } from './modules/doctors/doctors.module.js';
 import { JournalModule } from './modules/journal/journal.module.js';
 import { MoodModule } from './modules/mood/mood.module.js';
 import { AiModule } from './modules/ai/ai.module.js';
+import { ClinicalModule } from './modules/clinical-notes/clinical.module.js';
 import { CrisisResourcesModule } from './modules/crisis-resources/crisis-resources.module.js';
 
 @Module({
@@ -60,6 +61,7 @@ import { CrisisResourcesModule } from './modules/crisis-resources/crisis-resourc
     JournalModule,
     CrisisResourcesModule,
     AiModule,
+    ClinicalModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
