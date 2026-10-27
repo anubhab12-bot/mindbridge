@@ -32,7 +32,7 @@ class ModerateDto {
 
 class PolicyDto {
   @IsIn(Object.values(PolicyDocumentType)) type!: PolicyDocumentType;
-  @Matches(/^[0-9A-Za-z.\-]{1,20}$/) version!: string;
+  @Matches(/^[0-9A-Za-z.-]{1,20}$/) version!: string;
   @IsString() @Length(3, 200) title!: string;
   @IsString() @Length(20, 100000) body!: string;
 }

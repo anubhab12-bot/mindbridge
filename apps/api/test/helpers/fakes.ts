@@ -6,6 +6,8 @@ export function query<T>(result: T) {
   for (const m of ['sort', 'skip', 'limit', 'select', 'populate']) q[m] = () => q;
   q['lean'] = () => Promise.resolve(result);
   q['exec'] = () => Promise.resolve(result);
+  // Intentionally thenable: Mongoose queries can be awaited directly.
+  // oxlint-disable-next-line unicorn/no-thenable
   q['then'] = (res: (v: T) => unknown, rej: (e: unknown) => unknown) => Promise.resolve(result).then(res, rej);
   return q;
 }
