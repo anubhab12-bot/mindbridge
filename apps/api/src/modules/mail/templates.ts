@@ -86,7 +86,7 @@ export function renderTemplate(template: MailTemplate, d: TemplateData) {
     case 'account-deletion-scheduled':
       return layout('Your account deletion is scheduled', [
         `Hi ${name}, your account is scheduled for deletion on ${String(d['when'])}.`,
-        'You can cancel this by signing in before that date. Some records may be retained where the law requires it.',
+        'You can cancel this before that date by signing in and choosing Cancel deletion under Settings, Privacy. Some records may be retained where the law requires it.',
       ]);
   }
 }

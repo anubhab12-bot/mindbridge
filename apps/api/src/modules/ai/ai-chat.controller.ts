@@ -9,6 +9,7 @@ import { PaginationQueryDto } from '../../common/dto/pagination.dto.js';
 import { Paginated } from '../../common/interceptors/response-envelope.interceptor.js';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-object-id.pipe.js';
 import { AiChatService } from './ai-chat.service.js';
+import { RequireFeature } from '../feature-flags/require-feature.js';
 
 class CreateConversationDto {
   @IsOptional()
@@ -48,6 +49,7 @@ class HumanSupportDto {
 @ApiBearerAuth()
 @Roles(Role.PATIENT)
 @RequireEmailVerified()
+@RequireFeature('ai.companion')
 @Controller({ path: 'ai', version: '1' })
 export class AiChatController {
   constructor(private readonly chat: AiChatService) {}

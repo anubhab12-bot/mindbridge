@@ -23,6 +23,7 @@ import { PaginationQueryDto } from '../../common/dto/pagination.dto.js';
 import { Paginated } from '../../common/interceptors/response-envelope.interceptor.js';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-object-id.pipe.js';
 import { AppointmentsService } from './appointments.service.js';
+import { RequireFeature } from '../feature-flags/require-feature.js';
 
 class IntakeDto {
   @IsString()
@@ -139,6 +140,7 @@ export class AppointmentsController {
   @Roles(Role.PATIENT)
   @RequireEmailVerified()
   @Post('appointments')
+  @RequireFeature('booking.enabled')
   @ApiOperation({ summary: 'Request an appointment with a verified professional (PATIENT, verified email).' })
   book(@CurrentUser() user: AuthenticatedUser, @Body() dto: BookAppointmentDto) {
     return this.appointments.book(user, dto);

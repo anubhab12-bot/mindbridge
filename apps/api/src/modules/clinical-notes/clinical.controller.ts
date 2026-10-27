@@ -9,6 +9,7 @@ import { Paginated } from '../../common/interceptors/response-envelope.intercept
 import { ParseObjectIdPipe } from '../../common/pipes/parse-object-id.pipe.js';
 import { AddendumDto, AiAssistDto, CreateNoteDto, UpdateNoteDto } from './clinical.dto.js';
 import { ClinicalService } from './clinical.service.js';
+import { RequireFeature } from '../feature-flags/require-feature.js';
 
 /**
  * Professional-only. Requires an APPROVED professional; patient routes additionally require an
@@ -99,6 +100,7 @@ export class ClinicalController {
   }
 
   @Post('ai-assist')
+  @RequireFeature('ai.doctor_assist')
   @HttpCode(200)
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @ApiOperation({ summary: 'Generate an AI draft for professional review (verified DOCTOR; patient context needs DOCTOR_AI_ASSIST consent).' })

@@ -9,6 +9,7 @@ import {
   Post,
   Req,
   Res,
+  ServiceUnavailableException,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -33,6 +34,7 @@ import {
 } from './dto/auth.dto.js';
 import { CsrfGuard } from './guards/csrf.guard.js';
 import { SessionService } from './session.service.js';
+import { FeatureFlagsService } from '../feature-flags/feature-flags.service.js';
 
 export const REFRESH_COOKIE = 'mb_rt';
 const REFRESH_COOKIE_PATH = '/api/v1/auth';
@@ -53,6 +55,7 @@ export class AuthController {
     private readonly auth: AuthService,
     private readonly sessions: SessionService,
     private readonly config: AppConfigService,
+    private readonly flags: FeatureFlagsService,
   ) {}
 
   private setRefreshCookie(res: Response, tokens: IssuedTokens) {
@@ -85,6 +88,9 @@ export class AuthController {
   @Post('register')
   @ApiOperation({ summary: 'Register as a patient or doctor (public). Admin accounts cannot be registered here.' })
   async register(@Body() dto: RegisterDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    if (dto.role === Role.DOCTOR && !(await this.flags.isEnabled('registration.doctor'))) {
+      throw new ServiceUnavailableException({ code: 'FEATURE_DISABLED', message: 'Professional sign-up is temporarily paused.' });
+    }
     return this.respond(res, await this.auth.register(dto, requestMeta(req)));
   }
 

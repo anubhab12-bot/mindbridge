@@ -210,3 +210,22 @@ export const AdminPermission = {
 } as const;
 export type AdminPermission = (typeof AdminPermission)[keyof typeof AdminPermission];
 export const ALL_ADMIN_PERMISSIONS = Object.values(AdminPermission);
+
+export const WellnessContentType = {
+  ARTICLE: 'ARTICLE',
+  BREATHING: 'BREATHING',
+  GROUNDING: 'GROUNDING',
+  MINDFULNESS: 'MINDFULNESS',
+  SLEEP: 'SLEEP',
+} as const;
+export type WellnessContentType = (typeof WellnessContentType)[keyof typeof WellnessContentType];
+
+export const SupportTicketCategory = {
+  ACCOUNT: 'ACCOUNT',
+  BOOKING: 'BOOKING',
+  TECHNICAL: 'TECHNICAL',
+  PRIVACY: 'PRIVACY',
+  SAFETY_CONCERN: 'SAFETY_CONCERN',
+  OTHER: 'OTHER',
+} as const;
+export type SupportTicketCategory = (typeof SupportTicketCategory)[keyof typeof SupportTicketCategory];

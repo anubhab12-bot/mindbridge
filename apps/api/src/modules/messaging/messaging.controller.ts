@@ -8,6 +8,7 @@ import type { AuthenticatedUser } from '../../common/auth/authenticated-user.js'
 import { CurrentUser, RequireEmailVerified, Roles } from '../../common/auth/decorators.js';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-object-id.pipe.js';
 import { MessagingService } from './messaging.service.js';
+import { RequireFeature } from '../feature-flags/require-feature.js';
 
 class OpenThreadDto {
   /** For patients: the professional's profile id. For professionals: the patient's user id. */
@@ -40,6 +41,7 @@ class MessagesQueryDto {
 @ApiBearerAuth()
 @Roles(Role.PATIENT, Role.DOCTOR)
 @RequireEmailVerified()
+@RequireFeature('messaging.enabled')
 @Controller({ path: 'messaging/threads', version: '1' })
 export class MessagingController {
   constructor(private readonly messaging: MessagingService) {}

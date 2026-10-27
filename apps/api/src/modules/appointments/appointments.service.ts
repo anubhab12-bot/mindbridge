@@ -474,4 +474,24 @@ export class AppointmentsService implements OnModuleInit {
     }
     return items.length;
   }
+
+  async cancelAllFutureForPatient(patientId: string, reason: string) {
+    const items = await this.model.find({ patientId: new Types.ObjectId(patientId), status: { $in: SLOT_HOLDING_STATUSES }, startAt: { $gt: new Date() } });
+    for (const appt of items) {
+      appt.cancellation = { by: 'SYSTEM', reason, at: new Date(), late: false };
+      appt.status = AppointmentStatus.CANCELLED;
+      appt.holdsSlot = undefined;
+      appt.history.push({ action: 'cancelled_by_system', actorRole: 'SYSTEM', at: new Date() });
+      await appt.save();
+      await this.cancelReminders(appt);
+      await this.notifyParty(appt.toObject(), 'doctor', 'An appointment was cancelled', '/doctor/appointments');
+    }
+    return items.length;
+  }
+
+  /** Patient's appointments for a data export (no professional-only fields). */
+  async exportForPatient(patient: AuthenticatedUser) {
+    const items = await this.model.find({ patientId: new Types.ObjectId(patient.id) }).sort({ startAt: 1 }).lean();
+    return Promise.all(items.map((a) => this.toSummary(a, patient)));
+  }
 }
