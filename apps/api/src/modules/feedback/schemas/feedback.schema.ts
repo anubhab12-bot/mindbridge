@@ -23,7 +23,7 @@ export class Feedback {
   @Prop({ maxlength: 1000 })
   comment?: string;
 
-  @Prop({ required: true, enum: Object.values(ModerationStatus), default: ModerationStatus.PENDING })
+  @Prop({ type: String, required: true, enum: Object.values(ModerationStatus), default: ModerationStatus.PENDING })
   moderationStatus!: ModerationStatus;
 
   @Prop({ type: Types.ObjectId, ref: 'User' })

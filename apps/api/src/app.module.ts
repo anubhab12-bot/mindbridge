@@ -21,6 +21,8 @@ import { CareModule } from './modules/care/care.module.js';
 import { DoctorsModule } from './modules/doctors/doctors.module.js';
 import { JournalModule } from './modules/journal/journal.module.js';
 import { MoodModule } from './modules/mood/mood.module.js';
+import { AiModule } from './modules/ai/ai.module.js';
+import { CrisisResourcesModule } from './modules/crisis-resources/crisis-resources.module.js';
 
 @Module({
   imports: [
@@ -56,6 +58,8 @@ import { MoodModule } from './modules/mood/mood.module.js';
     AppointmentsModule,
     MoodModule,
     JournalModule,
+    CrisisResourcesModule,
+    AiModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

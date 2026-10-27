@@ -12,7 +12,7 @@ export class ConsentRecord {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   userId!: Types.ObjectId;
 
-  @Prop({ required: true, enum: Object.values(ConsentType) })
+  @Prop({ type: String, required: true, enum: Object.values(ConsentType) })
   type!: ConsentType;
 
   @Prop({ required: true, maxlength: 20 })

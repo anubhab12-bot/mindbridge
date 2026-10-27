@@ -14,7 +14,7 @@ export type VerificationDocumentType = (typeof VerificationDocumentType)[keyof t
 export class VerificationDocument {
   _id!: Types.ObjectId;
 
-  @Prop({ required: true, enum: Object.values(VerificationDocumentType) })
+  @Prop({ type: String, required: true, enum: Object.values(VerificationDocumentType) })
   type!: VerificationDocumentType;
 
   @Prop({ required: true, maxlength: 120 })
@@ -35,7 +35,7 @@ const VerificationDocumentSchema = SchemaFactory.createForClass(VerificationDocu
 
 @Schema({ _id: false })
 export class VerificationEvent {
-  @Prop({ required: true, enum: Object.values(DoctorVerificationStatus) })
+  @Prop({ type: String, required: true, enum: Object.values(DoctorVerificationStatus) })
   status!: DoctorVerificationStatus;
 
   @Prop({ maxlength: 1000 })
@@ -63,6 +63,7 @@ export class ProfessionalVerification {
   userId!: Types.ObjectId;
 
   @Prop({
+    type: String,
     required: true,
     enum: Object.values(DoctorVerificationStatus),
     default: DoctorVerificationStatus.PENDING_VERIFICATION,

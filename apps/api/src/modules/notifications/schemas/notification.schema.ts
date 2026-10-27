@@ -26,7 +26,7 @@ export class Notification {
   @Prop({ type: Date, default: null })
   readAt!: Date | null;
 
-  @Prop({ enum: ['PENDING', 'SENT', 'FAILED', 'SKIPPED'], default: 'SKIPPED' })
+  @Prop({ type: String, enum: ['PENDING', 'SENT', 'FAILED', 'SKIPPED'], default: 'SKIPPED' })
   emailStatus!: string;
 
   createdAt!: Date;

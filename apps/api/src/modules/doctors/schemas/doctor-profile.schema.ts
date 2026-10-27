@@ -34,7 +34,7 @@ export class DoctorProfile {
   @Prop({ required: true, trim: true, maxlength: 80 })
   displayName!: string;
 
-  @Prop({ required: true, enum: Object.values(ProfessionalCategory) })
+  @Prop({ type: String, required: true, enum: Object.values(ProfessionalCategory) })
   professionalCategory!: ProfessionalCategory;
 
   @Prop({ type: [String], default: [] })
@@ -77,6 +77,7 @@ export class DoctorProfile {
   clinicAddress?: string;
 
   @Prop({
+    type: String,
     required: true,
     enum: Object.values(DoctorVerificationStatus),
     default: DoctorVerificationStatus.PENDING_VERIFICATION,

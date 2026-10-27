@@ -12,7 +12,7 @@ export type PolicyDocumentType = (typeof PolicyDocumentType)[keyof typeof Policy
 /** Versioned legal texts (terms, privacy notice, AI notice). Admin-managed with `settings:manage`. */
 @Schema({ timestamps: true, collection: 'policy_documents' })
 export class PolicyDocument {
-  @Prop({ required: true, enum: Object.values(PolicyDocumentType) })
+  @Prop({ type: String, required: true, enum: Object.values(PolicyDocumentType) })
   type!: PolicyDocumentType;
 
   @Prop({ required: true, maxlength: 20 })
@@ -25,7 +25,7 @@ export class PolicyDocument {
   @Prop({ required: true, maxlength: 100000 })
   body!: string;
 
-  @Prop({ required: true, enum: Object.values(ContentStatus), default: ContentStatus.DRAFT })
+  @Prop({ type: String, required: true, enum: Object.values(ContentStatus), default: ContentStatus.DRAFT })
   status!: ContentStatus;
 
   @Prop({ type: Date })

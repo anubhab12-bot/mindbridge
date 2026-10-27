@@ -17,7 +17,7 @@ export class CareRelationship {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   patientId!: Types.ObjectId;
 
-  @Prop({ required: true, enum: Object.values(CareRelationshipStatus), default: CareRelationshipStatus.ACTIVE })
+  @Prop({ type: String, required: true, enum: Object.values(CareRelationshipStatus), default: CareRelationshipStatus.ACTIVE })
   status!: CareRelationshipStatus;
 
   @Prop({ required: true })
@@ -26,7 +26,7 @@ export class CareRelationship {
   @Prop({ type: Date })
   endedAt?: Date;
 
-  @Prop({ enum: ['PATIENT', 'DOCTOR', 'SYSTEM'] })
+  @Prop({ type: String, enum: ['PATIENT', 'DOCTOR', 'SYSTEM'] })
   endedBy?: string;
 
   createdAt!: Date;

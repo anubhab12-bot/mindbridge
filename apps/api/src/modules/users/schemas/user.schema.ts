@@ -20,10 +20,10 @@ export class User {
   @Prop({ required: true, select: false })
   passwordHash!: string;
 
-  @Prop({ required: true, enum: Object.values(Role) })
+  @Prop({ type: String, required: true, enum: Object.values(Role) })
   role!: Role;
 
-  @Prop({ required: true, enum: Object.values(AccountStatus), default: AccountStatus.ACTIVE })
+  @Prop({ type: String, required: true, enum: Object.values(AccountStatus), default: AccountStatus.ACTIVE })
   status!: AccountStatus;
 
   @Prop({ required: true, trim: true, maxlength: 80 })

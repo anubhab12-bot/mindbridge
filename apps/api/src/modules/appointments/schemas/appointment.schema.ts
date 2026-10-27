@@ -42,10 +42,10 @@ export class Appointment {
   @Prop({ required: true })
   endAt!: Date;
 
-  @Prop({ required: true, enum: Object.values(ConsultationMode) })
+  @Prop({ type: String, required: true, enum: Object.values(ConsultationMode) })
   mode!: ConsultationMode;
 
-  @Prop({ required: true, enum: Object.values(AppointmentStatus), default: AppointmentStatus.REQUESTED })
+  @Prop({ type: String, required: true, enum: Object.values(AppointmentStatus), default: AppointmentStatus.REQUESTED })
   status!: AppointmentStatus;
 
   /**

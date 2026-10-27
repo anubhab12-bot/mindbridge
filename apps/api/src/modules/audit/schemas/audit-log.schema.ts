@@ -23,7 +23,7 @@ export class AuditLog {
   @Prop({ maxlength: 40 })
   resourceId?: string;
 
-  @Prop({ required: true, enum: ['SUCCESS', 'FAILURE', 'DENIED'] })
+  @Prop({ type: String, required: true, enum: ['SUCCESS', 'FAILURE', 'DENIED'] })
   outcome!: 'SUCCESS' | 'FAILURE' | 'DENIED';
 
   @Prop({ maxlength: 64 })

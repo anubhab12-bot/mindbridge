@@ -24,7 +24,7 @@ export class AvailabilitySlot {
   @Prop({ required: true })
   endAt!: Date;
 
-  @Prop({ required: true, enum: Object.values(AvailabilityKind) })
+  @Prop({ type: String, required: true, enum: Object.values(AvailabilityKind) })
   kind!: AvailabilityKind;
 
   @Prop({ maxlength: 200 })
