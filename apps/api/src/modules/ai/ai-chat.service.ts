@@ -371,7 +371,7 @@ export class AiChatService {
       resources,
       careTeam: doctorProfiles.map((d) => ({ doctorId: d._id.toString(), displayName: d.displayName })),
       careTeamNotified: doctorProfiles.length,
-      bookingLink: '/patient/doctors',
+      bookingLink: '/patient/professionals',
     };
   }
 

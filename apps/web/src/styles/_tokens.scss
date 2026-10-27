@@ -1,0 +1,95 @@
+// MindBridge design tokens. Calm, warm and high-contrast (WCAG AA for text on every surface).
+:root {
+  color-scheme: light;
+  --mb-bg: #f7f6f2;
+  --mb-surface: #ffffff;
+  --mb-surface-2: #f0efe9;
+  --mb-border: #dcdad2;
+  --mb-text: #1d2626;
+  --mb-text-muted: #4f5d5c;
+  --mb-primary: #0f6e66;
+  --mb-primary-strong: #0b5550;
+  --mb-primary-soft: #ddefeb;
+  --mb-on-primary: #ffffff;
+  --mb-accent: #6b4fa3;
+  --mb-accent-soft: #ece6f6;
+  --mb-success: #2f6b2f;
+  --mb-success-soft: #e3f1e1;
+  --mb-warning: #8a5a00;
+  --mb-warning-soft: #fbf0d9;
+  --mb-danger: #a3271f;
+  --mb-danger-soft: #fbe5e2;
+  --mb-crisis: #9f1f17;
+  --mb-crisis-soft: #fff1ee;
+  --mb-focus: #1b6bd1;
+
+  --mb-radius-sm: 8px;
+  --mb-radius: 14px;
+  --mb-radius-lg: 22px;
+  --mb-shadow: 0 1px 2px rgb(20 30 30 / 6%), 0 6px 20px rgb(20 30 30 / 6%);
+  --mb-space-1: 4px;
+  --mb-space-2: 8px;
+  --mb-space-3: 12px;
+  --mb-space-4: 16px;
+  --mb-space-5: 24px;
+  --mb-space-6: 32px;
+  --mb-space-7: 48px;
+  --mb-font: 'Inter', 'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif;
+  --mb-font-size: 16px;
+  --mb-line: 1.6;
+  --mb-max: 1160px;
+  --mb-sidebar: 248px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --mb-bg: #121817;
+    --mb-surface: #19211f;
+    --mb-surface-2: #212b29;
+    --mb-border: #33403d;
+    --mb-text: #e8eeec;
+    --mb-text-muted: #a9b8b5;
+    --mb-primary: #4fb8ad;
+    --mb-primary-strong: #74cdc3;
+    --mb-primary-soft: #1f3a37;
+    --mb-on-primary: #0c1513;
+    --mb-accent: #b7a2e6;
+    --mb-accent-soft: #2c2440;
+    --mb-success: #8fd18a;
+    --mb-success-soft: #1d3320;
+    --mb-warning: #f0c060;
+    --mb-warning-soft: #3a2f16;
+    --mb-danger: #ff9b90;
+    --mb-danger-soft: #3d1c19;
+    --mb-crisis: #ffaca3;
+    --mb-crisis-soft: #3a1714;
+    --mb-focus: #7fb2ff;
+    --mb-shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 6px 20px rgb(0 0 0 / 25%);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --mb-bg: #121817;
+  --mb-surface: #19211f;
+  --mb-surface-2: #212b29;
+  --mb-border: #33403d;
+  --mb-text: #e8eeec;
+  --mb-text-muted: #a9b8b5;
+  --mb-primary: #4fb8ad;
+  --mb-primary-strong: #74cdc3;
+  --mb-primary-soft: #1f3a37;
+  --mb-on-primary: #0c1513;
+  --mb-accent: #b7a2e6;
+  --mb-accent-soft: #2c2440;
+  --mb-success: #8fd18a;
+  --mb-success-soft: #1d3320;
+  --mb-warning: #f0c060;
+  --mb-warning-soft: #3a2f16;
+  --mb-danger: #ff9b90;
+  --mb-danger-soft: #3d1c19;
+  --mb-crisis: #ffaca3;
+  --mb-crisis-soft: #3a1714;
+  --mb-focus: #7fb2ff;
+}

@@ -189,6 +189,9 @@ export class ClinicalService {
     if (dto.fromDraftId) {
       const draft = await this.drafts.findOne({ _id: new Types.ObjectId(dto.fromDraftId), doctorProfileId: new Types.ObjectId(doctor.doctorProfileId) }).lean();
       if (!draft) throw new BadRequestException({ code: 'INVALID_DRAFT', message: 'That AI draft is no longer available.' });
+      if (draft.patientId && draft.patientId.toString() !== patientId) {
+        throw new BadRequestException({ code: 'INVALID_DRAFT', message: 'That AI draft was created for a different patient.' });
+      }
       aiProvenance = { task: draft.task, provider: draft.provider, model: draft.model, isMock: draft.isMock, draftedAt: draft.createdAt };
     }
     const note = await this.notes.create({
