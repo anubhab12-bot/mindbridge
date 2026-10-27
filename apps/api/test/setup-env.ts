@@ -1,0 +1,19 @@
+// Synthetic, test-only configuration. These values are not secrets and are never used outside tests.
+process.env['NODE_ENV'] = 'test';
+process.env['MONGO_URI'] = process.env['MONGO_URI_TEST'] ?? 'mongodb://127.0.0.1:27017/mindbridge_test';
+process.env['REDIS_URL'] = process.env['REDIS_URL_TEST'] ?? 'redis://127.0.0.1:6379/15';
+process.env['JWT_ACCESS_SECRET'] = 'test-access-secret-0123456789-abcdefghijklmnop';
+process.env['MFA_TOKEN_SECRET'] = 'test-mfa-secret-0123456789-abcdefghijklmnopqr';
+process.env['AI_SERVICE_TOKEN'] = 'test-ai-service-token-0123456789-abcdefghijk';
+process.env['AI_SERVICE_URL'] = process.env['AI_SERVICE_URL_TEST'] ?? 'http://127.0.0.1:59999';
+process.env['AI_SERVICE_TIMEOUT_MS'] = '1500';
+process.env['FIELD_ENCRYPTION_KEY'] = Buffer.alloc(32, 7).toString('base64');
+process.env['FILE_SIGNING_SECRET'] = 'test-file-signing-secret-0123456789-abcdefgh';
+process.env['UPLOAD_DIR'] = './var/test-uploads';
+process.env['MAIL_TRANSPORT'] = 'memory';
+process.env['QUEUES_ENABLED'] = 'false';
+process.env['COOKIE_SECURE'] = 'false';
+process.env['SWAGGER_ENABLED'] = 'false';
+process.env['LOG_LEVEL'] = 'error';
+process.env['AUTH_THROTTLE_LIMIT'] = process.env['AUTH_THROTTLE_LIMIT'] ?? '1000';
+process.env['THROTTLE_LIMIT'] = process.env['THROTTLE_LIMIT'] ?? '10000';
