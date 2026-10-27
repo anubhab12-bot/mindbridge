@@ -16,6 +16,11 @@ import { MailModule } from './modules/mail/mail.module.js';
 import { NotificationsModule } from './modules/notifications/notifications.module.js';
 import { JobsModule } from './modules/queues/jobs.module.js';
 import { VerificationModule } from './modules/verification/verification.module.js';
+import { AppointmentsModule } from './modules/appointments/appointments.module.js';
+import { CareModule } from './modules/care/care.module.js';
+import { DoctorsModule } from './modules/doctors/doctors.module.js';
+import { JournalModule } from './modules/journal/journal.module.js';
+import { MoodModule } from './modules/mood/mood.module.js';
 
 @Module({
   imports: [
@@ -46,6 +51,11 @@ import { VerificationModule } from './modules/verification/verification.module.j
     ConsentModule,
     AuthModule,
     VerificationModule,
+    CareModule,
+    DoctorsModule,
+    AppointmentsModule,
+    MoodModule,
+    JournalModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
