@@ -29,6 +29,7 @@ import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module
 import { PrivacyModule } from './modules/privacy/privacy.module.js';
 import { SupportModule } from './modules/support/support.module.js';
 import { WellnessModule } from './modules/wellness/wellness.module.js';
+import { UsersModule } from './modules/users/users.module.js';
 import { CrisisResourcesModule } from './modules/crisis-resources/crisis-resources.module.js';
 
 @Module({
@@ -74,6 +75,7 @@ import { CrisisResourcesModule } from './modules/crisis-resources/crisis-resourc
     SupportModule,
     PrivacyModule,
     AdminModule,
+    UsersModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
