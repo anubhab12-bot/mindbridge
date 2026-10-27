@@ -17,7 +17,9 @@ class Settings(BaseSettings):
     ai_model: str = Field(default="", alias="AI_MODEL")
     ai_api_key: SecretStr = Field(default=SecretStr(""), alias="AI_API_KEY")
     ai_base_url: str = Field(default="", alias="AI_BASE_URL")
-    ai_provider_timeout_seconds: float = Field(default=15.0, alias="AI_PROVIDER_TIMEOUT_SECONDS", gt=0, le=120)
+    ai_provider_timeout_seconds: float = Field(
+        default=15.0, alias="AI_PROVIDER_TIMEOUT_SECONDS", gt=0, le=120
+    )
     ai_provider_max_retries: int = Field(default=1, alias="AI_PROVIDER_MAX_RETRIES", ge=0, le=3)
     ai_max_output_tokens: int = Field(default=600, alias="AI_MAX_OUTPUT_TOKENS", ge=64, le=4000)
     ai_risk_classifier: Literal["keyword", "provider"] = Field(default="keyword", alias="AI_RISK_CLASSIFIER")

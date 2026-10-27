@@ -80,7 +80,7 @@ def normalise(text: str) -> str:
 # --------------------------------------------------------------------------------------------- patterns
 
 SELF = r"(?:myself|my\s+(?:own\s+)?life|me)"
-INTENT = r"(?:want|wanna|going|plan(?:ning)?|intend(?:ing)?|thinking\s+(?:about|of)|think\s+about|considering|ready|decided|about)"
+INTENT = r"(?:want|wanna|going|plan(?:ning)?|intend(?:ing)?|thinking\s+(?:about|of)|think\s+about|considering|ready|decided|about\s+to)"
 
 
 @dataclass(frozen=True)
@@ -98,65 +98,160 @@ def _r(code: str, level: RiskLevel, pattern: str, inherently_negative: bool = Fa
 
 RULES: list[Rule] = [
     # ---- imminent: plan with timing/means, act in progress, goodbye messages, medical emergency
-    _r("overdose_in_progress", RiskLevel.IMMINENT,
-       r"\bi(?:'ve|\s+have)?\s+(?:just\s+)?(?:took|taken|swallowed|overdosed\s+on)\s+(?:a\s+lot\s+of|all\s+(?:of\s+)?(?:my|the)|too\s+many|a\s+(?:whole|full)\s+(?:bottle|strip|pack)\s+of|\d{2,}|\w+\s+(?:bottles?|strips?|packs?)\s+of)\b"),
+    _r(
+        "overdose_in_progress",
+        RiskLevel.IMMINENT,
+        r"\bi(?:'ve|\s+have)?\s+(?:just\s+)?(?:took|taken|swallowed|overdosed\s+on)\s+(?:a\s+lot\s+of|all\s+(?:of\s+)?(?:my|the)|too\s+many|a\s+(?:whole|full)\s+(?:bottle|strip|pack)\s+of|\d{2,}|\w+\s+(?:bottles?|strips?|packs?)\s+of)\b",
+    ),
     _r("overdose_in_progress", RiskLevel.IMMINENT, r"\bi(?:'ve|\s+have)?\s+(?:just\s+)?overdosed\b"),
-    _r("imminent_plan", RiskLevel.IMMINENT,
-       rf"\b(?:going\s+to|about\s+to|will|gonna|ready\s+to)\s+(?:kill\s+{SELF}|end\s+(?:it|{SELF}|it\s+all)|take\s+my\s+(?:own\s+)?life|jump|hang\s+myself)\b[^.!?]*\b(?:tonight|today|now|right\s+now|in\s+a\s+(?:few\s+)?(?:minutes?|hours?)|this\s+(?:evening|morning|weekend))\b"),
-    _r("imminent_plan", RiskLevel.IMMINENT,
-       r"\b(?:tonight|today|right\s+now)\s+(?:i(?:'m|\s+am)\s+going\s+to|i\s+will)\s+(?:kill\s+myself|end\s+it|end\s+my\s+life)\b"),
-    _r("at_location_of_means", RiskLevel.IMMINENT,
-       r"\bi(?:'m|\s+am)\s+(?:standing\s+)?(?:on|at)\s+(?:the|a)\s+(?:edge|ledge|bridge|roof(?:top)?|railway\s+tracks?|tracks|cliff)\b"),
-    _r("has_means_ready", RiskLevel.IMMINENT,
-       r"\bi\s+(?:have|got|bought)\s+(?:a|the)\s+(?:gun|rope|noose|knife|blade|pills|poison)\s+(?:ready|with\s+me|right\s+here|in\s+my\s+hand)\b"),
-    _r("goodbye_message", RiskLevel.IMMINENT,
-       r"\b(?:this\s+is\s+(?:my\s+)?(?:final\s+)?goodbye|goodbye\s+forever|my\s+(?:final|last)\s+(?:message|words|note)|won't\s+be\s+(?:here|alive)\s+(?:tomorrow|much\s+longer))\b"),
-    _r("serious_injury", RiskLevel.IMMINENT,
-       r"\bi(?:'ve|\s+have)?\s+(?:cut|hurt|stabbed|burned)\s+myself\b[^.!?]*\b(?:bleeding\s+(?:a\s+lot|badly|won't\s+stop)|deep|badly|can't\s+stop\s+the\s+bleeding)\b"),
-    _r("harm_to_others_imminent", RiskLevel.IMMINENT,
-       r"\b(?:going\s+to|about\s+to|will)\s+(?:kill|shoot|stab|hurt)\s+(?:him|her|them|someone|somebody|people|everyone|my\s+\w+)\b[^.!?]*\b(?:tonight|today|now|right\s+now)\b"),
-
+    _r(
+        "imminent_plan",
+        RiskLevel.IMMINENT,
+        rf"\b(?:going\s+to|about\s+to|will|gonna|ready\s+to)\s+(?:kill\s+{SELF}|end\s+(?:it|{SELF}|it\s+all)|take\s+my\s+(?:own\s+)?life|jump|hang\s+myself)\b[^.!?]*\b(?:tonight|today|now|right\s+now|in\s+a\s+(?:few\s+)?(?:minutes?|hours?)|this\s+(?:evening|morning|weekend))\b",
+    ),
+    _r(
+        "imminent_plan",
+        RiskLevel.IMMINENT,
+        r"\b(?:tonight|today|right\s+now)\s+(?:i(?:'m|\s+am)\s+going\s+to|i\s+will)\s+(?:kill\s+myself|end\s+it|end\s+my\s+life)\b",
+    ),
+    _r(
+        "at_location_of_means",
+        RiskLevel.IMMINENT,
+        r"\bi(?:'m|\s+am)\s+(?:standing\s+)?(?:on|at)\s+(?:the|a)\s+(?:edge|ledge|bridge|roof(?:top)?|railway\s+tracks?|tracks|cliff)\b",
+    ),
+    _r(
+        "has_means_ready",
+        RiskLevel.IMMINENT,
+        r"\bi\s+(?:have|got|bought)\s+(?:a|the)\s+(?:gun|rope|noose|knife|blade|pills|poison)\s+(?:ready|with\s+me|right\s+here|in\s+my\s+hand)\b",
+    ),
+    _r(
+        "goodbye_message",
+        RiskLevel.IMMINENT,
+        r"\b(?:this\s+is\s+(?:my\s+)?(?:final\s+)?goodbye|goodbye\s+forever|my\s+(?:final|last)\s+(?:message|words|note)|won't\s+be\s+(?:here|alive)\s+(?:tomorrow|much\s+longer))\b",
+    ),
+    _r(
+        "serious_injury",
+        RiskLevel.IMMINENT,
+        r"\bi(?:'ve|\s+have)?\s+(?:cut|hurt|stabbed|burned)\s+myself\b[^.!?]*\b(?:bleeding\s+(?:a\s+lot|badly|won't\s+stop)|deep|badly|can't\s+stop\s+the\s+bleeding)\b",
+    ),
+    _r(
+        "harm_to_others_imminent",
+        RiskLevel.IMMINENT,
+        r"\b(?:going\s+to|about\s+to|will)\s+(?:kill|shoot|stab|hurt)\s+(?:him|her|them|someone|somebody|people|everyone|my\s+\w+)\b[^.!?]*\b(?:tonight|today|now|right\s+now)\b",
+    ),
     # ---- high: active ideation, intent, method seeking, current self-harm
-    _r("suicidal_intent", RiskLevel.HIGH,
-       rf"\b{INTENT}\s+(?:to\s+|on\s+|of\s+)?(?:kill(?:ing)?\s+{SELF}|end(?:ing)?\s+(?:{SELF}|it\s+all|everything)|tak(?:e|ing)\s+my\s+(?:own\s+)?life|commit(?:ting)?\s+suicide|suicide)\b"),
-    _r("suicidal_intent", RiskLevel.HIGH, rf"\b(?:kill\s+myself|end\s+my\s+life|take\s+my\s+own\s+life|commit\s+suicide)\b"),
-    _r("suicidal_ideation", RiskLevel.HIGH, r"\bi(?:'m|\s+am|\s+feel|\s+have\s+been|'ve\s+been)\s+(?:so\s+|really\s+|very\s+|feeling\s+)?suicidal\b"),
-    _r("suicidal_ideation", RiskLevel.HIGH, r"\b(?:suicidal\s+(?:thoughts?|feelings?|urges?)|thoughts?\s+of\s+(?:suicide|killing\s+myself|ending\s+my\s+life))\b"),
-    _r("wish_to_die", RiskLevel.HIGH,
-       r"\bi\s+(?:just\s+)?(?:want|wish|wanted)\s+(?:to\s+(?:be\s+)?(?:dead|die)|i\s+(?:was|were)\s+dead|to\s+not\s+(?:be\s+alive|exist|wake\s+up))\b"),
-    _r("wish_to_die", RiskLevel.HIGH,
-       r"\b(?:don't|do\s+not|no\s+longer)\s+want\s+to\s+(?:be\s+alive|live|exist|wake\s+up|be\s+here(?:\s+anymore)?|go\s+on)\b",
-       inherently_negative=True),
-    _r("wish_to_die", RiskLevel.HIGH,
-       r"\b(?:sleep\s+and\s+never\s+wake\s+up|never\s+wake\s+up\s+again|wish\s+i\s+(?:had\s+never\s+been\s+born|could\s+just\s+die))\b"),
-    _r("hopeless_about_living", RiskLevel.HIGH,
-       r"\b(?:better\s+off\s+(?:dead|without\s+me)|no\s+(?:reason|point)\s+(?:to|in)\s+(?:live|living|being\s+alive|go\s+on)|nothing\s+(?:left\s+)?to\s+live\s+for|can't\s+go\s+on\s+(?:living|like\s+this|anymore)|end\s+it\s+all|want\s+it\s+(?:all\s+)?to\s+(?:end|be\s+over))\b",
-       inherently_negative=True),
-    _r("method_seeking", RiskLevel.HIGH,
-       r"\b(?:how\s+(?:many|much)\s+\w+(?:\s+\w+)?\s+(?:would|will|does\s+it\s+take\s+to|to)\s+(?:kill|die|overdose)|lethal\s+dose|painless\s+way\s+to\s+die|easiest\s+way\s+to\s+(?:die|kill\s+myself)|how\s+(?:to|do\s+i|can\s+i)\s+(?:kill\s+myself|hang\s+myself|commit\s+suicide|end\s+my\s+life|overdose))\b"),
-    _r("self_harm_current", RiskLevel.HIGH,
-       r"\bi(?:'ve|\s+have)?\s*(?:been\s+)?(?:cutting|burning|hitting|hurting|harming|scratching)\s+myself\b"),
-    _r("self_harm_current", RiskLevel.HIGH,
-       r"\b(?:want|urge|urges|need|going)\s+to\s+(?:cut|hurt|harm|burn)\s+myself\b"),
+    _r(
+        "suicidal_intent",
+        RiskLevel.HIGH,
+        rf"\b{INTENT}\s+(?:to\s+|on\s+|of\s+)?(?:kill(?:ing)?\s+{SELF}|end(?:ing)?\s+(?:{SELF}|it\s+all|everything)|tak(?:e|ing)\s+my\s+(?:own\s+)?life|commit(?:ting)?\s+suicide)\b",
+    ),
+    _r(
+        "suicidal_ideation",
+        RiskLevel.HIGH,
+        r"\bi(?:'m|\s+am|'ve\s+been|\s+have\s+been|\s+keep|\s+can't\s+stop)?\s+(?:thinking|think)\s+(?:about|of)\s+suicide\b",
+    ),
+    _r(
+        "suicidal_intent",
+        RiskLevel.HIGH,
+        r"\b(?:kill\s+myself|end\s+my\s+life|take\s+my\s+own\s+life|commit\s+suicide)\b",
+    ),
+    _r(
+        "suicidal_ideation",
+        RiskLevel.HIGH,
+        r"\bi(?:'m|\s+am|\s+feel|\s+have\s+been|'ve\s+been)\s+(?:so\s+|really\s+|very\s+|feeling\s+)?suicidal\b",
+    ),
+    _r(
+        "suicidal_ideation",
+        RiskLevel.HIGH,
+        r"\b(?:suicidal\s+(?:thoughts?|feelings?|urges?)|thoughts?\s+of\s+(?:suicide|killing\s+myself|ending\s+my\s+life))\b",
+    ),
+    _r(
+        "wish_to_die",
+        RiskLevel.HIGH,
+        r"\bi\s+(?:just\s+)?(?:want|wish|wanted)\s+(?:to\s+(?:be\s+)?(?:dead|die)|i\s+(?:was|were)\s+dead|to\s+not\s+(?:be\s+alive|exist|wake\s+up))\b",
+    ),
+    _r(
+        "wish_to_die",
+        RiskLevel.HIGH,
+        r"\b(?:don't|do\s+not|no\s+longer)\s+want\s+to\s+(?:be\s+alive|live|exist|wake\s+up|be\s+here(?:\s+anymore)?|go\s+on)\b",
+        inherently_negative=True,
+    ),
+    _r(
+        "wish_to_die",
+        RiskLevel.HIGH,
+        r"\b(?:sleep\s+and\s+never\s+wake\s+up|never\s+wake\s+up\s+again|wish\s+i\s+(?:had\s+never\s+been\s+born|could\s+just\s+die))\b",
+    ),
+    _r(
+        "wish_to_die",
+        RiskLevel.HIGH,
+        r"\b(?:not\s+sure|don't\s+know\s+(?:if|whether))\s+i\s+(?:want|can)\s+(?:to\s+)?(?:live|keep\s+going|go\s+on|be\s+alive|stay\s+alive)\b",
+        inherently_negative=True,
+    ),
+    _r(
+        "hopeless_about_living",
+        RiskLevel.HIGH,
+        r"\b(?:better\s+off\s+(?:dead|without\s+me)|no\s+(?:reason|point)\s+(?:to|in)\s+(?:live|living|being\s+alive|go\s+on)|nothing\s+(?:left\s+)?to\s+live\s+for|can't\s+go\s+on\s+(?:living|like\s+this|anymore)|end\s+it\s+all|want\s+it\s+(?:all\s+)?to\s+(?:end|be\s+over))\b",
+        inherently_negative=True,
+    ),
+    _r(
+        "method_seeking",
+        RiskLevel.HIGH,
+        r"\b(?:how\s+(?:many|much)\s+\w+(?:\s+\w+)?\s+(?:(?:would|will|does|do)\s+(?:it\s+)?(?:i\s+need\s+to\s+)?(?:take\s+)?)?(?:to\s+)?(?:kill|die|overdose|be\s+(?:lethal|fatal))|lethal\s+dose|painless\s+way\s+to\s+die|easiest\s+way\s+to\s+(?:die|kill\s+myself)|how\s+(?:to|do\s+i|can\s+i)\s+(?:kill\s+myself|hang\s+myself|commit\s+suicide|end\s+my\s+life|overdose))\b",
+    ),
+    _r(
+        "self_harm_current",
+        RiskLevel.HIGH,
+        r"\bi(?:'ve|\s+have)?\s*(?:been\s+)?(?:cutting|burning|hitting|hurting|harming|scratching)\s+myself\b",
+    ),
+    _r(
+        "self_harm_current",
+        RiskLevel.HIGH,
+        r"\b(?:want|urge|urges|need|going)\s+to\s+(?:cut|hurt|harm|burn)\s+myself\b",
+    ),
     _r("self_harm_current", RiskLevel.HIGH, r"\bi\s+(?:cut|hurt|harmed|burned)\s+myself\b"),
-    _r("uncertain_safety", RiskLevel.HIGH,
-       r"\b(?:can't|cannot|don't\s+know\s+if\s+i\s+can)\s+(?:promise|keep)\s+(?:i(?:'ll|\s+will)\s+(?:be|stay)\s+safe|myself\s+safe|that\s+i\s+won't\s+hurt\s+myself)\b",
-       inherently_negative=True),
-    _r("harm_to_others", RiskLevel.HIGH,
-       r"\bi\s+(?:want|am\s+going|'m\s+going|plan|feel\s+like\s+i\s+(?:could|might|want\s+to))\s+(?:to\s+)?(?:kill|shoot|stab|seriously\s+hurt)\s+(?:him|her|them|someone|somebody|people|everyone)\b"),
-
+    _r(
+        "self_harm_current",
+        RiskLevel.HIGH,
+        r"\b(?:cut|cutting|burn|burning|harm|harming|hurt|hurting)\s+myself\b",
+    ),
+    _r(
+        "uncertain_safety",
+        RiskLevel.HIGH,
+        r"\b(?:can't|cannot|don't\s+know\s+if\s+i\s+can)\s+(?:promise|keep)\s+(?:i(?:'ll|\s+will)\s+(?:be|stay)\s+safe|myself\s+safe|that\s+i\s+won't\s+hurt\s+myself)\b",
+        inherently_negative=True,
+    ),
+    _r(
+        "harm_to_others",
+        RiskLevel.HIGH,
+        r"\bi\s+(?:want|am\s+going|'m\s+going|plan|feel\s+like\s+i\s+(?:could|might|want\s+to))\s+(?:to\s+)?(?:kill|shoot|stab|seriously\s+hurt)\s+(?:him|her|them|someone|somebody|people|everyone)\b",
+    ),
     # ---- elevated: hopelessness, entrapment, safety concerns, possible medical emergency
-    _r("hopelessness", RiskLevel.ELEVATED,
-       r"\b(?:i\s+feel\s+(?:so\s+|completely\s+|totally\s+)?(?:hopeless|worthless|trapped|empty\s+inside)|i(?:'m|\s+am)\s+(?:a\s+burden|worthless|hopeless)|there(?:'s|\s+is)\s+no\s+way\s+out|can't\s+take\s+(?:it|this)\s+(?:anymore|any\s+longer)|give\s+up\s+on\s+(?:everything|life)|what's\s+the\s+point\s+of\s+(?:anything|living|life))\b"),
-    _r("wish_to_disappear", RiskLevel.ELEVATED, r"\b(?:wish\s+i\s+could\s+(?:just\s+)?disappear|want\s+to\s+disappear(?:\s+forever)?)\b"),
-    _r("unsafe_at_home", RiskLevel.ELEVATED,
-       r"\b(?:i(?:'m|\s+am)\s+(?:not\s+safe|scared\s+to\s+go)\s+(?:at\s+)?home|(?:he|she|they|my\s+(?:husband|wife|partner|father|mother|dad|mom|mum|brother|uncle|boyfriend|girlfriend))\s+(?:hits|beats|hurts|threatens|abuses)\s+me)\b"),
-    _r("possible_medical_emergency", RiskLevel.ELEVATED,
-       r"\b(?:i\s+can't\s+breathe|chest\s+pain|i(?:'m|\s+am)\s+(?:going\s+to\s+)?(?:faint|passing\s+out)|i\s+fainted|having\s+a\s+seizure)\b"),
+    _r(
+        "hopelessness",
+        RiskLevel.ELEVATED,
+        r"\b(?:i\s+feel\s+(?:so\s+|completely\s+|totally\s+)?(?:hopeless|worthless|trapped|empty\s+inside)|i(?:'m|\s+am)\s+(?:a\s+burden|worthless|hopeless)|there(?:'s|\s+is)\s+no\s+way\s+out|can't\s+take\s+(?:it|this)\s+(?:anymore|any\s+longer)|give\s+up\s+on\s+(?:everything|life)|what's\s+the\s+point\s+of\s+(?:anything|living|life))\b",
+    ),
+    _r(
+        "wish_to_disappear",
+        RiskLevel.ELEVATED,
+        r"\b(?:wish\s+i\s+could\s+(?:just\s+)?disappear|want\s+to\s+disappear(?:\s+forever)?)\b",
+    ),
+    _r(
+        "unsafe_at_home",
+        RiskLevel.ELEVATED,
+        r"\b(?:i(?:'m|\s+am)\s+(?:not\s+safe|scared\s+to\s+go)\s+(?:at\s+)?home|(?:he|she|they|my\s+(?:husband|wife|partner|father|mother|dad|mom|mum|brother|uncle|boyfriend|girlfriend))\s+(?:hits|beats|hurts|threatens|abuses)\s+me)\b",
+    ),
+    _r(
+        "possible_medical_emergency",
+        RiskLevel.ELEVATED,
+        r"\b(?:i\s+can't\s+breathe|chest\s+pain|i(?:'m|\s+am)\s+(?:going\s+to\s+)?(?:faint|passing\s+out)|i\s+fainted|having\s+a\s+seizure)\b",
+    ),
 ]
 
 # Mentions of risk topics without a first-person framing.
-_TOPIC = re.compile(r"\b(?:suicide|suicidal|self[- ]?harm|overdose|kill\s+(?:him|her|them)selves|end\s+(?:his|her|their)\s+li(?:fe|ves))\b")
+_TOPIC = re.compile(
+    r"\b(?:suicide|suicidal|self[- ]?harm|overdose|kill\s+(?:him|her|them)selves|end\s+(?:his|her|their)\s+li(?:fe|ves))\b"
+)
 _THIRD_PARTY = re.compile(
     r"\b(?:my\s+(?:friend|brother|sister|mom|mum|mother|dad|father|son|daughter|partner|husband|wife|boyfriend|girlfriend|cousin|classmate|colleague|roommate)|a\s+friend|someone\s+i\s+know|he|she|they)\b[^.!?]{0,60}\b(?:wants?\s+to\s+(?:kill|hurt|end)|is\s+(?:suicidal|cutting|self[- ]harming)|(?:kill|hurt|harm)(?:ing)?\s+(?:him|her|them)sel(?:f|ves)|end\s+(?:his|her|their)\s+life|talk(?:s|ed|ing)?\s+about\s+(?:suicide|dying|killing\s+(?:him|her|them)self))"
 )
@@ -166,10 +261,14 @@ _NEGATORS = re.compile(
 )
 _HEDGES = re.compile(r"\b(?:not\s+sure|not\s+certain|don't\s+know\s+(?:if|whether))\b")
 _HISTORICAL = re.compile(
-    r"\b(?:used\s+to|years?\s+ago|months?\s+ago|in\s+the\s+past|when\s+i\s+was\s+(?:younger|a\s+(?:kid|teen(?:ager)?|child|student)|\d{1,2})|back\s+(?:then|in\s+(?:school|college|\d{4}))|as\s+a\s+(?:teen(?:ager)?|kid|child)|in\s+(?:19|20)\d{2}|a\s+long\s+time\s+ago|anymore|no\s+longer|recovered|survivor)\b"
+    r"\b(?:used\s+to|years?\s+ago|months?\s+ago|in\s+the\s+past|when\s+i\s+was\s+(?:younger|a\s+(?:kid|teen(?:ager)?|child|student)|\d{1,2})|back\s+(?:then|in\s+(?:school|college|\d{4}))|as\s+a\s+(?:teen(?:ager)?|kid|child)|in\s+(?:19|20)\d{2}|a\s+long\s+time\s+ago|recovered|survivor)\b"
 )
-_RECENT = re.compile(r"\b(?:last\s+night|yesterday|earlier\s+today|this\s+(?:morning|afternoon|evening|week)|an?\s+hour\s+ago|just\s+now|tonight|today|right\s+now)\b")
-_ATTEMPT = re.compile(r"\b(?:tried|attempted|try)\s+to\s+(?:kill\s+myself|end\s+my\s+life|take\s+my\s+(?:own\s+)?life|commit\s+suicide)|\b(?:suicide\s+)?attempt(?:ed)?\b")
+_RECENT = re.compile(
+    r"\b(?:last\s+night|yesterday|earlier\s+today|this\s+(?:morning|afternoon|evening|week)|an?\s+hour\s+ago|just\s+now|tonight|today|right\s+now)\b"
+)
+_ATTEMPT = re.compile(
+    r"\b(?:tried|attempted|try)\s+to\s+(?:kill\s+myself|end\s+my\s+life|take\s+my\s+(?:own\s+)?life|commit\s+suicide)|\b(?:suicide\s+)?attempt(?:ed)?\b"
+)
 
 _DATA_REQUEST = re.compile(
     r"\b(?:other\s+(?:users?|patients?|people)'?s?\s+(?:conversations?|chats?|messages?|data|records?|notes?)|what\s+did\s+(?:the\s+)?(?:previous|last|other)\s+(?:user|person|patient)\s+say|show\s+me\s+(?:the\s+)?(?:database|all\s+(?:users|patients))|patient\s+records?\s+(?:of|for)\s+\w+)\b"
@@ -212,7 +311,9 @@ def evaluate(text: str) -> RuleResult:
     clauses = [c for c in _SENTENCE_SPLIT.split(norm) if c and c.strip()]
     for clause in clauses:
         third = bool(_THIRD_PARTY.search(clause))
-        first_person_self = bool(re.search(r"\b(?:myself|my\s+life|i\s+want\s+to\s+die|i(?:'m|\s+am)\s+suicidal)\b", clause))
+        first_person_self = bool(
+            re.search(r"\b(?:myself|my\s+life|i\s+want\s+to\s+die|i(?:'m|\s+am)\s+suicidal)\b", clause)
+        )
         if third and not first_person_self:
             result.third_party = True
             result.raise_to(RiskLevel.ELEVATED, "third_party_risk")
