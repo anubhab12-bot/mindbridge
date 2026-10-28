@@ -1,4 +1,13 @@
-import { Component, ElementRef, inject, Injectable, signal, viewChild, effect } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  inject,
+  Injectable,
+  signal,
+  viewChild,
+  effect,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 interface ConfirmRequest {
   title: string;
@@ -12,9 +21,19 @@ interface ConfirmRequest {
 export class ConfirmService {
   readonly request = signal<ConfirmRequest | null>(null);
 
-  ask(opts: { title: string; message: string; confirmLabel?: string; danger?: boolean }): Promise<boolean> {
+  ask(opts: {
+    title: string;
+    message: string;
+    confirmLabel?: string;
+    danger?: boolean;
+  }): Promise<boolean> {
     return new Promise((resolve) =>
-      this.request.set({ confirmLabel: 'Confirm', danger: false, ...opts, resolve } as ConfirmRequest),
+      this.request.set({
+        confirmLabel: 'Confirm',
+        danger: false,
+        ...opts,
+        resolve,
+      } as ConfirmRequest),
     );
   }
 
@@ -33,16 +52,35 @@ export class ConfirmService {
         <h2 id="confirm-title">{{ r.title }}</h2>
         <p>{{ r.message }}</p>
         <div class="row" style="justify-content: flex-end">
-          <button class="btn btn-secondary" type="button" (click)="confirm.answer(false)">Cancel</button>
-          <button class="btn" [class.btn-danger]="r.danger" type="button" (click)="confirm.answer(true)">{{ r.confirmLabel }}</button>
+          <button class="btn btn-secondary" type="button" (click)="confirm.answer(false)">
+            Cancel
+          </button>
+          <button
+            class="btn"
+            [class.btn-danger]="r.danger"
+            type="button"
+            (click)="confirm.answer(true)"
+          >
+            {{ r.confirmLabel }}
+          </button>
         </div>
       }
     </dialog>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
-    dialog { border: 0; border-radius: var(--mb-radius); padding: var(--mb-space-5); max-width: min(480px, calc(100vw - 32px));
-      background: var(--mb-surface); color: var(--mb-text); box-shadow: var(--mb-shadow); }
-    dialog::backdrop { background: rgb(0 0 0 / 40%); }
+    dialog {
+      border: 0;
+      border-radius: var(--mb-radius);
+      padding: var(--mb-space-5);
+      max-width: min(480px, calc(100vw - 32px));
+      background: var(--mb-surface);
+      color: var(--mb-text);
+      box-shadow: var(--mb-shadow);
+    }
+    dialog::backdrop {
+      background: rgb(0 0 0 / 40%);
+    }
   `,
 })
 export class ConfirmDialogComponent {

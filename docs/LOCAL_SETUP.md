@@ -64,7 +64,7 @@ docker compose down -v            # stop AND delete all data
 
 **You need:**
 
-- Node.js 22 LTS (Angular 21 needs Node 20.19 or newer)
+- Node.js 22 LTS (Angular 22 needs Node 22.22.3 or newer)
 - Python 3.12 or newer, and [uv](https://docs.astral.sh/uv/getting-started/installation/)
 - MongoDB 7 or 8 running on `localhost:27017`
 - Redis 7 running on `localhost:6379`. On Windows the simplest way is

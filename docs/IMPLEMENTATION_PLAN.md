@@ -12,7 +12,7 @@ _Last updated: 2026-10-27_
 
 | Concern | Choice | Notes |
 |---|---|---|
-| Web | Angular 21 (standalone, zoneless, signals, strict) | Angular 22 needs Node ≥ 22.22.3; see ADR-0002 |
+| Web | Angular 22 (standalone, zoneless, signals, strict) | Started on Angular 21 (ADR-0002), upgraded in ADR-0008 |
 | UI system | Hand-built SCSS design system with CSS custom properties | No Material dependency; see ADR-0003 |
 | API | NestJS 12 (ESM), Mongoose, class-validator, Swagger | Modular monolith, `/api/v1` |
 | Tests (API) | Vitest (Jest-compatible API), Supertest | Nest 12 default; see ADR-0004 |

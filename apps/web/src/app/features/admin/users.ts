@@ -1,7 +1,13 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AccountStatus, AdminPermission, ALL_ADMIN_PERMISSIONS, type PageMeta, Role } from '@mindbridge/shared-types';
+import {
+  AccountStatus,
+  AdminPermission,
+  ALL_ADMIN_PERMISSIONS,
+  type PageMeta,
+  Role,
+} from '@mindbridge/shared-types';
 import { ApiService } from '../../core/api/api.service';
 import { errorMessage } from '../../core/api/api-error';
 import { AuthService } from '../../core/auth/auth.service';
@@ -28,30 +34,90 @@ interface UserRow {
   imports: [DatePipe, FormsModule, LoadingComponent, EmptyStateComponent, PaginationComponent],
   template: `
     <div class="page">
-      <header class="page-header"><h1>Users</h1><p>Account administration. Health information is not shown here.</p></header>
+      <header class="page-header">
+        <h1>Users</h1>
+        <p>Account administration. Health information is not shown here.</p>
+      </header>
       <form class="row filters" (ngSubmit)="load()" role="search">
-        <input class="input" name="q" [(ngModel)]="q" placeholder="Name or email" aria-label="Search" />
-        <select class="input" name="role" [(ngModel)]="role" aria-label="Role"><option value="">All roles</option>@for (r of roles; track r) { <option [value]="r">{{ h(r) }}</option> }</select>
-        <select class="input" name="status" [(ngModel)]="status" aria-label="Status"><option value="">All statuses</option>@for (s of statuses; track s) { <option [value]="s">{{ h(s) }}</option> }</select>
+        <input
+          class="input"
+          name="q"
+          [(ngModel)]="q"
+          placeholder="Name or email"
+          aria-label="Search"
+        />
+        <select class="input" name="role" [(ngModel)]="role" aria-label="Role">
+          <option value="">All roles</option>
+          @for (r of roles; track r) {
+            <option [value]="r">{{ h(r) }}</option>
+          }
+        </select>
+        <select class="input" name="status" [(ngModel)]="status" aria-label="Status">
+          <option value="">All statuses</option>
+          @for (s of statuses; track s) {
+            <option [value]="s">{{ h(s) }}</option>
+          }
+        </select>
         <button class="btn" type="submit">Search</button>
       </form>
-      @if (loading()) { <mb-loading [lines]="5" /> } @else if (!rows().length) { <mb-empty title="No users found" /> } @else {
+      @if (loading()) {
+        <mb-loading [lines]="5" />
+      } @else if (!rows().length) {
+        <mb-empty title="No users found" />
+      } @else {
         <div class="table-wrap">
           <table class="table">
-            <thead><tr><th>User</th><th>Role</th><th>Status</th><th>Security</th><th>Last sign-in</th><th><span class="visually-hidden">Actions</span></th></tr></thead>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Security</th>
+                <th>Last sign-in</th>
+                <th><span class="visually-hidden">Actions</span></th>
+              </tr>
+            </thead>
             <tbody>
               @for (u of rows(); track u.id) {
                 <tr>
-                  <td>{{ u.displayName }}<div class="small muted">{{ u.email }}</div></td>
+                  <td>
+                    {{ u.displayName }}
+                    <div class="small muted">{{ u.email }}</div>
+                  </td>
                   <td>{{ h(u.role) }}</td>
-                  <td><span class="badge" [class.badge-danger]="u.status === 'SUSPENDED'">{{ h(u.status) }}</span></td>
-                  <td class="small">{{ u.emailVerified ? 'Email ✓' : 'Email ✗' }} · {{ u.mfaEnabled ? 'MFA ✓' : 'MFA ✗' }}</td>
-                  <td class="small">{{ u.lastLoginAt ? (u.lastLoginAt | date: 'short') : 'Never' }}</td>
+                  <td>
+                    <span class="badge" [class.badge-danger]="u.status === 'SUSPENDED'">{{
+                      h(u.status)
+                    }}</span>
+                  </td>
+                  <td class="small">
+                    {{ u.emailVerified ? 'Email ✓' : 'Email ✗' }} ·
+                    {{ u.mfaEnabled ? 'MFA ✓' : 'MFA ✗' }}
+                  </td>
+                  <td class="small">
+                    {{ u.lastLoginAt ? (u.lastLoginAt | date: 'short') : 'Never' }}
+                  </td>
                   <td>
                     @if (u.id !== me()) {
-                      @if (u.status === 'ACTIVE') { <button class="btn btn-ghost btn-sm" type="button" (click)="selected.set(u); action = 'suspend'">Suspend</button> }
-                      @if (u.status === 'SUSPENDED') { <button class="btn btn-ghost btn-sm" type="button" (click)="reactivate(u)">Reactivate</button> }
-                      @if (u.role === 'ADMIN' && canSecurity()) { <button class="btn btn-ghost btn-sm" type="button" (click)="editPerms(u)">Permissions</button> }
+                      @if (u.status === 'ACTIVE') {
+                        <button
+                          class="btn btn-ghost btn-sm"
+                          type="button"
+                          (click)="selected.set(u); action = 'suspend'"
+                        >
+                          Suspend
+                        </button>
+                      }
+                      @if (u.status === 'SUSPENDED') {
+                        <button class="btn btn-ghost btn-sm" type="button" (click)="reactivate(u)">
+                          Reactivate
+                        </button>
+                      }
+                      @if (u.role === 'ADMIN' && canSecurity()) {
+                        <button class="btn btn-ghost btn-sm" type="button" (click)="editPerms(u)">
+                          Permissions
+                        </button>
+                      }
                     }
                   </td>
                 </tr>
@@ -67,20 +133,63 @@ interface UserRow {
           @if (action === 'suspend') {
             <h2>Suspend {{ u.displayName }}</h2>
             <p class="small muted">They will be signed out everywhere and unable to sign in.</p>
-            <div class="field"><label for="reason">Reason (recorded in the audit log)</label><textarea id="reason" class="textarea" [(ngModel)]="reason" maxlength="500"></textarea></div>
-            <div class="row"><button class="btn btn-danger" type="button" (click)="suspend(u)" [disabled]="reason.trim().length < 5">Suspend</button><button class="btn btn-ghost" type="button" (click)="selected.set(null)">Cancel</button></div>
+            <div class="field">
+              <label for="reason">Reason (recorded in the audit log)</label
+              ><textarea
+                id="reason"
+                class="textarea"
+                [(ngModel)]="reason"
+                maxlength="500"
+              ></textarea>
+            </div>
+            <div class="row">
+              <button
+                class="btn btn-danger"
+                type="button"
+                (click)="suspend(u)"
+                [disabled]="reason.trim().length < 5"
+              >
+                Suspend</button
+              ><button class="btn btn-ghost" type="button" (click)="selected.set(null)">
+                Cancel
+              </button>
+            </div>
           } @else {
             <h2>Permissions for {{ u.displayName }}</h2>
             @for (p of allPerms; track p) {
-              <label class="checkbox"><input type="checkbox" [checked]="perms().includes(p)" (change)="togglePerm(p)" /><span>{{ p }}</span></label>
+              <label class="checkbox"
+                ><input
+                  type="checkbox"
+                  [checked]="perms().includes(p)"
+                  (change)="togglePerm(p)"
+                /><span>{{ p }}</span></label
+              >
             }
-            <div class="row"><button class="btn" type="button" (click)="savePerms(u)">Save</button><button class="btn btn-ghost" type="button" (click)="selected.set(null)">Cancel</button></div>
+            <div class="row">
+              <button class="btn" type="button" (click)="savePerms(u)">Save</button
+              ><button class="btn btn-ghost" type="button" (click)="selected.set(null)">
+                Cancel
+              </button>
+            </div>
           }
         </section>
       }
     </div>
   `,
-  styles: `.filters { margin-bottom: var(--mb-space-4); } .filters .input { width: auto; min-width: 160px; } .panel { margin-top: var(--mb-space-4); max-width: 640px; }`,
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styles: `
+    .filters {
+      margin-bottom: var(--mb-space-4);
+    }
+    .filters .input {
+      width: auto;
+      min-width: 160px;
+    }
+    .panel {
+      margin-top: var(--mb-space-4);
+      max-width: 640px;
+    }
+  `,
 })
 export class UsersPage {
   private readonly api = inject(ApiService);
@@ -91,7 +200,9 @@ export class UsersPage {
   protected readonly allPerms = ALL_ADMIN_PERMISSIONS;
   protected readonly h = humanize;
   protected readonly me = computed(() => this.auth.user()?.id);
-  protected readonly canSecurity = computed(() => this.auth.user()?.adminPermissions?.includes(AdminPermission.SECURITY_MANAGE) ?? false);
+  protected readonly canSecurity = computed(
+    () => this.auth.user()?.adminPermissions?.includes(AdminPermission.SECURITY_MANAGE) ?? false,
+  );
   protected readonly rows = signal<UserRow[]>([]);
   protected readonly meta = signal<PageMeta | null>(null);
   protected readonly loading = signal(true);
@@ -110,7 +221,13 @@ export class UsersPage {
   async load(page = 1) {
     this.loading.set(true);
     try {
-      const res = await this.api.page<UserRow>('/admin/users', { q: this.q.trim(), role: this.role, status: this.status, page, pageSize: 20 });
+      const res = await this.api.page<UserRow>('/admin/users', {
+        q: this.q.trim(),
+        role: this.role,
+        status: this.status,
+        page,
+        pageSize: 20,
+      });
       this.rows.set(res.items);
       this.meta.set(res.meta);
     } catch (err) {

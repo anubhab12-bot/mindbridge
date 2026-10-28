@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../core/auth/auth.service';
 
@@ -33,8 +33,9 @@ import { AuthService } from '../core/auth/auth.service';
     <footer class="site-footer">
       <div class="container">
         <p class="disclaimer">
-          MindBridge offers emotional support, self-help tools and access to verified professionals. It is not an emergency
-          service and does not diagnose or prescribe. If you are in immediate danger, call your local emergency number or
+          MindBridge offers emotional support, self-help tools and access to verified professionals.
+          It is not an emergency service and does not diagnose or prescribe. If you are in immediate
+          danger, call your local emergency number or
           <a routerLink="/crisis">see crisis support</a>.
         </p>
         <nav class="row small" aria-label="Footer">
@@ -46,17 +47,62 @@ import { AuthService } from '../core/auth/auth.service';
       </div>
     </footer>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
-    .site-header { background: var(--mb-surface); border-bottom: 1px solid var(--mb-border); padding: 12px 0; position: sticky; top: 0; z-index: 50; }
-    .brand { font-weight: 750; font-size: 1.2rem; text-decoration: none; color: var(--mb-text); display: inline-flex; gap: 8px; align-items: center; }
-    .logo { color: var(--mb-primary); font-size: 1.4rem; }
-    .nav { display: flex; gap: 18px; flex-wrap: wrap; }
-    .nav a { color: var(--mb-text-muted); text-decoration: none; font-weight: 500; }
-    .nav a.active, .nav a:hover { color: var(--mb-primary); }
-    main:focus { outline: none; }
-    .site-footer { border-top: 1px solid var(--mb-border); padding: var(--mb-space-5) 0; background: var(--mb-surface); margin-top: var(--mb-space-7); }
-    .disclaimer { color: var(--mb-text-muted); max-width: 80ch; font-size: 0.9rem; }
-    @media (max-width: 860px) { .nav { display: none; } }
+    .site-header {
+      background: var(--mb-surface);
+      border-bottom: 1px solid var(--mb-border);
+      padding: 12px 0;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .brand {
+      font-weight: 750;
+      font-size: 1.2rem;
+      text-decoration: none;
+      color: var(--mb-text);
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .logo {
+      color: var(--mb-primary);
+      font-size: 1.4rem;
+    }
+    .nav {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+    .nav a {
+      color: var(--mb-text-muted);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .nav a.active,
+    .nav a:hover {
+      color: var(--mb-primary);
+    }
+    main:focus {
+      outline: none;
+    }
+    .site-footer {
+      border-top: 1px solid var(--mb-border);
+      padding: var(--mb-space-5) 0;
+      background: var(--mb-surface);
+      margin-top: var(--mb-space-7);
+    }
+    .disclaimer {
+      color: var(--mb-text-muted);
+      max-width: 80ch;
+      font-size: 0.9rem;
+    }
+    @media (max-width: 860px) {
+      .nav {
+        display: none;
+      }
+    }
   `,
 })
 export class PublicLayoutComponent {

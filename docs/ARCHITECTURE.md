@@ -5,7 +5,7 @@ _Last updated: 2026-10-28_
 ## System overview
 
 ```
-                 Browser (Angular 21 SPA)
+                 Browser (Angular 22 SPA)
                         │  HTTPS
                         ▼
               ┌────────────────────┐
@@ -27,7 +27,7 @@ _Last updated: 2026-10-28_
 
 | Service | Tech | Responsibility |
 | --- | --- | --- |
-| `web` | Angular 21, served by nginx | Public pages, patient, doctor and admin portals. Proxies `/api` and `/socket.io` to the API. |
+| `web` | Angular 22, served by nginx | Public pages, patient, doctor and admin portals. Proxies `/api` and `/socket.io` to the API. |
 | `api` | NestJS 12 (ESM), Mongoose | The only service that reads or writes MongoDB. Handles auth, RBAC, consent, business rules and audit. |
 | `worker` | Same image as `api`, `dist/worker.js` | Runs BullMQ jobs: email, appointment reminders, knowledge-base sync, account-deletion sweeps. |
 | `ai-service` | Python 3.13, FastAPI, Pydantic | Risk screening, the safety decision, prompt building, provider calls, output guard and RAG. It is stateless and has no database access. |

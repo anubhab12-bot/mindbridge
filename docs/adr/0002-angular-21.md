@@ -1,6 +1,6 @@
 # ADR-0002: Angular 21
 
-- Status: Accepted
+- Status: Superseded by [ADR-0008](0008-upgrade-to-angular-22.md)
 - Date: 2026-10-27
 
 ## Context

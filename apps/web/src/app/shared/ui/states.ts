@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'mb-loading',
@@ -10,7 +10,17 @@ import { Component, input, output } from '@angular/core';
       <span class="visually-hidden">{{ label() }}</span>
     </div>
   `,
-  styles: `.loading { display: grid; gap: 10px; padding: var(--mb-space-3) 0; } .skeleton { height: 18px; }`,
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styles: `
+    .loading {
+      display: grid;
+      gap: 10px;
+      padding: var(--mb-space-3) 0;
+    }
+    .skeleton {
+      height: 18px;
+    }
+  `,
 })
 export class LoadingComponent {
   readonly label = input('Loading');
@@ -25,11 +35,21 @@ export class LoadingComponent {
   template: `
     <div class="empty">
       <h3>{{ title() }}</h3>
-      @if (text()) { <p class="muted">{{ text() }}</p> }
+      @if (text()) {
+        <p class="muted">{{ text() }}</p>
+      }
       <ng-content />
     </div>
   `,
-  styles: `.empty { text-align: center; padding: var(--mb-space-6) var(--mb-space-4); border: 1px dashed var(--mb-border); border-radius: var(--mb-radius); }`,
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styles: `
+    .empty {
+      text-align: center;
+      padding: var(--mb-space-6) var(--mb-space-4);
+      border: 1px dashed var(--mb-border);
+      border-radius: var(--mb-radius);
+    }
+  `,
 })
 export class EmptyStateComponent {
   readonly title = input.required<string>();
@@ -38,10 +58,15 @@ export class EmptyStateComponent {
 
 @Component({
   selector: 'mb-error',
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="alert alert-danger" role="alert">
       <p>{{ message() }}</p>
-      @if (retryable()) { <button class="btn btn-secondary btn-sm" type="button" (click)="retry.emit()">Try again</button> }
+      @if (retryable()) {
+        <button class="btn btn-secondary btn-sm" type="button" (click)="retry.emit()">
+          Try again
+        </button>
+      }
     </div>
   `,
 })

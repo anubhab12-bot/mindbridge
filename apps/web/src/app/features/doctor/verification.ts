@@ -1,5 +1,12 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { DoctorVerificationStatus } from '@mindbridge/shared-types';
@@ -44,10 +51,26 @@ const MESSAGES: Record<string, { title: string; text: string; kind: string }> = 
     text: 'Upload your documents below. Our team checks registrations with the issuing council, which usually takes a few working days. You will be emailed when there is a decision.',
     kind: 'alert-info',
   },
-  INFO_REQUESTED: { title: 'We need a little more information', text: 'Please read the note from our team and upload what is requested.', kind: 'alert-warning' },
-  APPROVED: { title: 'You are verified', text: 'Your profile is visible to patients.', kind: 'alert-success' },
-  REJECTED: { title: 'Your application was not approved', text: 'See the reason below. Contact support if you think this is a mistake.', kind: 'alert-danger' },
-  SUSPENDED: { title: 'Your account is suspended', text: 'Please contact support.', kind: 'alert-danger' },
+  INFO_REQUESTED: {
+    title: 'We need a little more information',
+    text: 'Please read the note from our team and upload what is requested.',
+    kind: 'alert-warning',
+  },
+  APPROVED: {
+    title: 'You are verified',
+    text: 'Your profile is visible to patients.',
+    kind: 'alert-success',
+  },
+  REJECTED: {
+    title: 'Your application was not approved',
+    text: 'See the reason below. Contact support if you think this is a mistake.',
+    kind: 'alert-danger',
+  },
+  SUSPENDED: {
+    title: 'Your account is suspended',
+    text: 'Please contact support.',
+    kind: 'alert-danger',
+  },
 };
 
 @Component({
@@ -62,45 +85,74 @@ const MESSAGES: Record<string, { title: string; text: string; kind: string }> = 
         <div class="alert" [class]="'alert ' + msg().kind" role="status">
           <strong>{{ msg().title }}</strong>
           <p>{{ msg().text }}</p>
-          @if (a.requestedInfo && a.status === 'INFO_REQUESTED') { <p class="note"><strong>Note from our team:</strong> {{ a.requestedInfo }}</p> }
-          @if (a.status === 'APPROVED') { <a routerLink="/doctor/dashboard">Go to your dashboard</a> }
+          @if (a.requestedInfo && a.status === 'INFO_REQUESTED') {
+            <p class="note"><strong>Note from our team:</strong> {{ a.requestedInfo }}</p>
+          }
+          @if (a.status === 'APPROVED') {
+            <a routerLink="/doctor/dashboard">Go to your dashboard</a>
+          }
         </div>
 
         @if (canUpload()) {
           <section class="card">
             <h2>Upload a document</h2>
-            <p class="small muted">PDF, PNG or JPEG up to 5 MB. Files are stored privately and only our verification team can open them.</p>
+            <p class="small muted">
+              PDF, PNG or JPEG up to 5 MB. Files are stored privately and only our verification team
+              can open them.
+            </p>
             <div class="grid-2">
               <div class="field">
                 <label for="type">Document type</label>
                 <select id="type" class="input" [(ngModel)]="docType">
-                  @for (t of docTypes; track t.value) { <option [value]="t.value">{{ t.label }}</option> }
+                  @for (t of docTypes; track t.value) {
+                    <option [value]="t.value">{{ t.label }}</option>
+                  }
                 </select>
               </div>
               <div class="field">
                 <label for="file">File</label>
-                <input id="file" class="input" type="file" accept="application/pdf,image/png,image/jpeg" (change)="pick($event)" />
+                <input
+                  id="file"
+                  class="input"
+                  type="file"
+                  accept="application/pdf,image/png,image/jpeg"
+                  (change)="pick($event)"
+                />
               </div>
             </div>
-            <button class="btn" type="button" (click)="upload()" [disabled]="!file || busy()">{{ busy() ? 'Uploading…' : 'Upload' }}</button>
+            <button class="btn" type="button" (click)="upload()" [disabled]="!file || busy()">
+              {{ busy() ? 'Uploading…' : 'Upload' }}
+            </button>
           </section>
         }
 
         <section class="card">
           <h2>Your documents</h2>
           @if (!a.documents.length) {
-            <p class="muted">No documents uploaded yet. Please add your registration certificate and a government ID.</p>
+            <p class="muted">
+              No documents uploaded yet. Please add your registration certificate and a government
+              ID.
+            </p>
           } @else {
             <ul class="list">
               @for (d of a.documents; track d.id) {
                 <li class="row-between">
                   <div>
                     <strong>{{ typeLabel(d.type) }}</strong>
-                    <div class="small muted">{{ d.originalName }} · {{ (d.size / 1024).toFixed(0) }} KB · {{ d.uploadedAt | date: 'medium' }}</div>
+                    <div class="small muted">
+                      {{ d.originalName }} · {{ (d.size / 1024).toFixed(0) }} KB ·
+                      {{ d.uploadedAt | date: 'medium' }}
+                    </div>
                   </div>
                   <div class="row">
-                    <button class="btn btn-ghost btn-sm" type="button" (click)="download(d)">Download</button>
-                    @if (canUpload()) { <button class="btn btn-ghost btn-sm" type="button" (click)="remove(d)">Remove</button> }
+                    <button class="btn btn-ghost btn-sm" type="button" (click)="download(d)">
+                      Download
+                    </button>
+                    @if (canUpload()) {
+                      <button class="btn btn-ghost btn-sm" type="button" (click)="remove(d)">
+                        Remove
+                      </button>
+                    }
                   </div>
                 </li>
               }
@@ -112,14 +164,36 @@ const MESSAGES: Record<string, { title: string; text: string; kind: string }> = 
           <h2 class="h3">History</h2>
           <ul class="list small">
             @for (h of a.history; track $index) {
-              <li>{{ h.at | date: 'medium' }} · {{ human(h.status) }}@if (h.reason) { · {{ h.reason }} }</li>
+              <li>
+                {{ h.at | date: 'medium' }} · {{ human(h.status) }}
+                @if (h.reason) {
+                  · {{ h.reason }}
+                }
+              </li>
             }
           </ul>
         </section>
       }
     </div>
   `,
-  styles: `.narrow { max-width: 820px; } .card { margin-bottom: var(--mb-space-4); } .note { margin: 8px 0 0; } .h3 { font-size: 1.05rem; } .alert p { margin: 6px 0 0; }`,
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styles: `
+    .narrow {
+      max-width: 820px;
+    }
+    .card {
+      margin-bottom: var(--mb-space-4);
+    }
+    .note {
+      margin: 8px 0 0;
+    }
+    .h3 {
+      font-size: 1.05rem;
+    }
+    .alert p {
+      margin: 6px 0 0;
+    }
+  `,
 })
 export class VerificationPage implements OnInit {
   private readonly api = inject(ApiService);
@@ -131,10 +205,16 @@ export class VerificationPage implements OnInit {
   protected readonly loading = signal(true);
   protected readonly busy = signal(false);
   protected readonly app = signal<VerificationView | null>(null);
-  protected readonly msg = computed(() => MESSAGES[this.app()?.status ?? 'PENDING_VERIFICATION'] ?? MESSAGES['PENDING_VERIFICATION']);
+  protected readonly msg = computed(
+    () =>
+      MESSAGES[this.app()?.status ?? 'PENDING_VERIFICATION'] ?? MESSAGES['PENDING_VERIFICATION'],
+  );
   protected readonly canUpload = computed(() => {
     const s = this.app()?.status;
-    return s === DoctorVerificationStatus.PENDING_VERIFICATION || s === DoctorVerificationStatus.INFO_REQUESTED;
+    return (
+      s === DoctorVerificationStatus.PENDING_VERIFICATION ||
+      s === DoctorVerificationStatus.INFO_REQUESTED
+    );
   });
   protected docType = 'REGISTRATION_CERTIFICATE';
   protected file: File | null = null;
@@ -142,7 +222,8 @@ export class VerificationPage implements OnInit {
   async ngOnInit() {
     await this.load();
     // Pick up a decision made while this tab was open.
-    if (this.app()?.status !== this.auth.user()?.doctorVerificationStatus) await this.auth.reloadUser();
+    if (this.app()?.status !== this.auth.user()?.doctorVerificationStatus)
+      await this.auth.reloadUser();
   }
 
   async load() {
@@ -177,7 +258,9 @@ export class VerificationPage implements OnInit {
     form.append('file', this.file);
     this.busy.set(true);
     try {
-      this.app.set(await this.api.upload<VerificationView>('/doctors/verification-documents', form));
+      this.app.set(
+        await this.api.upload<VerificationView>('/doctors/verification-documents', form),
+      );
       this.file = null;
       this.toast.success('Document uploaded.');
       await this.auth.reloadUser();
@@ -198,7 +281,15 @@ export class VerificationPage implements OnInit {
   }
 
   async remove(d: VerificationDoc) {
-    if (!(await this.confirm.ask({ title: 'Remove this document?', message: d.originalName, confirmLabel: 'Remove', danger: true }))) return;
+    if (
+      !(await this.confirm.ask({
+        title: 'Remove this document?',
+        message: d.originalName,
+        confirmLabel: 'Remove',
+        danger: true,
+      }))
+    )
+      return;
     try {
       await this.api.delete(`/doctors/verification-documents/${d.id}`);
       await this.load();

@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1.7
 # Build context: repository root.
-FROM node:22.22-alpine AS build
+# Angular 22 needs Node 22.22.3 or later.
+FROM node:22.23-alpine AS build
 RUN npm install -g npm@11.21.1
 WORKDIR /repo
 COPY packages/shared-types/package.json packages/shared-types/package-lock.json packages/shared-types/

@@ -1,5 +1,14 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, DestroyRef, ElementRef, inject, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  computed,
+  DestroyRef,
+  ElementRef,
+  inject,
+  signal,
+  viewChild,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { type CrisisResourcesResponse, Role } from '@mindbridge/shared-types';
@@ -37,7 +46,14 @@ interface CareMember {
 
 @Component({
   selector: 'mb-messages',
-  imports: [DatePipe, FormsModule, RouterLink, LoadingComponent, EmptyStateComponent, CrisisPanelComponent],
+  imports: [
+    DatePipe,
+    FormsModule,
+    RouterLink,
+    LoadingComponent,
+    EmptyStateComponent,
+    CrisisPanelComponent,
+  ],
   template: `
     <div class="page">
       <header class="page-header">
@@ -45,7 +61,10 @@ interface CareMember {
         <p>For non-urgent questions between sessions. Replies may take a while.</p>
       </header>
       @if (isPatient()) {
-        <div class="alert alert-crisis small">Messages are not monitored around the clock. If you need help now, <a routerLink="/crisis">see crisis contacts</a>.</div>
+        <div class="alert alert-crisis small">
+          Messages are not monitored around the clock. If you need help now,
+          <a routerLink="/crisis">see crisis contacts</a>.
+        </div>
       }
       @if (!flags.enabled('messaging.enabled')) {
         <div class="alert alert-warning">Messaging is paused at the moment.</div>
@@ -55,23 +74,46 @@ interface CareMember {
             @if (isPatient() && startable().length) {
               <div class="field">
                 <label for="start">Start a conversation</label>
-                <select id="start" class="input" (change)="start($any($event.target).value); $any($event.target).value = ''">
+                <select
+                  id="start"
+                  class="input"
+                  (change)="start($any($event.target).value); $any($event.target).value = ''"
+                >
                   <option value="">Choose a professional…</option>
-                  @for (m of startable(); track m.doctorId) { <option [value]="m.doctorId">{{ m.displayName }}</option> }
+                  @for (m of startable(); track m.doctorId) {
+                    <option [value]="m.doctorId">{{ m.displayName }}</option>
+                  }
                 </select>
               </div>
             }
             @if (loading()) {
               <mb-loading />
             } @else if (!threads().length) {
-              <p class="small muted">No conversations yet. @if (isPatient()) { You can message professionals once you've had a confirmed session. }</p>
+              <p class="small muted">
+                No conversations yet.
+                @if (isPatient()) {
+                  You can message professionals once you've had a confirmed session.
+                }
+              </p>
             }
             <ul class="thread-list">
               @for (t of threads(); track t.id) {
                 <li>
-                  <button type="button" class="thread" [class.active]="active()?.id === t.id" (click)="open(t)">
-                    <span class="row-between"><strong>{{ t.counterpart.displayName }}</strong> @if (t.unread) { <span class="badge badge-primary">{{ t.unread }}</span> }</span>
-                    <span class="small muted">{{ t.lastMessageAt ? (t.lastMessageAt | date: 'short') : 'No messages yet' }}</span>
+                  <button
+                    type="button"
+                    class="thread"
+                    [class.active]="active()?.id === t.id"
+                    (click)="open(t)"
+                  >
+                    <span class="row-between"
+                      ><strong>{{ t.counterpart.displayName }}</strong>
+                      @if (t.unread) {
+                        <span class="badge badge-primary">{{ t.unread }}</span>
+                      }
+                    </span>
+                    <span class="small muted">{{
+                      t.lastMessageAt ? (t.lastMessageAt | date: 'short') : 'No messages yet'
+                    }}</span>
                   </button>
                 </li>
               }
@@ -82,29 +124,49 @@ interface CareMember {
             @if (!active()) {
               <mb-empty title="Select a conversation" />
             } @else {
-              <div class="chat-head"><strong>{{ active()!.counterpart.displayName }}</strong></div>
+              <div class="chat-head">
+                <strong>{{ active()!.counterpart.displayName }}</strong>
+              </div>
               <div class="messages" #scroller aria-live="polite">
                 @for (m of messages(); track m.id) {
                   <div class="msg" [class.mine]="m.mine">
                     <div class="bubble">{{ m.content }}</div>
-                    <div class="small muted">{{ m.createdAt | date: 'short' }}@if (m.mine && m.readAt) { · Read }</div>
+                    <div class="small muted">
+                      {{ m.createdAt | date: 'short' }}
+                      @if (m.mine && m.readAt) {
+                        · Read
+                      }
+                    </div>
                   </div>
                 }
               </div>
               @if (safety(); as s) {
                 <div class="safety">
-                  <p class="small"><strong>{{ s.notice }}</strong></p>
+                  <p class="small">
+                    <strong>{{ s.notice }}</strong>
+                  </p>
                   <mb-crisis-panel [data]="s.resources" [compact]="true" />
                 </div>
               }
               @if (active()!.canSend) {
                 <form class="composer" (ngSubmit)="send()">
                   <label for="m" class="visually-hidden">Message</label>
-                  <textarea id="m" class="textarea" name="m" rows="3" [(ngModel)]="draft" maxlength="4000"></textarea>
-                  <button class="btn" type="submit" [disabled]="sending() || !draft.trim()">Send</button>
+                  <textarea
+                    id="m"
+                    class="textarea"
+                    name="m"
+                    rows="3"
+                    [(ngModel)]="draft"
+                    maxlength="4000"
+                  ></textarea>
+                  <button class="btn" type="submit" [disabled]="sending() || !draft.trim()">
+                    Send
+                  </button>
                 </form>
               } @else {
-                <p class="small muted composer">This care relationship has ended, so new messages can't be sent.</p>
+                <p class="small muted composer">
+                  This care relationship has ended, so new messages can't be sent.
+                </p>
               }
             }
           </section>
@@ -112,19 +174,97 @@ interface CareMember {
       }
     </div>
   `,
-  styles: `.layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: var(--mb-space-4); }
-    @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
-    .thread-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
-    .thread { all: unset; box-sizing: border-box; cursor: pointer; display: flex; flex-direction: column; gap: 2px; width: 100%; padding: 8px 10px; border-radius: var(--mb-radius-sm); }
-    .thread:hover, .thread.active { background: var(--mb-primary-soft); } .thread:focus-visible { outline: 3px solid var(--mb-focus); }
-    .chat { padding: 0; display: flex; flex-direction: column; min-height: 55vh; }
-    .chat-head { padding: 12px 16px; border-bottom: 1px solid var(--mb-border); }
-    .messages { flex: 1; overflow-y: auto; max-height: 55vh; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-    .msg { max-width: 80%; display: flex; flex-direction: column; gap: 4px; } .msg.mine { align-self: flex-end; align-items: flex-end; }
-    .bubble { background: var(--mb-surface-2); padding: 10px 14px; border-radius: 14px; white-space: pre-wrap; }
-    .mine .bubble { background: var(--mb-primary); color: var(--mb-on-primary); }
-    .composer { border-top: 1px solid var(--mb-border); padding: 12px 16px; display: grid; gap: 8px; justify-items: end; margin: 0; } .composer .textarea { min-height: 70px; }
-    .safety { padding: 0 16px 12px; }`,
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styles: `
+    .layout {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      gap: var(--mb-space-4);
+    }
+    @media (max-width: 860px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    .thread-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 4px;
+    }
+    .thread {
+      all: unset;
+      box-sizing: border-box;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: var(--mb-radius-sm);
+    }
+    .thread:hover,
+    .thread.active {
+      background: var(--mb-primary-soft);
+    }
+    .thread:focus-visible {
+      outline: 3px solid var(--mb-focus);
+    }
+    .chat {
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 55vh;
+    }
+    .chat-head {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--mb-border);
+    }
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      max-height: 55vh;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .msg {
+      max-width: 80%;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .msg.mine {
+      align-self: flex-end;
+      align-items: flex-end;
+    }
+    .bubble {
+      background: var(--mb-surface-2);
+      padding: 10px 14px;
+      border-radius: 14px;
+      white-space: pre-wrap;
+    }
+    .mine .bubble {
+      background: var(--mb-primary);
+      color: var(--mb-on-primary);
+    }
+    .composer {
+      border-top: 1px solid var(--mb-border);
+      padding: 12px 16px;
+      display: grid;
+      gap: 8px;
+      justify-items: end;
+      margin: 0;
+    }
+    .composer .textarea {
+      min-height: 70px;
+    }
+    .safety {
+      padding: 0 16px 12px;
+    }
+  `,
 })
 export class MessagesPage {
   private readonly api = inject(ApiService);
@@ -140,7 +280,9 @@ export class MessagesPage {
   protected readonly careTeam = signal<CareMember[]>([]);
   protected readonly loading = signal(true);
   protected readonly sending = signal(false);
-  protected readonly safety = signal<{ notice: string; resources: CrisisResourcesResponse } | null>(null);
+  protected readonly safety = signal<{ notice: string; resources: CrisisResourcesResponse } | null>(
+    null,
+  );
   protected readonly startable = computed(() => {
     const open = new Set(this.threads().map((t) => t.counterpart.id));
     return this.careTeam().filter((m) => m.status === 'ACTIVE' && !open.has(m.doctorId));
@@ -149,7 +291,11 @@ export class MessagesPage {
 
   constructor() {
     void this.loadThreads();
-    if (this.isPatient()) this.api.get<CareMember[]>('/patients/care-team').then((t) => this.careTeam.set(t), () => undefined);
+    if (this.isPatient())
+      this.api.get<CareMember[]>('/patients/care-team').then(
+        (t) => this.careTeam.set(t),
+        () => undefined,
+      );
     this.realtime.on(
       'message:new',
       (p) => {
@@ -189,7 +335,9 @@ export class MessagesPage {
 
   async loadMessages(t: Thread) {
     try {
-      this.messages.set(await this.api.get<Message[]>(`/messaging/threads/${t.id}/messages`, { limit: 100 }));
+      this.messages.set(
+        await this.api.get<Message[]>(`/messaging/threads/${t.id}/messages`, { limit: 100 }),
+      );
       this.scrollDown();
       if (t.unread) {
         await this.api.post(`/messaging/threads/${t.id}/read`);
@@ -206,13 +354,14 @@ export class MessagesPage {
     if (!t || !content) return;
     this.sending.set(true);
     try {
-      const res = await this.api.post<{ message: Message; safety?: { notice: string; resources: CrisisResourcesResponse } }>(
-        `/messaging/threads/${t.id}/messages`,
-        { content },
-      );
+      const res = await this.api.post<{
+        message: Message;
+        safety?: { notice: string; resources: CrisisResourcesResponse };
+      }>(`/messaging/threads/${t.id}/messages`, { content });
       this.draft = '';
       this.messages.update((m) => [...m, res.message]);
-      if (res.safety?.resources) this.safety.set({ notice: res.safety.notice, resources: res.safety.resources });
+      if (res.safety?.resources)
+        this.safety.set({ notice: res.safety.notice, resources: res.safety.resources });
       this.scrollDown();
     } catch (err) {
       const e = ApiError.from(err);
