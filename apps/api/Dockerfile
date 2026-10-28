@@ -21,9 +21,11 @@ COPY --from=build /repo/packages/shared-types/dist /repo/packages/shared-types/d
 COPY --from=build /repo/apps/api/package.json ./package.json
 COPY --from=build /repo/apps/api/node_modules ./node_modules
 COPY --from=build /repo/apps/api/dist ./dist
+COPY apps/api/scripts/start-with-seeds.sh ./start-with-seeds.sh
 RUN mkdir -p var/uploads && chown -R app:app var
 USER app
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD wget -qO- http://127.0.0.1:3000/api/v1/health || exit 1
 # The worker uses the same image with: node dist/worker.js
+# Hosts without a shell for seeding can start with: sh ./start-with-seeds.sh
 CMD ["node", "dist/main.js"]

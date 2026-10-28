@@ -40,15 +40,12 @@ services:
     autoDeployTrigger: checksPass
     buildFilter:
       paths: [apps/api/**, packages/shared-types/**]
-    # Free instances have no shell or one-off jobs, so the idempotent seeds run before the server
-    # starts: verified crisis contacts, the admin account (only when ADMIN_EMAIL and ADMIN_PASSWORD
-    # are set; skipped if the account exists) and, when DEMO_SEED=true, synthetic demo accounts
-    # (their shared password is printed once in the deploy log when they are first created).
-    dockerCommand: >-
-      sh -c 'node dist/cli/seed-crisis-resources.js || true;
-      if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then node dist/cli/seed-admin.js --email "$ADMIN_EMAIL" --name "${ADMIN_NAME:-Administrator}" || true; fi;
-      if [ "$DEMO_SEED" = "true" ]; then node dist/cli/seed-dev.js --yes || true; fi;
-      exec node dist/main.js'
+    # Free instances have no shell or one-off jobs, so apps/api/scripts/start-with-seeds.sh runs the
+    # idempotent seeds before starting the server: verified crisis contacts, the admin account (only
+    # when ADMIN_EMAIL and ADMIN_PASSWORD are set; skipped if it exists) and, when DEMO_SEED=true,
+    # synthetic demo accounts (their shared password is printed once in the log when first created).
+    # Render does not run dockerCommand through a shell, so it must stay a plain command.
+    dockerCommand: sh ./start-with-seeds.sh
     envVars:
       - key: NODE_ENV
         value: staging
