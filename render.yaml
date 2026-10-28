@@ -1,0 +1,136 @@
+# Render Blueprint: free demo deployment of MindBridge.
+# See docs/DEPLOYMENT.md ("Free demo on Render") for the one-time setup and the limits of free tiers.
+#
+# Deploys happen automatically on every push to main, but only after the GitHub Actions CI checks
+# pass (autoDeployTrigger: checksPass).
+#
+# This is a DEMO environment (NODE_ENV=staging): mock AI, no outgoing email, ephemeral uploads,
+# synthetic demo accounts. It is not fit for real patients.
+
+services:
+  # ------------------------------------------------------------------ web (Angular + nginx)
+  - type: web
+    name: mindbridge-web
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./apps/web/Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    autoDeployTrigger: checksPass
+    buildFilter:
+      paths: [apps/web/**, packages/shared-types/**, infrastructure/nginx/**]
+    envVars:
+      - key: PORT
+        value: "8080"
+      # Free services cannot receive private-network traffic, so nginx proxies to the API's
+      # public URL. If Render gave the API a different URL, change this value.
+      - key: API_UPSTREAM
+        value: https://mindbridge-api.onrender.com
+
+  # ------------------------------------------------------------------ api (NestJS)
+  - type: web
+    name: mindbridge-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/v1/health
+    autoDeployTrigger: checksPass
+    buildFilter:
+      paths: [apps/api/**, packages/shared-types/**]
+    # Free instances have no shell or one-off jobs, so the idempotent seeds run before the server
+    # starts: verified crisis contacts, the admin account (only when ADMIN_EMAIL and ADMIN_PASSWORD
+    # are set; skipped if the account exists) and, when DEMO_SEED=true, synthetic demo accounts
+    # (their shared password is printed once in the deploy log when they are first created).
+    dockerCommand: >-
+      sh -c 'node dist/cli/seed-crisis-resources.js || true;
+      if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then node dist/cli/seed-admin.js --email "$ADMIN_EMAIL" --name "${ADMIN_NAME:-Administrator}" || true; fi;
+      if [ "$DEMO_SEED" = "true" ]; then node dist/cli/seed-dev.js --yes || true; fi;
+      exec node dist/main.js'
+    envVars:
+      - key: NODE_ENV
+        value: staging
+      - key: PORT
+        value: "3000"
+      - key: MONGO_URI
+        sync: false # Atlas connection string; entered in the Render dashboard, never committed
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: mindbridge-redis
+          property: connectionString
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: MFA_TOKEN_SECRET
+        generateValue: true
+      - key: FILE_SIGNING_SECRET
+        generateValue: true
+      # base64 of 32 random bytes, as the AES-256-GCM key requires. Generated once and kept.
+      - key: FIELD_ENCRYPTION_KEY
+        generateValue: true
+      - key: AI_SERVICE_TOKEN
+        generateValue: true
+      - key: AI_SERVICE_URL
+        value: https://mindbridge-ai.onrender.com
+      # Free instances can be cold for ~1 minute; give the AI service time to wake up.
+      - key: AI_SERVICE_TIMEOUT_MS
+        value: "60000"
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: CORS_ORIGINS
+        value: https://mindbridge-web.onrender.com
+      - key: WEB_APP_URL
+        value: https://mindbridge-web.onrender.com
+      # Render free instances block outgoing SMTP ports 25, 465 and 587, so mail is kept in memory.
+      # To send real email, set MAIL_TRANSPORT=smtp with a provider that accepts port 2525.
+      - key: MAIL_TRANSPORT
+        value: memory
+      # No free background workers: jobs run inline and scheduled jobs (reminders, purge sweep) are off.
+      - key: QUEUES_ENABLED
+        value: "false"
+      - key: SWAGGER_ENABLED
+        value: "true"
+      - key: UPLOAD_DIR
+        value: /repo/apps/api/var/uploads
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: DEMO_SEED
+        value: "true"
+
+  # ------------------------------------------------------------------ ai-service (FastAPI)
+  - type: web
+    name: mindbridge-ai
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./apps/ai-service/Dockerfile
+    dockerContext: ./apps/ai-service
+    healthCheckPath: /health
+    autoDeployTrigger: checksPass
+    buildFilter:
+      paths: [apps/ai-service/**]
+    envVars:
+      - key: NODE_ENV
+        value: staging
+      - key: PORT
+        value: "8000"
+      # Every endpoint except /health requires this token, shared with the API.
+      - key: AI_SERVICE_TOKEN
+        fromService:
+          type: web
+          name: mindbridge-api
+          envVarKey: AI_SERVICE_TOKEN
+      - key: AI_PROVIDER
+        value: mock
+
+  # ------------------------------------------------------------------ Redis (rate limits)
+  - type: keyvalue
+    name: mindbridge-redis
+    plan: free
+    region: singapore
+    maxmemoryPolicy: noeviction
+    ipAllowList: [] # private network only

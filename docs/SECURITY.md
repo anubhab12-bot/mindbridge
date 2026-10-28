@@ -58,7 +58,7 @@ Do not include real patient data.
 - The API uses helmet with a restrictive CSP, `frame-ancestors 'none'`, `Referrer-Policy: no-referrer` and HSTS in production. `x-powered-by` is removed.
 - Request bodies are limited to 256 KB. `ValidationPipe` uses `whitelist` and `forbidNonWhitelisted`, so unknown fields are rejected rather than silently stored.
 - Errors use a fixed envelope with a request ID. Stack traces and internal messages are never sent to clients.
-- nginx (`infrastructure/nginx/default.conf`) adds a `Permissions-Policy` that blocks camera, microphone, geolocation and payment, plus the other security headers.
+- nginx (`infrastructure/nginx/default.conf.template`) adds a `Permissions-Policy` that blocks camera, microphone, geolocation and payment, plus the other security headers.
 - Communication from the API to the AI service uses a shared bearer token (`AI_SERVICE_TOKEN`). The AI service has no database access.
 
 ## Supply chain and CI

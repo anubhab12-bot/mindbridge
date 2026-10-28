@@ -13,6 +13,9 @@ COPY apps/web apps/web
 RUN cd apps/web && npm run build -- --configuration production
 
 FROM nginxinc/nginx-unprivileged:1.27-alpine AS runtime
-COPY infrastructure/nginx/default.conf /etc/nginx/conf.d/default.conf
+# The entrypoint renders /etc/nginx/templates/*.template into conf.d, substituting only
+# variables that are set in the environment (so nginx's own $host etc. are left alone).
+ENV API_UPSTREAM=http://api:3000
+COPY infrastructure/nginx/default.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /repo/apps/web/dist/web/browser /usr/share/nginx/html
 EXPOSE 8080

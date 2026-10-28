@@ -53,7 +53,7 @@ first.
 - [Security](docs/SECURITY.md)
 - [AI safety](docs/AI_SAFETY.md)
 - [API reference](docs/API.md) (Swagger UI is at `/api/docs` outside production)
-- [Deployment and production readiness](docs/DEPLOYMENT.md)
+- [Deployment (free Render demo) and production readiness](docs/DEPLOYMENT.md)
 - [Architecture decision records](docs/adr/)
 - [Implementation status](docs/IMPLEMENTATION_STATUS.md)
 

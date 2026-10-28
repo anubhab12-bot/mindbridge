@@ -120,3 +120,5 @@ jobs:
       - run: docker build -f apps/api/Dockerfile -t mindbridge-api:ci .
       - run: docker build -t mindbridge-ai:ci apps/ai-service
       - run: docker build -f apps/web/Dockerfile -t mindbridge-web:ci .
+      - name: Web image renders a valid nginx config from its template
+        run: docker run --rm -e API_UPSTREAM=https://127.0.0.1:3000 mindbridge-web:ci nginx -t

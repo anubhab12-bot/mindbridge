@@ -21,7 +21,7 @@ claims production readiness.
 - **Docker Compose stack**: the Dockerfiles and `docker-compose.yml` have not been built or started yet.
 - **The web app against a live API**: the screens compile and unit tests pass, but no one has clicked
   through them against a running backend yet. Expect small integration bugs on the first local run.
-- **GitHub Actions CI**: not run (no repository yet).
+- **GitHub Actions CI**: first run started on 2026-10-28 in `anubhab12-bot/mindbridge`.
 
 ## Feature state
 
@@ -42,7 +42,7 @@ claims production readiness.
 | SMS / push notifications | Not implemented (email and in-app only) |
 | Legal texts (terms, privacy, AI notice) | **Not written**: admins must publish reviewed text before launch |
 | Documentation: README, architecture, security, AI safety, API reference, deployment checklist, ADRs 0001 to 0007 | Written (2026-10-28) |
-| Deployment | Not started (hosting target not chosen); see `docs/DEPLOYMENT.md` |
+| Deployment | Free demo on Render + MongoDB Atlas configured (`render.yaml`), auto-deploys after CI passes. Not yet live: the Atlas user/network access and the Render Blueprint need the owner's one-time setup. See `docs/DEPLOYMENT.md` |
 
 ## Known gaps before any real use
 
