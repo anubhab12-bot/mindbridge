@@ -34,8 +34,8 @@ mindbridge/
 ├── packages/
 │   └── shared-types/        Enums and API contracts shared by web and api
 ├── infrastructure/
-│   ├── docker/              Dockerfiles, nginx config
-│   └── docker-compose.yml
+│   └── nginx/               nginx config for the web container (Dockerfiles live in each app)
+├── docker-compose.yml
 ├── docs/                    Architecture, API, security, AI safety, setup, ADRs, status
 └── .github/workflows/       CI
 ```

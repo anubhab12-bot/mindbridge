@@ -1,6 +1,6 @@
 # Implementation status
 
-Last updated: 2026-10-27. This file states what exists and what has actually been run. Nothing here
+Last updated: 2026-10-28. This file states what exists and what has actually been run. Nothing here
 claims production readiness.
 
 ## What was executed, and the result
@@ -41,7 +41,8 @@ claims production readiness.
 | Video consultations | **Not implemented**: provider interface only, off by default |
 | SMS / push notifications | Not implemented (email and in-app only) |
 | Legal texts (terms, privacy, AI notice) | **Not written**: admins must publish reviewed text before launch |
-| Deployment | Not started (hosting target not chosen) |
+| Documentation: README, architecture, security, AI safety, API reference, deployment checklist, ADRs 0001 to 0007 | Written (2026-10-28) |
+| Deployment | Not started (hosting target not chosen); see `docs/DEPLOYMENT.md` |
 
 ## Known gaps before any real use
 
