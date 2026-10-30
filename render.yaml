@@ -26,7 +26,7 @@ services:
       # Free services cannot receive private-network traffic, so nginx proxies to the API's
       # public URL. If Render gave the API a different URL, change this value.
       - key: API_UPSTREAM
-        value: https://mindbridge-api.onrender.com
+        value: https://mindbridge-api-x99i.onrender.com
 
   # ------------------------------------------------------------------ api (NestJS)
   - type: web
