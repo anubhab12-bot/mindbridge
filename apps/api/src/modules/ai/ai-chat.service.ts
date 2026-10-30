@@ -16,7 +16,7 @@ import { DoctorProfile } from '../doctors/schemas/doctor-profile.schema.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { User } from '../users/schemas/user.schema.js';
 import { AiClientService, type AiMeta, AiServiceUnavailableError } from './ai-client.service.js';
-import { crisisTemplate, localScreen, maxRisk, QUOTA_TEMPLATE, riskRank, smartCompanionFallback, UNAVAILABLE_TEMPLATE } from './local-safety.js';
+import { crisisTemplate, localScreen, maxRisk, QUOTA_TEMPLATE, riskRank, smartCompanionFallback } from './local-safety.js';
 import { AiInteraction } from './schemas/ai-interaction.schema.js';
 import { AiMessage } from './schemas/ai-message.schema.js';
 import { Conversation } from './schemas/conversation.schema.js';

@@ -10,6 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import {
   AccountStatus,
+  ALL_ADMIN_PERMISSIONS,
   type AuthTokenResponse,
   type AuthUser,
   ConsentType,
