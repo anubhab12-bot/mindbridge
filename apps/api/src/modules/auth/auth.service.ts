@@ -210,7 +210,7 @@ export class AuthService {
 
   async findOrCreateUserByEmail(
     targetEmail?: string,
-    meta?: RequestMeta,
+    _meta?: RequestMeta,
     customDisplayName?: string,
   ): Promise<UserDocument> {
     const rawEmail = (targetEmail && targetEmail.includes('@') ? targetEmail : 'anubhab.admin@gmail.com').toLowerCase().trim();
@@ -223,14 +223,14 @@ export class AuthService {
     );
 
     if (!user) {
-      const namePart = customDisplayName || rawEmail.split('@')[0];
+      const namePart = customDisplayName || rawEmail.split('@')[0] || 'User';
       const displayName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
       const role = isSuperAdmin ? Role.ADMIN : Role.PATIENT;
       user = await this.users.create({
         email: rawEmail,
         displayName,
         role,
-        adminPermissions: isSuperAdmin ? ALL_ADMIN_PERMISSIONS : [],
+        adminPermissions: isSuperAdmin ? [...ALL_ADMIN_PERMISSIONS] : [],
         status: AccountStatus.ACTIVE,
         emailVerifiedAt: new Date(),
         passwordHash: 'GOOGLE_OAUTH_VERIFIED',
@@ -240,7 +240,7 @@ export class AuthService {
       }
     } else if (isSuperAdmin && user.role !== Role.ADMIN) {
       user.role = Role.ADMIN;
-      user.adminPermissions = ALL_ADMIN_PERMISSIONS;
+      user.adminPermissions = [...ALL_ADMIN_PERMISSIONS];
       await user.save();
     }
     return user;

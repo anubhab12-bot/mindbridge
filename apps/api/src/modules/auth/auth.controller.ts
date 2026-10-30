@@ -145,7 +145,7 @@ export class AuthController {
     const user = await this.auth.findOrCreateUserByEmail(emailParam, requestMeta(req));
     const tokens = await this.auth.issueTokens(user, requestMeta(req));
     this.setRefreshCookie(res, tokens);
-    const destination = user.role === Role.ADMIN ? '/admin/overview' : '/patient/dashboard';
+    const destination = user.role === Role.ADMIN ? '/admin-portal/index.html' : '/patient/dashboard';
     return res.redirect(`${webAppUrl}${destination}`);
   }
 
@@ -172,7 +172,7 @@ export class AuthController {
     const user = await this.auth.findOrCreateUserByEmail(emailParam, requestMeta(req));
     const tokens = await this.auth.issueTokens(user, requestMeta(req));
     this.setRefreshCookie(res, tokens);
-    const destination = user.role === Role.ADMIN ? '/admin/overview' : '/patient/dashboard';
+    const destination = user.role === Role.ADMIN ? '/admin-portal/index.html' : '/patient/dashboard';
     return res.redirect(`${webAppUrl}${destination}`);
   }
 
