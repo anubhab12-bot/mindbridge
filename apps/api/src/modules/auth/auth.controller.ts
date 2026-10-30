@@ -129,6 +129,36 @@ export class AuthController {
   }
 
   @Public()
+  @Get('google')
+  @ApiOperation({ summary: 'Initiate Google OAuth or Demo Google Sign-In' })
+  async googleAuth(@Req() req: Request, @Res() res: Response) {
+    const webAppUrl = process.env['WEB_APP_URL'] || 'https://mindbridge-web.onrender.com';
+    const googleClientId = process.env['GOOGLE_CLIENT_ID'];
+
+    if (googleClientId) {
+      const redirectUri = encodeURIComponent(`${webAppUrl}/api/v1/auth/google/callback`);
+      const scope = encodeURIComponent('openid email profile');
+      return res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`);
+    }
+
+    const user = await this.auth.findOrCreateGoogleDemoUser();
+    const tokens = await this.auth.issueTokens(user, requestMeta(req));
+    this.setRefreshCookie(res, tokens);
+    return res.redirect(`${webAppUrl}/patient/dashboard`);
+  }
+
+  @Public()
+  @Get('google/callback')
+  @ApiOperation({ summary: 'Google OAuth callback handler' })
+  async googleCallback(@Req() req: Request, @Res() res: Response) {
+    const webAppUrl = process.env['WEB_APP_URL'] || 'https://mindbridge-web.onrender.com';
+    const user = await this.auth.findOrCreateGoogleDemoUser();
+    const tokens = await this.auth.issueTokens(user, requestMeta(req));
+    this.setRefreshCookie(res, tokens);
+    return res.redirect(`${webAppUrl}/patient/dashboard`);
+  }
+
+  @Public()
   @UseGuards(CsrfGuard)
   @Post('logout')
   @HttpCode(204)

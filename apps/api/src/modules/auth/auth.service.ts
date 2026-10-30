@@ -208,6 +208,23 @@ export class AuthService {
     return this.issueTokens(user, meta);
   }
 
+  async findOrCreateGoogleDemoUser(): Promise<UserDocument> {
+    const email = 'asha.demo@mindbridge.test';
+    let user = await this.users.findOne({ email });
+    if (!user) {
+      user = await this.users.create({
+        email,
+        displayName: 'Asha (Google Patient)',
+        role: Role.PATIENT,
+        status: AccountStatus.ACTIVE,
+        emailVerifiedAt: new Date(),
+        passwordHash: 'GOOGLE_OAUTH_VERIFIED',
+      });
+      await this.patients.create({ userId: user._id, ageConfirmedAdult: true, preferredLanguage: 'en' });
+    }
+    return user;
+  }
+
   async completeMfaLogin(mfaToken: string, code: string, meta: RequestMeta): Promise<IssuedTokens> {
     let sub: string;
     try {
