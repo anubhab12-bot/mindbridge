@@ -130,7 +130,7 @@ export class AuthController {
 
   @Public()
   @Get('google')
-  @ApiOperation({ summary: 'Initiate Google OAuth or Demo Google Sign-In' })
+  @ApiOperation({ summary: 'Initiate Google OAuth or Direct Gmail Sign-In' })
   async googleAuth(@Req() req: Request, @Res() res: Response) {
     const webAppUrl = process.env['WEB_APP_URL'] || 'https://mindbridge-web.onrender.com';
     const googleClientId = process.env['GOOGLE_CLIENT_ID'];
@@ -141,10 +141,26 @@ export class AuthController {
       return res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`);
     }
 
-    const user = await this.auth.findOrCreateGoogleDemoUser();
+    const emailParam = (req.query?.['email'] as string) || (req.query?.['user'] as string);
+    const user = await this.auth.findOrCreateUserByEmail(emailParam, requestMeta(req));
     const tokens = await this.auth.issueTokens(user, requestMeta(req));
     this.setRefreshCookie(res, tokens);
-    return res.redirect(`${webAppUrl}/patient/dashboard`);
+    const destination = user.role === Role.ADMIN ? '/admin/overview' : '/patient/dashboard';
+    return res.redirect(`${webAppUrl}${destination}`);
+  }
+
+  @Public()
+  @Post('google/signin')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Sign in directly with user Gmail account' })
+  async googleDirectSignIn(
+    @Body() dto: { email: string; displayName?: string },
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const user = await this.auth.findOrCreateUserByEmail(dto.email, requestMeta(req), dto.displayName);
+    const tokens = await this.auth.issueTokens(user, requestMeta(req));
+    return this.respond(res, tokens);
   }
 
   @Public()
@@ -152,10 +168,12 @@ export class AuthController {
   @ApiOperation({ summary: 'Google OAuth callback handler' })
   async googleCallback(@Req() req: Request, @Res() res: Response) {
     const webAppUrl = process.env['WEB_APP_URL'] || 'https://mindbridge-web.onrender.com';
-    const user = await this.auth.findOrCreateGoogleDemoUser();
+    const emailParam = req.query?.['email'] as string;
+    const user = await this.auth.findOrCreateUserByEmail(emailParam, requestMeta(req));
     const tokens = await this.auth.issueTokens(user, requestMeta(req));
     this.setRefreshCookie(res, tokens);
-    return res.redirect(`${webAppUrl}/patient/dashboard`);
+    const destination = user.role === Role.ADMIN ? '/admin/overview' : '/patient/dashboard';
+    return res.redirect(`${webAppUrl}${destination}`);
   }
 
   @Public()

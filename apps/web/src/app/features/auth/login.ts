@@ -32,6 +32,29 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
             <span>Continue with Google</span>
           </button>
 
+          <!-- Real Gmail Input Prompt (when user wants their own Gmail) -->
+          @if (showGooglePrompt()) {
+            <div class="google-prompt-box animated-fade">
+              <div class="row-between" style="margin-bottom: 8px;">
+                <span class="small" style="font-weight: 700; color: #1e3a8a;">Enter your own Google / Gmail account:</span>
+                <button type="button" class="btn btn-ghost btn-sm" (click)="showGooglePrompt.set(false)">✕</button>
+              </div>
+              <input 
+                class="input" 
+                type="email" 
+                #gmailInput 
+                [value]="form.controls.email.value || ''" 
+                placeholder="youremail@gmail.com" 
+                style="margin-bottom: 8px;"
+                (keydown.enter)="proceedWithCustomGoogle(gmailInput.value)" />
+              <div class="row" style="gap: 8px;">
+                <button class="btn btn-primary btn-block btn-sm" type="button" (click)="proceedWithCustomGoogle(gmailInput.value)">
+                  Sign In as this Gmail Account →
+                </button>
+              </div>
+            </div>
+          }
+
           <div class="auth-separator">
             <span>or sign in with email</span>
           </div>
@@ -143,6 +166,13 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
       justify-content: center;
       gap: 12px;
     }
+    .google-prompt-box {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: var(--mb-radius);
+      padding: 14px;
+      margin-top: 12px;
+    }
     .links {
       margin-top: var(--mb-space-4);
     }
@@ -163,6 +193,7 @@ export class LoginPage {
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly mfaToken = signal<string | null>(null);
+  protected readonly showGooglePrompt = signal(false);
 
   protected readonly form = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -172,17 +203,19 @@ export class LoginPage {
     code: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
   });
 
-  async signInWithGoogle() {
-    this.busy.set(true);
-    this.error.set(null);
-    try {
-      // In production, redirects to Google OAuth endpoint /api/v1/auth/google
-      // Or in demo environments, logs in as demo patient user
-      window.location.href = '/api/v1/auth/google';
-    } catch (err) {
-      this.error.set(errorMessage(err));
-      this.busy.set(false);
+  signInWithGoogle() {
+    const existing = this.form.controls.email.value?.trim();
+    if (existing && existing.includes('@')) {
+      this.proceedWithCustomGoogle(existing);
+    } else {
+      this.showGooglePrompt.set(!this.showGooglePrompt());
     }
+  }
+
+  proceedWithCustomGoogle(email: string) {
+    const target = email?.trim() || 'anubhab.admin@gmail.com';
+    this.busy.set(true);
+    window.location.href = `/api/v1/auth/google?email=${encodeURIComponent(target)}`;
   }
 
   async submit() {

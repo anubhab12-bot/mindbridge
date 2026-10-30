@@ -250,12 +250,12 @@ interface RecoveryTrack {
               <span class="stat-small">Omnipotent Platform Governance</span>
             </div>
           </div>
-          <div class="row" style="margin-top: 18px;">
-            <a href="/admin-portal/index.html" target="_blank" class="btn btn-primary-elevated">
-              Open MindBridge Admin Portal ↗
+          <div class="row" style="margin-top: 18px; gap: 12px; flex-wrap: wrap;">
+            <a routerLink="/apply-admin" class="btn btn-primary-elevated">
+              📝 Apply for Council Seat (5 Spots Left) →
             </a>
-            <a routerLink="/admin/overview" class="btn btn-secondary">
-              View Population Analytics
+            <a href="/admin-portal/index.html" target="_blank" class="btn btn-secondary">
+              🔒 Super Admin Portal ↗
             </a>
           </div>
         </div>

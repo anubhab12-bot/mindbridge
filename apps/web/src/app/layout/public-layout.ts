@@ -34,11 +34,11 @@ import { AuthService } from '../core/auth/auth.service';
           <a routerLink="/self-help" routerLinkActive="active">Self-help</a>
           <a routerLink="/professionals" routerLinkActive="active">Find a professional</a>
           <a routerLink="/how-it-works" routerLinkActive="active">How it works</a>
-          <a routerLink="/admin/overview" routerLinkActive="active" class="nav-admin-link">
-            <span class="admin-pill">👑 Admin Portal</span>
+          <a routerLink="/apply-admin" routerLinkActive="active" class="nav-council-link">
+            <span>🏛️ Apply for Admin</span>
           </a>
-          <a href="/admin-portal/index.html" target="_blank" class="nav-council-link">
-            <span>🏛️ 12-Member Council</span>
+          <a href="/admin-portal/index.html" target="_blank" class="nav-admin-link">
+            <span class="admin-pill">👑 Admin Portal 🔒</span>
           </a>
         </nav>
         <div class="row header-cta-group">

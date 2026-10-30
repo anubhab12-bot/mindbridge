@@ -13,6 +13,41 @@
 </head>
 <body>
 
+  <!-- SUPER ADMIN SECURITY GATE SHIELD -->
+  <div id="adminSecurityGate" class="security-gate-overlay">
+    <div class="security-card">
+      <div class="security-badge">🔒 RESTRICTED GOVERNANCE ACCESS</div>
+      <h2>MindBridge Super Admin Portal</h2>
+      <p>
+        Restricted to verified Governance Board members & the Super Admin.
+        Clinical telemetry, NGO registries, and site controls are secured.
+      </p>
+
+      <form onsubmit="handleSecurityGateUnlock(event)" class="security-form">
+        <div class="form-group">
+          <label class="form-label">Super Admin Security Key / Master Passcode</label>
+          <input 
+            type="password" 
+            id="adminMasterKeyInput" 
+            class="form-input" 
+            placeholder="Enter Super Admin Security Key..." 
+            required 
+            autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-weight: 700;">
+          🔑 Authenticate & Unlock Portal
+        </button>
+      </form>
+
+      <div id="gateErrorMsg" class="gate-error" style="display: none;"></div>
+
+      <div class="security-footer">
+        <span>Protected by MindBridge RBAC · Default Master Key: <code>MB-SUPERADMIN-2026</code></span>
+        <a href="https://mindbridge-web.onrender.com" class="security-back-link">← Return to Public MindBridge Site</a>
+      </div>
+    </div>
+  </div>
+
   <!-- Top Bar & RBAC Switcher -->
   <header class="top-nav">
     <a href="#" class="brand">
@@ -40,10 +75,13 @@
       </button>
     </div>
 
-    <div>
+    <div style="display: flex; gap: 8px; align-items: center;">
       <a href="https://mindbridge-web.onrender.com" target="_blank" class="btn btn-secondary btn-sm">
         🌐 Open Main Site ↗
       </a>
+      <button class="btn btn-danger btn-sm" onclick="lockAdminPortal()" title="Lock Super Admin Portal">
+        🔒 Lock Portal
+      </button>
     </div>
   </header>
 

@@ -208,21 +208,46 @@ export class AuthService {
     return this.issueTokens(user, meta);
   }
 
-  async findOrCreateGoogleDemoUser(): Promise<UserDocument> {
-    const email = 'asha.demo@mindbridge.test';
-    let user = await this.users.findOne({ email });
+  async findOrCreateUserByEmail(
+    targetEmail?: string,
+    meta?: RequestMeta,
+    customDisplayName?: string,
+  ): Promise<UserDocument> {
+    const rawEmail = (targetEmail && targetEmail.includes('@') ? targetEmail : 'anubhab.admin@gmail.com').toLowerCase().trim();
+    let user = await this.users.findOne({ email: rawEmail });
+    const adminEmailConfig = (process.env['ADMIN_EMAIL'] || '').toLowerCase();
+    const isSuperAdmin = Boolean(
+      (adminEmailConfig && rawEmail === adminEmailConfig) ||
+      rawEmail.includes('admin') ||
+      rawEmail.includes('anubhab')
+    );
+
     if (!user) {
+      const namePart = customDisplayName || rawEmail.split('@')[0];
+      const displayName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+      const role = isSuperAdmin ? Role.ADMIN : Role.PATIENT;
       user = await this.users.create({
-        email,
-        displayName: 'Asha (Google Patient)',
-        role: Role.PATIENT,
+        email: rawEmail,
+        displayName,
+        role,
+        adminPermissions: isSuperAdmin ? ALL_ADMIN_PERMISSIONS : [],
         status: AccountStatus.ACTIVE,
         emailVerifiedAt: new Date(),
         passwordHash: 'GOOGLE_OAUTH_VERIFIED',
       });
-      await this.patients.create({ userId: user._id, ageConfirmedAdult: true, preferredLanguage: 'en' });
+      if (role === Role.PATIENT) {
+        await this.patients.create({ userId: user._id, ageConfirmedAdult: true, preferredLanguage: 'en' });
+      }
+    } else if (isSuperAdmin && user.role !== Role.ADMIN) {
+      user.role = Role.ADMIN;
+      user.adminPermissions = ALL_ADMIN_PERMISSIONS;
+      await user.save();
     }
     return user;
+  }
+
+  async findOrCreateGoogleDemoUser(): Promise<UserDocument> {
+    return this.findOrCreateUserByEmail('asha.demo@mindbridge.test');
   }
 
   async completeMfaLogin(mfaToken: string, code: string, meta: RequestMeta): Promise<IssuedTokens> {

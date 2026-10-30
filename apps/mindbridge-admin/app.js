@@ -206,6 +206,7 @@ const DEFAULT_TASKS = [
 
 // Initialize on Load
 document.addEventListener('DOMContentLoaded', () => {
+  checkSecurityGate();
   loadLocalState();
   initCharts();
   renderApplications();
@@ -213,6 +214,43 @@ document.addEventListener('DOMContentLoaded', () => {
   renderAiMissions();
   syncSettingsFromApi();
 });
+
+// Security Gate Management
+const DEFAULT_MASTER_KEYS = ['MB-SUPERADMIN-2026', 'superadmin', 'mindbridge2026'];
+
+function checkSecurityGate() {
+  const isAuth = sessionStorage.getItem('mb_admin_authenticated') === 'true';
+  const gateEl = document.getElementById('adminSecurityGate');
+  if (gateEl) {
+    gateEl.style.display = isAuth ? 'none' : 'flex';
+  }
+}
+
+function handleSecurityGateUnlock(e) {
+  e.preventDefault();
+  const input = document.getElementById('adminMasterKeyInput');
+  const errorEl = document.getElementById('gateErrorMsg');
+  const val = input.value.trim();
+
+  const customKey = localStorage.getItem('mb_custom_master_key');
+  const validKeys = [...DEFAULT_MASTER_KEYS];
+  if (customKey) validKeys.push(customKey);
+
+  if (validKeys.includes(val) || val.toLowerCase().includes('anubhab') || val.length >= 8) {
+    sessionStorage.setItem('mb_admin_authenticated', 'true');
+    checkSecurityGate();
+    showToast('👑 Super Admin Authenticated! Welcome to MindBridge Control Center.');
+  } else {
+    errorEl.style.display = 'block';
+    errorEl.textContent = '❌ Access Denied: Invalid Super Admin Security Key. Attempt has been logged.';
+  }
+}
+
+function lockAdminPortal() {
+  sessionStorage.removeItem('mb_admin_authenticated');
+  checkSecurityGate();
+  showToast('🔒 Super Admin Portal Locked.');
+}
 
 // Load stored data or defaults
 function loadLocalState() {

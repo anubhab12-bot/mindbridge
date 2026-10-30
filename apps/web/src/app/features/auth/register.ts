@@ -308,7 +308,14 @@ export class RegisterPage implements OnInit {
     adult.updateValueAndValidity();
   }
 
-  signUpWithGoogle() { window.location.href = '/api/v1/auth/google'; }
+  signUpWithGoogle() {
+    const email = this.form.controls.email.value?.trim();
+    if (email && email.includes('@')) {
+      window.location.href = `/api/v1/auth/google?email=${encodeURIComponent(email)}`;
+    } else {
+      window.location.href = '/api/v1/auth/google';
+    }
+  }
   async submit() {
     this.errors.set([]);
     if (this.form.invalid) {
