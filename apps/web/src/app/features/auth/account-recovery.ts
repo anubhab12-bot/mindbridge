@@ -1,5 +1,11 @@
-import { Component, inject, input, OnInit, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators, type AbstractControl, type ValidationErrors } from '@angular/forms';
+import { Component, inject, input, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  FormBuilder,
+  ReactiveFormsModule,
+  Validators,
+  type AbstractControl,
+  type ValidationErrors,
+} from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api/api.service';
 import { ApiError, errorMessage } from '../../core/api/api-error';
@@ -27,17 +33,23 @@ export function matchPasswords(group: AbstractControl): ValidationErrors | null 
     <div class="container page auth">
       <div class="card center">
         @switch (state()) {
-          @case ('working') { <h1>Confirming your email…</h1> }
+          @case ('working') {
+            <h1>Confirming your email…</h1>
+          }
           @case ('done') {
             <h1>Email confirmed</h1>
             <p class="muted">Thank you. Your email address is confirmed.</p>
-            <a class="btn" [routerLink]="auth.isAuthenticated() ? auth.homeFor() : '/login'">Continue</a>
+            <a class="btn" [routerLink]="auth.isAuthenticated() ? auth.homeFor() : '/login'"
+              >Continue</a
+            >
           }
           @default {
             <h1>We couldn't confirm your email</h1>
             <p class="muted">{{ error() }}</p>
             @if (auth.isAuthenticated()) {
-              <button class="btn" type="button" (click)="resend()" [disabled]="resent()">{{ resent() ? 'Link sent' : 'Send a new link' }}</button>
+              <button class="btn" type="button" (click)="resend()" [disabled]="resent()">
+                {{ resent() ? 'Link sent' : 'Send a new link' }}
+              </button>
             } @else {
               <a class="btn" routerLink="/login">Sign in to request a new link</a>
             }
@@ -46,7 +58,12 @@ export function matchPasswords(group: AbstractControl): ValidationErrors | null 
       </div>
     </div>
   `,
-  styles: `.auth { max-width: 520px; }`,
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styles: `
+    .auth {
+      max-width: 520px;
+    }
+  `,
 })
 export class VerifyEmailPage implements OnInit {
   private readonly api = inject(ApiService);
@@ -95,11 +112,19 @@ export class VerifyEmailPage implements OnInit {
           <a routerLink="/login">Back to sign in</a>
         } @else {
           <p class="muted">Enter your email and we'll send you a link to choose a new password.</p>
-          @if (error()) { <div class="alert alert-danger" role="alert">{{ error() }}</div> }
+          @if (error()) {
+            <div class="alert alert-danger" role="alert">{{ error() }}</div>
+          }
           <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
             <div class="field">
               <label for="email">Email</label>
-              <input id="email" class="input" type="email" formControlName="email" autocomplete="email" />
+              <input
+                id="email"
+                class="input"
+                type="email"
+                formControlName="email"
+                autocomplete="email"
+              />
               <mb-field-error [control]="form.controls.email" label="Email" />
             </div>
             <button class="btn btn-block" type="submit" [disabled]="busy()">Send reset link</button>
@@ -108,11 +133,18 @@ export class VerifyEmailPage implements OnInit {
       </div>
     </div>
   `,
-  styles: `.auth { max-width: 460px; }`,
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styles: `
+    .auth {
+      max-width: 460px;
+    }
+  `,
 })
 export class ForgotPasswordPage {
   private readonly api = inject(ApiService);
-  protected readonly form = inject(FormBuilder).nonNullable.group({ email: ['', [Validators.required, Validators.email]] });
+  protected readonly form = inject(FormBuilder).nonNullable.group({
+    email: ['', [Validators.required, Validators.email]],
+  });
   protected readonly busy = signal(false);
   protected readonly message = signal<string | null>(null);
   protected readonly error = signal<string | null>(null);
@@ -122,7 +154,10 @@ export class ForgotPasswordPage {
     this.busy.set(true);
     this.error.set(null);
     try {
-      const res = await this.api.post<{ message: string }>('/auth/forgot-password', this.form.getRawValue());
+      const res = await this.api.post<{ message: string }>(
+        '/auth/forgot-password',
+        this.form.getRawValue(),
+      );
       this.message.set(res.message);
     } catch (err) {
       this.error.set(errorMessage(err));
@@ -140,32 +175,59 @@ export class ForgotPasswordPage {
       <div class="card">
         <h1>Choose a new password</h1>
         @if (done()) {
-          <div class="alert alert-success" role="status">Your password has been changed and you've been signed out everywhere.</div>
+          <div class="alert alert-success" role="status">
+            Your password has been changed and you've been signed out everywhere.
+          </div>
           <a class="btn" routerLink="/login">Sign in</a>
         } @else {
-          @if (!token()) { <div class="alert alert-danger">This link is missing its token. Request a new one.</div> }
+          @if (!token()) {
+            <div class="alert alert-danger">This link is missing its token. Request a new one.</div>
+          }
           @if (errors().length) {
-            <div class="alert alert-danger" role="alert">@for (e of errors(); track e) { <div>{{ e }}</div> }</div>
+            <div class="alert alert-danger" role="alert">
+              @for (e of errors(); track e) {
+                <div>{{ e }}</div>
+              }
+            </div>
           }
           <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
             <div class="field">
               <label for="password">New password</label>
-              <input id="password" class="input" type="password" formControlName="password" autocomplete="new-password" />
+              <input
+                id="password"
+                class="input"
+                type="password"
+                formControlName="password"
+                autocomplete="new-password"
+              />
               <mb-field-error [control]="form.controls.password" label="Password" />
             </div>
             <div class="field">
               <label for="confirm">Confirm new password</label>
-              <input id="confirm" class="input" type="password" formControlName="confirm" autocomplete="new-password" />
+              <input
+                id="confirm"
+                class="input"
+                type="password"
+                formControlName="confirm"
+                autocomplete="new-password"
+              />
               <mb-field-error [control]="form.controls.confirm" label="Confirmation" />
             </div>
-            <button class="btn btn-block" type="submit" [disabled]="busy() || !token()">Change password</button>
+            <button class="btn btn-block" type="submit" [disabled]="busy() || !token()">
+              Change password
+            </button>
           </form>
           <p class="small"><a routerLink="/forgot-password">Request a new link</a></p>
         }
       </div>
     </div>
   `,
-  styles: `.auth { max-width: 460px; }`,
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styles: `
+    .auth {
+      max-width: 460px;
+    }
+  `,
 })
 export class ResetPasswordPage {
   private readonly api = inject(ApiService);
@@ -186,11 +248,16 @@ export class ResetPasswordPage {
     this.busy.set(true);
     this.errors.set([]);
     try {
-      await this.api.post('/auth/reset-password', { token: this.token(), password: this.form.getRawValue().password });
+      await this.api.post('/auth/reset-password', {
+        token: this.token(),
+        password: this.form.getRawValue().password,
+      });
       this.done.set(true);
     } catch (err) {
       const e = ApiError.from(err);
-      this.errors.set(Array.isArray(e.details) ? (e.details as unknown[]).map(String) : [e.message]);
+      this.errors.set(
+        Array.isArray(e.details) ? (e.details as unknown[]).map(String) : [e.message],
+      );
     } finally {
       this.busy.set(false);
     }

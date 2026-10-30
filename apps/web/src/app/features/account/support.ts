@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { type PageMeta, SupportTicketCategory } from '@mindbridge/shared-types';
@@ -23,7 +23,15 @@ export interface Ticket {
 
 @Component({
   selector: 'mb-support',
-  imports: [ReactiveFormsModule, DatePipe, RouterLink, FieldErrorComponent, LoadingComponent, EmptyStateComponent, PaginationComponent],
+  imports: [
+    ReactiveFormsModule,
+    DatePipe,
+    RouterLink,
+    FieldErrorComponent,
+    LoadingComponent,
+    EmptyStateComponent,
+    PaginationComponent,
+  ],
   template: `
     <div class="page">
       <header class="page-header">
@@ -31,7 +39,8 @@ export interface Ticket {
         <p>Questions about your account, bookings or privacy? Send us a message.</p>
       </header>
       <div class="alert alert-crisis small">
-        Support is answered during working hours. If you or someone else is in immediate danger, <a routerLink="/crisis">get help now</a>.
+        Support is answered during working hours. If you or someone else is in immediate danger,
+        <a routerLink="/crisis">get help now</a>.
       </div>
       <div class="layout">
         <section>
@@ -44,22 +53,42 @@ export interface Ticket {
             <ul class="list card-flat">
               @for (t of tickets(); track t.id) {
                 <li>
-                  <button type="button" class="open" (click)="select(t)" [attr.aria-expanded]="selected()?.id === t.id">
-                    <span class="row-between"><strong>{{ t.subject }}</strong><span class="badge">{{ label(t.status) }}</span></span>
-                    <span class="small muted">{{ label(t.category) }} · updated {{ t.updatedAt | date: 'medium' }}</span>
+                  <button
+                    type="button"
+                    class="open"
+                    (click)="select(t)"
+                    [attr.aria-expanded]="selected()?.id === t.id"
+                  >
+                    <span class="row-between"
+                      ><strong>{{ t.subject }}</strong
+                      ><span class="badge">{{ label(t.status) }}</span></span
+                    >
+                    <span class="small muted"
+                      >{{ label(t.category) }} · updated {{ t.updatedAt | date: 'medium' }}</span
+                    >
                   </button>
                   @if (selected()?.id === t.id) {
                     <div class="thread">
                       @for (r of t.replies; track r.id) {
                         <div class="reply" [class.staff]="r.from !== 'USER'">
-                          <div class="small muted">{{ r.from === 'USER' ? 'You' : 'MindBridge support' }} · {{ r.createdAt | date: 'short' }}</div>
+                          <div class="small muted">
+                            {{ r.from === 'USER' ? 'You' : 'MindBridge support' }} ·
+                            {{ r.createdAt | date: 'short' }}
+                          </div>
                           <div class="body">{{ r.body }}</div>
                         </div>
                       }
                       @if (t.status !== 'CLOSED') {
                         <form [formGroup]="reply" (ngSubmit)="sendReply(t)">
-                          <textarea class="textarea" formControlName="message" aria-label="Reply" maxlength="5000"></textarea>
-                          <button class="btn btn-sm" type="submit" [disabled]="busy()">Send reply</button>
+                          <textarea
+                            class="textarea"
+                            formControlName="message"
+                            aria-label="Reply"
+                            maxlength="5000"
+                          ></textarea>
+                          <button class="btn btn-sm" type="submit" [disabled]="busy()">
+                            Send reply
+                          </button>
                         </form>
                       }
                     </div>
@@ -76,7 +105,9 @@ export interface Ticket {
             <div class="field">
               <label for="cat">Topic</label>
               <select id="cat" class="input" formControlName="category">
-                @for (c of categories; track c) { <option [value]="c">{{ label(c) }}</option> }
+                @for (c of categories; track c) {
+                  <option [value]="c">{{ label(c) }}</option>
+                }
               </select>
             </div>
             <div class="field">
@@ -86,8 +117,15 @@ export interface Ticket {
             </div>
             <div class="field">
               <label for="msg">Message</label>
-              <textarea id="msg" class="textarea" formControlName="message" maxlength="5000"></textarea>
-              <span class="hint">Please don't include passwords or detailed health information.</span>
+              <textarea
+                id="msg"
+                class="textarea"
+                formControlName="message"
+                maxlength="5000"
+              ></textarea>
+              <span class="hint"
+                >Please don't include passwords or detailed health information.</span
+              >
               <mb-field-error [control]="form.controls.message" label="Message" />
             </div>
             <button class="btn" type="submit" [disabled]="busy()">Send</button>
@@ -96,12 +134,47 @@ export interface Ticket {
       </div>
     </div>
   `,
-  styles: `.layout { display: grid; gap: var(--mb-space-5); grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); align-items: start; }
-    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
-    .open { all: unset; cursor: pointer; display: flex; flex-direction: column; gap: 4px; width: 100%; }
-    .thread { margin-top: var(--mb-space-3); display: grid; gap: var(--mb-space-2); }
-    .reply { background: var(--mb-surface-2); border-radius: var(--mb-radius-sm); padding: 10px 12px; } .staff { background: var(--mb-primary-soft); }
-    .body { white-space: pre-wrap; } form .btn-sm { margin-top: 8px; }`,
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styles: `
+    .layout {
+      display: grid;
+      gap: var(--mb-space-5);
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    .open {
+      all: unset;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      width: 100%;
+    }
+    .thread {
+      margin-top: var(--mb-space-3);
+      display: grid;
+      gap: var(--mb-space-2);
+    }
+    .reply {
+      background: var(--mb-surface-2);
+      border-radius: var(--mb-radius-sm);
+      padding: 10px 12px;
+    }
+    .staff {
+      background: var(--mb-primary-soft);
+    }
+    .body {
+      white-space: pre-wrap;
+    }
+    form .btn-sm {
+      margin-top: 8px;
+    }
+  `,
 })
 export class SupportPage {
   private readonly api = inject(ApiService);
@@ -151,7 +224,10 @@ export class SupportPage {
     if (this.form.invalid) return this.form.markAllAsTouched();
     this.busy.set(true);
     try {
-      const res = await this.api.post<{ ticket: Ticket; notice: string }>('/support/tickets', this.form.getRawValue());
+      const res = await this.api.post<{ ticket: Ticket; notice: string }>(
+        '/support/tickets',
+        this.form.getRawValue(),
+      );
       this.toast.success('Thanks. We have your request.');
       this.form.reset({ category: SupportTicketCategory.ACCOUNT, subject: '', message: '' });
       this.tickets.update((list) => [res.ticket, ...list]);
@@ -167,7 +243,10 @@ export class SupportPage {
     if (this.reply.invalid) return;
     this.busy.set(true);
     try {
-      const updated = await this.api.post<Ticket>(`/support/tickets/${t.id}/replies`, this.reply.getRawValue());
+      const updated = await this.api.post<Ticket>(
+        `/support/tickets/${t.id}/replies`,
+        this.reply.getRawValue(),
+      );
       this.reply.reset();
       this.selected.set(updated);
       this.tickets.update((list) => list.map((x) => (x.id === updated.id ? updated : x)));

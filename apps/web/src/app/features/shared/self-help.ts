@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, signal } from '@angular/core';
+import { Component, effect, inject, input, signal, ChangeDetectionStrategy } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { type PageMeta, WellnessContentType } from '@mindbridge/shared-types';
@@ -30,17 +30,30 @@ function basePath(router: Router) {
 
 @Component({
   selector: 'mb-self-help-list',
-  imports: [RouterLink, LoadingComponent, ErrorStateComponent, EmptyStateComponent, PaginationComponent],
+  imports: [
+    RouterLink,
+    LoadingComponent,
+    ErrorStateComponent,
+    EmptyStateComponent,
+    PaginationComponent,
+  ],
   template: `
     <div class="container page">
       <header class="page-header">
         <h1>Self-help library</h1>
-        <p>Short exercises and articles you can use any time. These are not a replacement for professional care.</p>
+        <p>
+          Short exercises and articles you can use any time. These are not a replacement for
+          professional care.
+        </p>
       </header>
       <div class="tabs" role="tablist" aria-label="Filter by type">
-        <button type="button" role="tab" [attr.aria-selected]="!type()" (click)="setType(null)">All</button>
+        <button type="button" role="tab" [attr.aria-selected]="!type()" (click)="setType(null)">
+          All
+        </button>
         @for (t of types; track t) {
-          <button type="button" role="tab" [attr.aria-selected]="type() === t" (click)="setType(t)">{{ label(t) }}</button>
+          <button type="button" role="tab" [attr.aria-selected]="type() === t" (click)="setType(t)">
+            {{ label(t) }}
+          </button>
         }
       </div>
       @if (loading()) {
@@ -56,7 +69,9 @@ function basePath(router: Router) {
               <span class="badge badge-accent">{{ label(i.type) }}</span>
               <h2 class="h3">{{ i.title }}</h2>
               <p class="muted small">{{ i.summary }}</p>
-              @if (i.durationMinutes) { <span class="small muted">{{ i.durationMinutes }} min</span> }
+              @if (i.durationMinutes) {
+                <span class="small muted">{{ i.durationMinutes }} min</span>
+              }
             </a>
           }
         </div>
@@ -64,8 +79,26 @@ function basePath(router: Router) {
       }
     </div>
   `,
-  styles: `.item { display: flex; flex-direction: column; gap: 8px; text-decoration: none; color: inherit; }
-    .item:hover { border-color: var(--mb-primary); } .h3 { font-size: 1.1rem; margin: 0; } .item p { margin: 0; }`,
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styles: `
+    .item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .item:hover {
+      border-color: var(--mb-primary);
+    }
+    .h3 {
+      font-size: 1.1rem;
+      margin: 0;
+    }
+    .item p {
+      margin: 0;
+    }
+  `,
 })
 export class SelfHelpListPage {
   private readonly api = inject(ApiService);
@@ -91,7 +124,11 @@ export class SelfHelpListPage {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const res = await this.api.page<WellnessItem>('/wellness', { type: this.type(), page, pageSize: 12 });
+      const res = await this.api.page<WellnessItem>('/wellness', {
+        type: this.type(),
+        page,
+        pageSize: 12,
+      });
       this.items.set(res.items);
       this.meta.set(res.meta);
     } catch (err) {
@@ -114,29 +151,63 @@ export class SelfHelpListPage {
         <mb-error [message]="error()!" (retry)="load()" />
       } @else if (item(); as i) {
         <article>
-          <p class="badge badge-accent">{{ label(i.type) }} @if (i.durationMinutes) { · {{ i.durationMinutes }} min }</p>
+          <p class="badge badge-accent">
+            {{ label(i.type) }}
+            @if (i.durationMinutes) {
+              · {{ i.durationMinutes }} min
+            }
+          </p>
           <h1>{{ i.title }}</h1>
           <p class="lead muted">{{ i.summary }}</p>
           @if (i.steps.length) {
             <ol class="steps">
-              @for (s of i.steps; track $index) { <li>{{ s }}</li> }
+              @for (s of i.steps; track $index) {
+                <li>{{ s }}</li>
+              }
             </ol>
           }
           <div class="body">{{ i.body }}</div>
           <p class="small muted source">
-            @if (i.publisher) { {{ i.publisher }}. }
-            @if (i.reviewedAt) { Reviewed {{ i.reviewedAt | date: 'mediumDate' }}. }
-            @if (i.sourceUrl) { <a [href]="i.sourceUrl" target="_blank" rel="noopener noreferrer">Source</a> }
+            @if (i.publisher) {
+              {{ i.publisher }}.
+            }
+            @if (i.reviewedAt) {
+              Reviewed {{ i.reviewedAt | date: 'mediumDate' }}.
+            }
+            @if (i.sourceUrl) {
+              <a [href]="i.sourceUrl" target="_blank" rel="noopener noreferrer">Source</a>
+            }
           </p>
           <div class="alert alert-info small">
-            If an exercise makes you feel worse, stop and take a break. If you are in distress, <a routerLink="/crisis">get help now</a>.
+            If an exercise makes you feel worse, stop and take a break. If you are in distress,
+            <a routerLink="/crisis">get help now</a>.
           </div>
         </article>
       }
     </div>
   `,
-  styles: `.narrow { max-width: 760px; } .lead { font-size: 1.1rem; } .steps { display: grid; gap: 8px; padding-left: 1.4rem; margin-bottom: var(--mb-space-4); }
-    .body { white-space: pre-wrap; margin-bottom: var(--mb-space-4); } .source { margin-bottom: var(--mb-space-4); }`,
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styles: `
+    .narrow {
+      max-width: 760px;
+    }
+    .lead {
+      font-size: 1.1rem;
+    }
+    .steps {
+      display: grid;
+      gap: 8px;
+      padding-left: 1.4rem;
+      margin-bottom: var(--mb-space-4);
+    }
+    .body {
+      white-space: pre-wrap;
+      margin-bottom: var(--mb-space-4);
+    }
+    .source {
+      margin-bottom: var(--mb-space-4);
+    }
+  `,
 })
 export class SelfHelpDetailPage {
   private readonly api = inject(ApiService);
@@ -158,7 +229,9 @@ export class SelfHelpDetailPage {
     this.loading.set(true);
     this.error.set(null);
     try {
-      this.item.set(await this.api.get<WellnessItem>(`/wellness/${encodeURIComponent(this.slug())}`));
+      this.item.set(
+        await this.api.get<WellnessItem>(`/wellness/${encodeURIComponent(this.slug())}`),
+      );
     } catch (err) {
       this.error.set(errorMessage(err));
     } finally {

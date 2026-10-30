@@ -1,86 +1,63 @@
-# MindBridge 🧠
+# MindBridge
 
-> An end-to-end, privacy-focused mental healthcare platform connecting patients with verified clinical professionals and AI-guided supportive tools.
+MindBridge is a mental wellness platform. It connects patients with verified mental health
+professionals, and includes an AI wellbeing companion that has a crisis-safety layer.
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/anubhab12-bot/mindbridge)
+> **Status: development build, not for real patients.**
+> Legal texts, clinical review of the safety flows, a security review and a production deployment
+> are all still outstanding. [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md)
+> lists what has actually been run and what has not.
 
----
+## What's inside
 
-## 🌟 Overview
+| Path | What it is |
+| --- | --- |
+| `apps/web` | Angular 22 web app: public site, plus patient, doctor and admin portals |
+| `apps/api` | NestJS API (`/api/v1`), BullMQ worker and CLI seed commands |
+| `apps/ai-service` | FastAPI AI service: provider adapters (mock, OpenAI-compatible, Anthropic, Ollama), safety layer and RAG |
+| `packages/shared-types` | Enums and API contracts shared by the web app and the API |
+| `infrastructure/nginx` | nginx config for the web container (Dockerfiles live in each app) |
+| `docker-compose.yml` | Local full stack: MongoDB, Redis, Mailpit, API, worker, AI service and web |
+| `docs` | Setup, architecture, security, AI safety, API reference, deployment, ADRs and status |
 
-MindBridge is a modern, modular mental health platform designed with security, patient confidentiality, and clinical safety at its core:
-- **Patient Portal**: Mood tracking, encrypted reflective journaling, appointment bookings, and secure real-time messaging with care providers.
-- **AI Companion**: Layered crisis safety detection (Tele-MANAS & 112 emergency routing), prompt injection prevention, clinical guardrails, and mock/LLM fallback modes.
-- **Doctor Portal**: License verification and document submission, calendar availability management, clinical notes with AI-assisted drafting, and patient record oversight.
-- **Admin Dashboard**: System telemetry, audit logs, doctor verification approval workflows, crisis hotline freshness verification, and platform management.
+## Roles
 
----
+- **Patient**: self-registers. Gets mood tracking, an encrypted journal, the AI companion, self-help content, booking, secure messaging with their care team, and privacy controls.
+- **Doctor**: self-registers. Stays at `/doctor/verification-pending` until an admin approves their documents. After approval: schedule, patients (consent-gated), clinical notes, and AI drafting help that a person must review.
+- **Admin**: created **only** through the CLI seed (`seed-admin`). Never through registration. Has fine-grained permissions such as `doctors:verify`, `crisis:manage` and `audit:read`.
 
-## 🏗️ Architecture
+## Quick start (Docker)
 
-```
-mindbridge/
-├── apps/
-│   ├── web/                 Angular 21 (Zoneless, Signals, SCSS design tokens, Standalone)
-│   ├── api/                 NestJS 12 ESM (Modular monolith, MongoDB, Redis, WebSockets)
-│   └── ai-service/          FastAPI (Python 3.13, safety classifiers, prompt guardrails)
-├── packages/
-│   └── shared-types/        Shared TypeScript contracts & enums
-├── infrastructure/
-│   ├── nginx/               Production reverse proxy configuration
-│   └── docker-compose.yml   Local full-stack container orchestration
-├── docs/                    Implementation status, local setup, and architecture specs
-├── render.yaml              Render Blueprint for 1-click cloud multi-service deployment
-└── vercel.json              Vercel deployment configuration for frontend
-```
-
----
-
-## 🚀 1-Click Cloud Deployment (Free)
-
-### Deploy to Render
-Click the button above or use **[render.yaml](./render.yaml)**:
-1. Log in to [Render.com](https://render.com) with GitHub.
-2. Go to **Blueprints** → **New Blueprint Instance**.
-3. Select your `mindbridge` repository.
-4. Render automatically configures the **Frontend**, **API**, and **AI Service**.
-5. Connect your free [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) and [Upstash Redis](https://upstash.com) instances.
-
-### Deploy Frontend to Vercel
-1. Import repository into [Vercel](https://vercel.com).
-2. Vercel automatically detects `vercel.json` and builds the Angular frontend.
-
-See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for full instructions.
-
----
-
-## 💻 Local Development
-
-### Option 1: Docker Compose
 ```bash
+node scripts/init-env.mjs          # creates .env with random secrets (never commit it)
 docker compose up -d --build
-```
-- Web Application: http://localhost:8080
-- Mailpit (Local email testing): http://localhost:8025
-
-### Option 2: Run Services Directly
-```bash
-# 1. Build shared packages
-cd packages/shared-types && npm install && npm run build
-
-# 2. Start API
-cd apps/api && npm install && npm run start:dev
-
-# 3. Start AI Service
-cd apps/ai-service && uv run uvicorn app.asgi:app --port 8000 --reload
-
-# 4. Start Web Application
-cd apps/web && npm install && npm start
+docker compose exec api node dist/cli/seed-crisis-resources.js
+docker compose exec api node dist/cli/seed-dev.js --yes      # synthetic demo accounts
+docker compose exec -it api node dist/cli/seed-admin.js --email you@example.com --name "Your Name"
 ```
 
----
+Then open http://localhost:8080. Emails are delivered to Mailpit at http://localhost:8025.
+The full guide, including a non-Docker setup, is in [`docs/LOCAL_SETUP.md`](docs/LOCAL_SETUP.md).
 
-## 🛡️ Security & Privacy
-- **Field-level encryption (AES-256-GCM)** for journal entries, private chats, and clinical records.
-- **Strict Role-Based Access Control (RBAC)** enforced at the API layer.
-- **Crisis Intervention Pipeline**: Automated rule-based detection for self-harm and crisis escalation with localized emergency resources.
+## The AI companion
+
+The repo ships with `AI_PROVIDER=mock`. Mock replies are labelled **"Simulated reply (mock)"** in the
+UI and are never shown as real AI output. To use a real model, set `AI_PROVIDER`, `AI_MODEL`,
+`AI_API_KEY` and (where needed) `AI_BASE_URL` in `.env`. Read [`docs/AI_SAFETY.md`](docs/AI_SAFETY.md)
+first.
+
+## Documentation
+
+- [Local setup](docs/LOCAL_SETUP.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Security](docs/SECURITY.md)
+- [AI safety](docs/AI_SAFETY.md)
+- [API reference](docs/API.md) (Swagger UI is at `/api/docs` outside production)
+- [Deployment (free Render demo) and production readiness](docs/DEPLOYMENT.md)
+- [Architecture decision records](docs/adr/)
+- [Implementation status](docs/IMPLEMENTATION_STATUS.md)
+
+## If you are in crisis
+
+MindBridge is not an emergency service. If you or someone else is in immediate danger, contact your
+local emergency number. The app shows crisis contacts that admins have verified for each country.

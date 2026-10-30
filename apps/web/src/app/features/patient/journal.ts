@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { PageMeta } from '@mindbridge/shared-types';
 import { ApiService } from '../../core/api/api.service';
@@ -21,12 +21,21 @@ interface JournalEntry {
 
 @Component({
   selector: 'mb-journal',
-  imports: [ReactiveFormsModule, DatePipe, LoadingComponent, EmptyStateComponent, PaginationComponent],
+  imports: [
+    ReactiveFormsModule,
+    DatePipe,
+    LoadingComponent,
+    EmptyStateComponent,
+    PaginationComponent,
+  ],
   template: `
     <div class="page">
       <header class="page-header">
         <h1>Journal</h1>
-        <p>A private space to write. Entries are encrypted and are never shared with professionals or the AI companion.</p>
+        <p>
+          A private space to write. Entries are encrypted and are never shared with professionals or
+          the AI companion.
+        </p>
       </header>
       <div class="layout">
         <section class="card">
@@ -34,19 +43,43 @@ interface JournalEntry {
           @if (prompts().length && !editing()) {
             <div class="field">
               <label for="prompt">Need a starting point?</label>
-              <select id="prompt" class="input" [value]="form.controls.prompt.value" (change)="form.controls.prompt.setValue($any($event.target).value)">
+              <select
+                id="prompt"
+                class="input"
+                [value]="form.controls.prompt.value"
+                (change)="form.controls.prompt.setValue($any($event.target).value)"
+              >
                 <option value="">No prompt</option>
-                @for (p of prompts(); track p) { <option [value]="p">{{ p }}</option> }
+                @for (p of prompts(); track p) {
+                  <option [value]="p">{{ p }}</option>
+                }
               </select>
             </div>
           }
-          @if (form.controls.prompt.value) { <p class="prompt">{{ form.controls.prompt.value }}</p> }
+          @if (form.controls.prompt.value) {
+            <p class="prompt">{{ form.controls.prompt.value }}</p>
+          }
           <form [formGroup]="form" (ngSubmit)="save()">
-            <div class="field"><label for="title">Title <span class="muted">(optional)</span></label><input id="title" class="input" formControlName="title" maxlength="200" /></div>
-            <div class="field"><label for="body">Entry</label><textarea id="body" class="textarea tall" formControlName="body" maxlength="20000"></textarea></div>
+            <div class="field">
+              <label for="title">Title <span class="muted">(optional)</span></label
+              ><input id="title" class="input" formControlName="title" maxlength="200" />
+            </div>
+            <div class="field">
+              <label for="body">Entry</label
+              ><textarea
+                id="body"
+                class="textarea tall"
+                formControlName="body"
+                maxlength="20000"
+              ></textarea>
+            </div>
             <div class="row">
-              <button class="btn" type="submit" [disabled]="busy() || form.invalid">{{ editing() ? 'Save changes' : 'Save entry' }}</button>
-              @if (editing()) { <button class="btn btn-ghost" type="button" (click)="cancelEdit()">Cancel</button> }
+              <button class="btn" type="submit" [disabled]="busy() || form.invalid">
+                {{ editing() ? 'Save changes' : 'Save entry' }}
+              </button>
+              @if (editing()) {
+                <button class="btn btn-ghost" type="button" (click)="cancelEdit()">Cancel</button>
+              }
             </div>
           </form>
         </section>
@@ -70,9 +103,15 @@ interface JournalEntry {
                     <p class="small muted">{{ e.preview }}…</p>
                   }
                   <div class="row">
-                    <button class="btn btn-ghost btn-sm" type="button" (click)="toggle(e)">{{ open()?.id === e.id ? 'Close' : 'Read' }}</button>
-                    <button class="btn btn-ghost btn-sm" type="button" (click)="edit(e)">Edit</button>
-                    <button class="btn btn-ghost btn-sm" type="button" (click)="remove(e)">Delete</button>
+                    <button class="btn btn-ghost btn-sm" type="button" (click)="toggle(e)">
+                      {{ open()?.id === e.id ? 'Close' : 'Read' }}
+                    </button>
+                    <button class="btn btn-ghost btn-sm" type="button" (click)="edit(e)">
+                      Edit
+                    </button>
+                    <button class="btn btn-ghost btn-sm" type="button" (click)="remove(e)">
+                      Delete
+                    </button>
                   </div>
                 </li>
               }
@@ -83,9 +122,30 @@ interface JournalEntry {
       </div>
     </div>
   `,
-  styles: `.layout { display: grid; gap: var(--mb-space-5); grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
-    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
-    .tall { min-height: 240px; } .prompt { font-style: italic; color: var(--mb-text-muted); } .body { white-space: pre-wrap; }`,
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styles: `
+    .layout {
+      display: grid;
+      gap: var(--mb-space-5);
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    .tall {
+      min-height: 240px;
+    }
+    .prompt {
+      font-style: italic;
+      color: var(--mb-text-muted);
+    }
+    .body {
+      white-space: pre-wrap;
+    }
+  `,
 })
 export class JournalPage implements OnInit {
   private readonly api = inject(ApiService);
@@ -104,13 +164,19 @@ export class JournalPage implements OnInit {
   });
 
   ngOnInit() {
-    this.api.get<string[]>('/patients/journal-entries/prompts').then((p) => this.prompts.set(p), () => undefined);
+    this.api.get<string[]>('/patients/journal-entries/prompts').then(
+      (p) => this.prompts.set(p),
+      () => undefined,
+    );
     void this.load();
   }
 
   async load(page = 1) {
     try {
-      const res = await this.api.page<JournalEntry>('/patients/journal-entries', { page, pageSize: 10 });
+      const res = await this.api.page<JournalEntry>('/patients/journal-entries', {
+        page,
+        pageSize: 10,
+      });
       this.entries.set(res.items);
       this.meta.set(res.meta);
     } catch (err) {
@@ -120,7 +186,9 @@ export class JournalPage implements OnInit {
   }
 
   private async full(e: JournalEntry) {
-    return e.body !== undefined ? e : this.api.get<JournalEntry>(`/patients/journal-entries/${e.id}`);
+    return e.body !== undefined
+      ? e
+      : this.api.get<JournalEntry>(`/patients/journal-entries/${e.id}`);
   }
 
   async toggle(e: JournalEntry) {
@@ -154,10 +222,17 @@ export class JournalPage implements OnInit {
     try {
       const ed = this.editing();
       if (ed) {
-        await this.api.patch(`/patients/journal-entries/${ed.id}`, { title: v.title.trim(), body: v.body });
+        await this.api.patch(`/patients/journal-entries/${ed.id}`, {
+          title: v.title.trim(),
+          body: v.body,
+        });
         this.toast.success('Entry updated.');
       } else {
-        await this.api.post('/patients/journal-entries', { title: v.title.trim() || undefined, body: v.body, prompt: v.prompt || undefined });
+        await this.api.post('/patients/journal-entries', {
+          title: v.title.trim() || undefined,
+          body: v.body,
+          prompt: v.prompt || undefined,
+        });
         this.toast.success('Entry saved.');
       }
       this.cancelEdit();
@@ -171,7 +246,15 @@ export class JournalPage implements OnInit {
   }
 
   async remove(e: JournalEntry) {
-    if (!(await this.confirm.ask({ title: 'Delete this entry?', message: 'This cannot be undone.', confirmLabel: 'Delete', danger: true }))) return;
+    if (
+      !(await this.confirm.ask({
+        title: 'Delete this entry?',
+        message: 'This cannot be undone.',
+        confirmLabel: 'Delete',
+        danger: true,
+      }))
+    )
+      return;
     try {
       await this.api.delete(`/patients/journal-entries/${e.id}`);
       if (this.editing()?.id === e.id) this.cancelEdit();

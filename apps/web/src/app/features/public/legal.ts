@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, signal } from '@angular/core';
+import { Component, effect, inject, input, signal, ChangeDetectionStrategy } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ApiService } from '../../core/api/api.service';
 import { errorMessage } from '../../core/api/api-error';
@@ -12,7 +12,11 @@ interface Policy {
   effectiveAt: string;
 }
 
-const SLUGS: Record<string, string> = { privacy: 'PRIVACY_POLICY', terms: 'TERMS', ai: 'AI_PROCESSING' };
+const SLUGS: Record<string, string> = {
+  privacy: 'PRIVACY_POLICY',
+  terms: 'TERMS',
+  ai: 'AI_PROCESSING',
+};
 
 @Component({
   selector: 'mb-legal',
@@ -25,12 +29,22 @@ const SLUGS: Record<string, string> = { privacy: 'PRIVACY_POLICY', terms: 'TERMS
         <mb-error [message]="error()!" (retry)="load()" />
       } @else if (policy(); as p) {
         <h1>{{ p.title }}</h1>
-        <p class="muted small">Version {{ p.version }} · effective {{ p.effectiveAt | date: 'mediumDate' }}</p>
+        <p class="muted small">
+          Version {{ p.version }} · effective {{ p.effectiveAt | date: 'mediumDate' }}
+        </p>
         <article class="policy">{{ p.body }}</article>
       }
     </div>
   `,
-  styles: `.narrow { max-width: 760px; } .policy { white-space: pre-wrap; }`,
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styles: `
+    .narrow {
+      max-width: 760px;
+    }
+    .policy {
+      white-space: pre-wrap;
+    }
+  `,
 })
 export class LegalPage {
   private readonly api = inject(ApiService);

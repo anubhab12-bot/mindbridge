@@ -1,5 +1,13 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import {
@@ -26,7 +34,14 @@ function basePath(router: Router) {
 
 @Component({
   selector: 'mb-professionals',
-  imports: [FormsModule, RouterLink, LoadingComponent, ErrorStateComponent, EmptyStateComponent, PaginationComponent],
+  imports: [
+    FormsModule,
+    RouterLink,
+    LoadingComponent,
+    ErrorStateComponent,
+    EmptyStateComponent,
+    PaginationComponent,
+  ],
   template: `
     <div class="container page">
       <header class="page-header">
@@ -37,20 +52,30 @@ function basePath(router: Router) {
       <form class="card-flat filters" (ngSubmit)="load()" role="search">
         <div class="field">
           <label for="q">Search</label>
-          <input id="q" class="input" name="q" [(ngModel)]="filters.q" placeholder="Name or area, e.g. anxiety" />
+          <input
+            id="q"
+            class="input"
+            name="q"
+            [(ngModel)]="filters.q"
+            placeholder="Name or area, e.g. anxiety"
+          />
         </div>
         <div class="field">
           <label for="category">Type of professional</label>
           <select id="category" class="input" name="category" [(ngModel)]="filters.category">
             <option value="">Any</option>
-            @for (c of categories; track c) { <option [value]="c">{{ scope[c].label }}</option> }
+            @for (c of categories; track c) {
+              <option [value]="c">{{ scope[c].label }}</option>
+            }
           </select>
         </div>
         <div class="field">
           <label for="language">Language</label>
           <select id="language" class="input" name="language" [(ngModel)]="filters.language">
             <option value="">Any</option>
-            @for (l of facets().languages; track l) { <option [value]="l">{{ l }}</option> }
+            @for (l of facets().languages; track l) {
+              <option [value]="l">{{ l }}</option>
+            }
           </select>
         </div>
         <div class="field">
@@ -63,7 +88,14 @@ function basePath(router: Router) {
         </div>
         <div class="field">
           <label for="maxFee">Max fee</label>
-          <input id="maxFee" class="input" type="number" min="0" name="maxFee" [(ngModel)]="filters.maxFee" />
+          <input
+            id="maxFee"
+            class="input"
+            type="number"
+            min="0"
+            name="maxFee"
+            [(ngModel)]="filters.maxFee"
+          />
         </div>
         <div class="actions"><button class="btn" type="submit">Search</button></div>
       </form>
@@ -80,12 +112,20 @@ function basePath(router: Router) {
             <article class="card-flat pro">
               <div class="row-between">
                 <h2 class="h3">{{ d.displayName }}</h2>
-                @if (d.verified) { <span class="badge badge-success">Verified</span> }
+                @if (d.verified) {
+                  <span class="badge badge-success">Verified</span>
+                }
               </div>
-              <p class="small"><strong>{{ label(d.professionalCategory) }}</strong> · {{ d.yearsExperience }} yrs</p>
+              <p class="small">
+                <strong>{{ label(d.professionalCategory) }}</strong> · {{ d.yearsExperience }} yrs
+              </p>
               <p class="small muted">{{ d.specialties.join(', ') }}</p>
-              <p class="small">{{ fee(d.consultationFee) }} · {{ d.consultationModes.map(modeLabel).join(' / ') }}</p>
-              @if (d.ratingAverage !== null) { <p class="small muted">★ {{ d.ratingAverage.toFixed(1) }} ({{ d.ratingCount }})</p> }
+              <p class="small">
+                {{ fee(d.consultationFee) }} · {{ d.consultationModes.map(modeLabel).join(' / ') }}
+              </p>
+              @if (d.ratingAverage !== null) {
+                <p class="small muted">★ {{ d.ratingAverage.toFixed(1) }} ({{ d.ratingCount }})</p>
+              }
               <a class="btn btn-secondary btn-sm" [routerLink]="[base, d.id]">View profile</a>
             </article>
           }
@@ -94,11 +134,37 @@ function basePath(router: Router) {
       }
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
-    .filters { display: grid; gap: var(--mb-space-3); grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); align-items: end; margin-bottom: var(--mb-space-5); }
-    .filters .field { margin: 0; } .actions { padding-bottom: 2px; }
-    .pro { display: flex; flex-direction: column; gap: 4px; } .pro p { margin: 0; } .h3 { font-size: 1.1rem; margin: 0; }
-    .pro .btn { margin-top: 8px; align-self: flex-start; }
+    .filters {
+      display: grid;
+      gap: var(--mb-space-3);
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      align-items: end;
+      margin-bottom: var(--mb-space-5);
+    }
+    .filters .field {
+      margin: 0;
+    }
+    .actions {
+      padding-bottom: 2px;
+    }
+    .pro {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .pro p {
+      margin: 0;
+    }
+    .h3 {
+      font-size: 1.1rem;
+      margin: 0;
+    }
+    .pro .btn {
+      margin-top: 8px;
+      align-self: flex-start;
+    }
   `,
 })
 export class ProfessionalsPage {
@@ -108,24 +174,41 @@ export class ProfessionalsPage {
   protected readonly categories = Object.values(ProfessionalCategory);
   protected readonly items = signal<DoctorPublicProfile[]>([]);
   protected readonly meta = signal<PageMeta | null>(null);
-  protected readonly facets = signal<{ specialties: string[]; languages: string[] }>({ specialties: [], languages: [] });
+  protected readonly facets = signal<{ specialties: string[]; languages: string[] }>({
+    specialties: [],
+    languages: [],
+  });
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
-  protected filters = { q: '', category: '', language: '', mode: '', maxFee: null as number | null };
+  protected filters = {
+    q: '',
+    category: '',
+    language: '',
+    mode: '',
+    maxFee: null as number | null,
+  };
   protected readonly label = categoryLabel;
   protected readonly fee = money;
-  protected readonly modeLabel = (m: string) => (m === ConsultationMode.ONLINE ? 'Online' : 'In person');
+  protected readonly modeLabel = (m: string) =>
+    m === ConsultationMode.ONLINE ? 'Online' : 'In person';
 
   constructor() {
     void this.load();
-    this.api.get<{ specialties: string[]; languages: string[] }>('/doctors/facets').then((f) => this.facets.set(f), () => undefined);
+    this.api.get<{ specialties: string[]; languages: string[] }>('/doctors/facets').then(
+      (f) => this.facets.set(f),
+      () => undefined,
+    );
   }
 
   async load(page = 1) {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const res = await this.api.page<DoctorPublicProfile>('/doctors', { ...this.filters, page, pageSize: 12 });
+      const res = await this.api.page<DoctorPublicProfile>('/doctors', {
+        ...this.filters,
+        page,
+        pageSize: 12,
+      });
       this.items.set(res.items);
       this.meta.set(res.meta);
     } catch (err) {
@@ -156,13 +239,19 @@ interface DaySlots {
           <section class="card">
             <div class="row-between">
               <h1>{{ d.displayName }}</h1>
-              @if (d.verified) { <span class="badge badge-success">Registration verified</span> }
+              @if (d.verified) {
+                <span class="badge badge-success">Registration verified</span>
+              }
             </div>
-            <p><strong>{{ label(d.professionalCategory) }}</strong> · {{ d.yearsExperience }} years of experience</p>
+            <p>
+              <strong>{{ label(d.professionalCategory) }}</strong> · {{ d.yearsExperience }} years
+              of experience
+            </p>
             <p class="small muted">{{ scope[d.professionalCategory].description }}</p>
             <p class="small">
               @if (scope[d.professionalCategory].mayPrescribe) {
-                Can assess and diagnose, and may prescribe medication in person. MindBridge itself does not issue prescriptions.
+                Can assess and diagnose, and may prescribe medication in person. MindBridge itself
+                does not issue prescriptions.
               } @else if (scope[d.professionalCategory].mayDiagnose) {
                 Can provide psychological assessment and therapy. Does not prescribe medication.
               } @else {
@@ -173,19 +262,29 @@ interface DaySlots {
             <h2 class="h3">About</h2>
             <p class="bio">{{ d.bio || 'This professional has not added a biography yet.' }}</p>
             <dl class="facts">
-              <dt>Qualifications</dt><dd>{{ d.qualifications.join(', ') }}</dd>
-              <dt>Areas of focus</dt><dd>{{ d.specialties.join(', ') }}</dd>
-              <dt>Languages</dt><dd>{{ d.languages.join(', ') }}</dd>
-              <dt>Fee</dt><dd>{{ fee(d.consultationFee) }} for {{ d.slotDurationMinutes }} minutes</dd>
-              <dt>Sessions</dt><dd>{{ modes(d.consultationModes) }}</dd>
-              @if (d.ratingAverage !== null) { <dt>Rating</dt><dd>★ {{ d.ratingAverage.toFixed(1) }} from {{ d.ratingCount }} reviews</dd> }
+              <dt>Qualifications</dt>
+              <dd>{{ d.qualifications.join(', ') }}</dd>
+              <dt>Areas of focus</dt>
+              <dd>{{ d.specialties.join(', ') }}</dd>
+              <dt>Languages</dt>
+              <dd>{{ d.languages.join(', ') }}</dd>
+              <dt>Fee</dt>
+              <dd>{{ fee(d.consultationFee) }} for {{ d.slotDurationMinutes }} minutes</dd>
+              <dt>Sessions</dt>
+              <dd>{{ modes(d.consultationModes) }}</dd>
+              @if (d.ratingAverage !== null) {
+                <dt>Rating</dt>
+                <dd>★ {{ d.ratingAverage.toFixed(1) }} from {{ d.ratingCount }} reviews</dd>
+              }
             </dl>
           </section>
 
           <section class="card booking" aria-labelledby="book-title">
             <h2 id="book-title">Book a session</h2>
             @if (!flags.enabled('booking.enabled')) {
-              <div class="alert alert-warning">Booking is paused at the moment. Please try again later.</div>
+              <div class="alert alert-warning">
+                Booking is paused at the moment. Please try again later.
+              </div>
             } @else if (auth.role() && auth.role() !== 'PATIENT') {
               <p class="muted">Only patient accounts can book sessions.</p>
             } @else {
@@ -201,8 +300,14 @@ interface DaySlots {
                       <div class="day-label">{{ day.slots[0].startAt | date: 'EEE d MMM' }}</div>
                       <div class="slots">
                         @for (s of day.slots; track s.startAt) {
-                          <button type="button" class="btn btn-sm" [class.btn-secondary]="selected()?.startAt !== s.startAt"
-                            role="option" [attr.aria-selected]="selected()?.startAt === s.startAt" (click)="selected.set(s)">
+                          <button
+                            type="button"
+                            class="btn btn-sm"
+                            [class.btn-secondary]="selected()?.startAt !== s.startAt"
+                            role="option"
+                            [attr.aria-selected]="selected()?.startAt === s.startAt"
+                            (click)="selected.set(s)"
+                          >
                             {{ s.startAt | date: 'shortTime' }}
                           </button>
                         }
@@ -214,35 +319,90 @@ interface DaySlots {
 
               @if (selected(); as s) {
                 <form [formGroup]="form" (ngSubmit)="book()" class="book-form">
-                  <p><strong>{{ s.startAt | date: 'fullDate' }} at {{ s.startAt | date: 'shortTime' }}</strong></p>
+                  <p>
+                    <strong
+                      >{{ s.startAt | date: 'fullDate' }} at
+                      {{ s.startAt | date: 'shortTime' }}</strong
+                    >
+                  </p>
                   <div class="field">
                     <label for="mode">Session type</label>
                     <select id="mode" class="input" formControlName="mode">
-                      @for (m of d.consultationModes; track m) { <option [value]="m">{{ modes([m]) }}</option> }
+                      @for (m of d.consultationModes; track m) {
+                        <option [value]="m">{{ modes([m]) }}</option>
+                      }
                     </select>
                   </div>
                   <div class="field">
-                    <label for="reason">What would you like help with? <span class="muted">(optional)</span></label>
-                    <textarea id="reason" class="textarea" formControlName="reasonForVisit" maxlength="500"></textarea>
+                    <label for="reason"
+                      >What would you like help with? <span class="muted">(optional)</span></label
+                    >
+                    <textarea
+                      id="reason"
+                      class="textarea"
+                      formControlName="reasonForVisit"
+                      maxlength="500"
+                    ></textarea>
                   </div>
                   <details>
                     <summary>Add an intake form (optional)</summary>
                     <div formGroupName="intake" class="intake">
-                      <div class="field"><label for="mc">Main concerns</label><textarea id="mc" class="textarea" formControlName="mainConcerns" maxlength="2000"></textarea></div>
-                      <div class="field"><label for="goals">What you hope to get from sessions</label><textarea id="goals" class="textarea" formControlName="goals" maxlength="1000"></textarea></div>
-                      <div class="field"><label for="dur">How long has this been going on?</label><input id="dur" class="input" formControlName="duration" maxlength="200" /></div>
-                      <div class="field"><label for="prev">Any previous support</label><textarea id="prev" class="textarea" formControlName="previousSupport" maxlength="1000"></textarea></div>
+                      <div class="field">
+                        <label for="mc">Main concerns</label
+                        ><textarea
+                          id="mc"
+                          class="textarea"
+                          formControlName="mainConcerns"
+                          maxlength="2000"
+                        ></textarea>
+                      </div>
+                      <div class="field">
+                        <label for="goals">What you hope to get from sessions</label
+                        ><textarea
+                          id="goals"
+                          class="textarea"
+                          formControlName="goals"
+                          maxlength="1000"
+                        ></textarea>
+                      </div>
+                      <div class="field">
+                        <label for="dur">How long has this been going on?</label
+                        ><input id="dur" class="input" formControlName="duration" maxlength="200" />
+                      </div>
+                      <div class="field">
+                        <label for="prev">Any previous support</label
+                        ><textarea
+                          id="prev"
+                          class="textarea"
+                          formControlName="previousSupport"
+                          maxlength="1000"
+                        ></textarea>
+                      </div>
                     </div>
                     <label class="checkbox">
                       <input type="checkbox" formControlName="shareIntake" />
-                      <span>Share this intake form with {{ d.displayName }}. You can withdraw this later.</span>
+                      <span
+                        >Share this intake form with {{ d.displayName }}. You can withdraw this
+                        later.</span
+                      >
                     </label>
                   </details>
-                  @if (bookError()) { <div class="alert alert-danger" role="alert">{{ bookError() }}</div> }
+                  @if (bookError()) {
+                    <div class="alert alert-danger" role="alert">{{ bookError() }}</div>
+                  }
                   <button class="btn btn-block" type="submit" [disabled]="booking()">
-                    {{ auth.isAuthenticated() ? (booking() ? 'Requesting…' : 'Request appointment') : 'Sign in to book' }}
+                    {{
+                      auth.isAuthenticated()
+                        ? booking()
+                          ? 'Requesting…'
+                          : 'Request appointment'
+                        : 'Sign in to book'
+                    }}
                   </button>
-                  <p class="small muted">Your professional will confirm the request. You can cancel from your appointments.</p>
+                  <p class="small muted">
+                    Your professional will confirm the request. You can cancel from your
+                    appointments.
+                  </p>
                 </form>
               }
             }
@@ -251,14 +411,63 @@ interface DaySlots {
       }
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
-    .layout { display: grid; gap: var(--mb-space-5); grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start; margin-top: var(--mb-space-3); }
-    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
-    .h3 { font-size: 1.1rem; } .bio { white-space: pre-wrap; }
-    .facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; } dt { font-weight: 600; } dd { margin: 0; }
-    .days { display: grid; gap: var(--mb-space-3); max-height: 360px; overflow: auto; }
-    .day-label { font-weight: 600; margin-bottom: 6px; } .slots { display: flex; flex-wrap: wrap; gap: 6px; }
-    .book-form { margin-top: var(--mb-space-4); } details { margin-bottom: var(--mb-space-4); } summary { cursor: pointer; font-weight: 600; margin-bottom: 8px; }
+    .layout {
+      display: grid;
+      gap: var(--mb-space-5);
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      align-items: start;
+      margin-top: var(--mb-space-3);
+    }
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    .h3 {
+      font-size: 1.1rem;
+    }
+    .bio {
+      white-space: pre-wrap;
+    }
+    .facts {
+      display: grid;
+      grid-template-columns: max-content 1fr;
+      gap: 6px 16px;
+    }
+    dt {
+      font-weight: 600;
+    }
+    dd {
+      margin: 0;
+    }
+    .days {
+      display: grid;
+      gap: var(--mb-space-3);
+      max-height: 360px;
+      overflow: auto;
+    }
+    .day-label {
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .slots {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .book-form {
+      margin-top: var(--mb-space-4);
+    }
+    details {
+      margin-bottom: var(--mb-space-4);
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
   `,
 })
 export class ProfessionalDetailPage {
@@ -294,7 +503,12 @@ export class ProfessionalDetailPage {
     mode: [ConsultationMode.ONLINE as ConsultationMode, Validators.required],
     reasonForVisit: [''],
     shareIntake: [true],
-    intake: inject(FormBuilder).nonNullable.group({ mainConcerns: [''], goals: [''], duration: [''], previousSupport: [''] }),
+    intake: inject(FormBuilder).nonNullable.group({
+      mainConcerns: [''],
+      goals: [''],
+      duration: [''],
+      previousSupport: [''],
+    }),
   });
 
   constructor() {
@@ -328,7 +542,12 @@ export class ProfessionalDetailPage {
     try {
       const from = new Date();
       const to = new Date(Date.now() + 13 * 86400_000);
-      this.slots.set(await this.api.get<TimeSlot[]>(`/doctors/${this.id()}/slots`, { from: isoDate(from), to: isoDate(to) }));
+      this.slots.set(
+        await this.api.get<TimeSlot[]>(`/doctors/${this.id()}/slots`, {
+          from: isoDate(from),
+          to: isoDate(to),
+        }),
+      );
     } catch {
       this.slots.set([]);
     } finally {
@@ -338,7 +557,9 @@ export class ProfessionalDetailPage {
 
   async book() {
     if (!this.auth.isAuthenticated()) {
-      await this.router.navigate(['/login'], { queryParams: { returnUrl: `/patient/professionals/${this.id()}` } });
+      await this.router.navigate(['/login'], {
+        queryParams: { returnUrl: `/patient/professionals/${this.id()}` },
+      });
       return;
     }
     if (this.auth.role() !== Role.PATIENT) return;
@@ -356,11 +577,17 @@ export class ProfessionalDetailPage {
         reasonForVisit: v.reasonForVisit.trim() || undefined,
         patientTimezone: this.tz,
         intake: hasIntake
-          ? Object.fromEntries(Object.entries(v.intake).filter(([, x]) => x.trim()).map(([k, x]) => [k, x.trim()]))
+          ? Object.fromEntries(
+              Object.entries(v.intake)
+                .filter(([, x]) => x.trim())
+                .map(([k, x]) => [k, x.trim()]),
+            )
           : undefined,
         shareIntake: hasIntake && v.shareIntake,
       });
-      await this.router.navigate(['/patient/appointments', appt.id], { queryParams: { booked: 1 } });
+      await this.router.navigate(['/patient/appointments', appt.id], {
+        queryParams: { booked: 1 },
+      });
     } catch (err) {
       const e = ApiError.from(err);
       this.bookError.set(e.message);

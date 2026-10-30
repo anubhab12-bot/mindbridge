@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api/api.service';
 import { errorMessage } from '../../core/api/api-error';
@@ -15,28 +15,47 @@ interface PatientRow {
 @Component({
   selector: 'mb-patients',
   imports: [DatePipe, RouterLink, LoadingComponent, ErrorStateComponent, EmptyStateComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="page">
       <header class="page-header">
         <h1>Patients</h1>
-        <p>People with an active care relationship with you. You only see what each person has chosen to share.</p>
+        <p>
+          People with an active care relationship with you. You only see what each person has chosen
+          to share.
+        </p>
       </header>
       @if (loading()) {
         <mb-loading [lines]="4" />
       } @else if (error()) {
         <mb-error [message]="error()!" (retry)="load()" />
       } @else if (!rows().length) {
-        <mb-empty title="No patients yet" text="Patients appear here after you confirm their first appointment." />
+        <mb-empty
+          title="No patients yet"
+          text="Patients appear here after you confirm their first appointment."
+        />
       } @else {
         <div class="table-wrap">
           <table class="table">
-            <thead><tr><th>Name</th><th>In your care since</th><th>Next session</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>In your care since</th>
+                <th>Next session</th>
+              </tr>
+            </thead>
             <tbody>
               @for (r of rows(); track r.patientId) {
                 <tr>
-                  <td><a [routerLink]="['/doctor/patients', r.patientId]">{{ r.displayName }}</a></td>
+                  <td>
+                    <a [routerLink]="['/doctor/patients', r.patientId]">{{ r.displayName }}</a>
+                  </td>
                   <td>{{ r.careSince | date: 'mediumDate' }}</td>
-                  <td>{{ r.nextAppointmentAt ? (r.nextAppointmentAt | date: 'EEE d MMM, h:mm a') : '—' }}</td>
+                  <td>
+                    {{
+                      r.nextAppointmentAt ? (r.nextAppointmentAt | date: 'EEE d MMM, h:mm a') : '—'
+                    }}
+                  </td>
                 </tr>
               }
             </tbody>
