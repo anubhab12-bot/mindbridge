@@ -134,3 +134,93 @@ export interface AiChatMessage {
   /** True when the reply came from the development mock provider rather than a real model. */
   isMock?: boolean;
 }
+
+export interface CouncilApplicationCredentials {
+  licenseNumber?: string;
+  yearsExperience?: number;
+  specialization?: string;
+  hospitalAffiliation?: string;
+  organizationName?: string;
+  ngoRegistrationNumber?: string;
+  operatingRegions?: string[];
+  socialHandle?: string;
+  platform?: string;
+  followersCount?: number;
+  portfolioUrl?: string;
+  sampleContent?: string;
+}
+
+export interface CouncilAiSafetyAssessment {
+  isSafe: boolean;
+  safetyScore: number; // 0 - 100%
+  riskCategory: 'CLEAN_BRAND_SAFE' | 'POTENTIAL_CONCERN' | 'VULGARITY_OR_ADULT_CONTENT' | 'REJECTED_UNSAFE';
+  flaggedReasons: string[];
+  summary: string;
+  recommendation: 'RECOMMEND_APPROVAL' | 'MANUAL_REVIEW_REQUIRED' | 'AUTOMATIC_REJECTION';
+}
+
+export interface CouncilApplication {
+  id: string;
+  fullName: string;
+  email: string;
+  phone?: string;
+  category: 'SPECIALIST' | 'NGO' | 'INFLUENCER';
+  status: 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED' | 'AI_SAFETY_FLAGGED';
+  credentials: CouncilApplicationCredentials;
+  aiSafety: CouncilAiSafetyAssessment;
+  decisionNotes?: string;
+  seatNumber?: number; // 1 to 12
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CouncilTaskProof {
+  url?: string;
+  screenshotUrl?: string;
+  notes?: string;
+  impressions?: number;
+  submittedAt?: string;
+}
+
+export interface CouncilTask {
+  id: string;
+  targetCategory: 'SPECIALIST' | 'NGO' | 'INFLUENCER';
+  assigneeId?: string;
+  assigneeName?: string;
+  title: string;
+  description: string;
+  deliverableFormat: string;
+  status: 'ASSIGNED' | 'PROOF_SUBMITTED' | 'VERIFIED' | 'REVISION_REQUESTED';
+  proof?: CouncilTaskProof;
+  aiGenerated: boolean;
+  dueDate?: string;
+  createdAt: string;
+}
+
+export interface DynamicSiteSettings {
+  announcementBanner: {
+    enabled: boolean;
+    title: string;
+    message: string;
+    linkText?: string;
+    linkUrl?: string;
+    badgeType: 'info' | 'urgent' | 'success';
+  };
+  statsOverride: {
+    enabled: boolean;
+    totalUsers: string;
+    totalNgos: string;
+    recoveryRate: string;
+    avgResponseTime: string;
+  };
+  featuredNgos: {
+    name: string;
+    region: string;
+    focus: string;
+  }[];
+  maintenanceMode: boolean;
+  totalCouncilSeats: number;
+  occupiedSeats: number;
+  updatedAt: string;
+}
+

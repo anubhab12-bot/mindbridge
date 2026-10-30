@@ -31,6 +31,7 @@ import { SupportModule } from './modules/support/support.module.js';
 import { WellnessModule } from './modules/wellness/wellness.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 import { CrisisResourcesModule } from './modules/crisis-resources/crisis-resources.module.js';
+import { GovernanceModule } from './modules/governance/governance.module.js';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { CrisisResourcesModule } from './modules/crisis-resources/crisis-resourc
     PrivacyModule,
     AdminModule,
     UsersModule,
+    GovernanceModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

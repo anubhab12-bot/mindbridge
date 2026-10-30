@@ -229,3 +229,36 @@ export const SupportTicketCategory = {
   OTHER: 'OTHER',
 } as const;
 export type SupportTicketCategory = (typeof SupportTicketCategory)[keyof typeof SupportTicketCategory];
+
+/** Governance RBAC roles for the MindBridge 12-Member Council & Super Admin */
+export const GovernanceRole = {
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  SPECIALIST_ADMIN: 'SPECIALIST_ADMIN',
+  NGO_ADMIN: 'NGO_ADMIN',
+  INFLUENCER_ADMIN: 'INFLUENCER_ADMIN',
+} as const;
+export type GovernanceRole = (typeof GovernanceRole)[keyof typeof GovernanceRole];
+
+export const CouncilCategory = {
+  SPECIALIST: 'SPECIALIST',
+  NGO: 'NGO',
+  INFLUENCER: 'INFLUENCER',
+} as const;
+export type CouncilCategory = (typeof CouncilCategory)[keyof typeof CouncilCategory];
+
+export const CouncilApplicationStatus = {
+  PENDING_REVIEW: 'PENDING_REVIEW',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  AI_SAFETY_FLAGGED: 'AI_SAFETY_FLAGGED',
+} as const;
+export type CouncilApplicationStatus = (typeof CouncilApplicationStatus)[keyof typeof CouncilApplicationStatus];
+
+export const CouncilTaskStatus = {
+  ASSIGNED: 'ASSIGNED',
+  PROOF_SUBMITTED: 'PROOF_SUBMITTED',
+  VERIFIED: 'VERIFIED',
+  REVISION_REQUESTED: 'REVISION_REQUESTED',
+} as const;
+export type CouncilTaskStatus = (typeof CouncilTaskStatus)[keyof typeof CouncilTaskStatus];
+

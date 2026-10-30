@@ -1,0 +1,9 @@
+{
+  "name": "mindbridge-admin",
+  "version": "1.0.0",
+  "description": "MindBridge Executive Council & RBAC Admin Portal",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve . -l 8081"
+  }
+}
