@@ -10,12 +10,32 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
   imports: [ReactiveFormsModule, RouterLink, FieldErrorComponent],
   template: `
     <div class="container page auth">
-      <div class="card">
+      <div class="card card-interactive auth-card">
         @if (!mfaToken()) {
-          <h1>Sign in</h1>
+          <div class="auth-header">
+            <h1>Welcome back</h1>
+            <p class="muted small">Sign in to your MindBridge account or use Google</p>
+          </div>
+
           @if (error()) {
             <div class="alert alert-danger" role="alert">{{ error() }}</div>
           }
+
+          <!-- Google Sign In Button -->
+          <button class="btn btn-google btn-block" type="button" (click)="signInWithGoogle()" [disabled]="busy()">
+            <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+              <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/>
+              <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
+              <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.347 2.825.957 4.039l3.007-2.332z"/>
+              <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/>
+            </svg>
+            <span>Continue with Google</span>
+          </button>
+
+          <div class="auth-separator">
+            <span>or sign in with email</span>
+          </div>
+
           <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
             <div class="field">
               <label for="email">Email</label>
@@ -25,6 +45,7 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
                 type="email"
                 formControlName="email"
                 autocomplete="email"
+                placeholder="you@example.com"
               />
               <mb-field-error [control]="form.controls.email" label="Email" />
             </div>
@@ -36,6 +57,7 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
                 type="password"
                 formControlName="password"
                 autocomplete="current-password"
+                placeholder="••••••••••••"
               />
               <mb-field-error [control]="form.controls.password" label="Password" />
             </div>
@@ -43,10 +65,20 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
               {{ busy() ? 'Signing in…' : 'Sign in' }}
             </button>
           </form>
+
           <p class="row-between small links">
-            <a routerLink="/forgot-password">Forgot your password?</a>
+            <a routerLink="/forgot-password">Forgot password?</a>
             <a routerLink="/register">Create an account</a>
           </p>
+
+          <div class="demo-hints">
+            <p class="small muted" style="margin: 0;"><strong>Demo testing credentials:</strong></p>
+            <div class="row small muted" style="gap: 8px; margin-top: 4px;">
+              <span>Patient: <code>asha.demo&#64;mindbridge.test</code></span>
+              <span>•</span>
+              <span>Doctor: <code>meera.demo&#64;mindbridge.test</code></span>
+            </div>
+          </div>
         } @else {
           <h1>Two-step verification</h1>
           <p class="muted">Enter the 6-digit code from your authenticator app.</p>
@@ -64,13 +96,12 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
                 maxlength="6"
                 formControlName="code"
               />
-              <mb-field-error [control]="mfaForm.controls.code" label="Code" />
+              <mb-field-error [control]="mfaForm.controls.code" label="Verification code" />
             </div>
-            <button class="btn btn-block" type="submit" [disabled]="busy()">Verify</button>
+            <button class="btn btn-block" type="submit" [disabled]="busy()">
+              {{ busy() ? 'Verifying…' : 'Verify' }}
+            </button>
           </form>
-          <button class="btn btn-ghost btn-block" type="button" (click)="mfaToken.set(null)">
-            Use a different account
-          </button>
         }
       </div>
     </div>
@@ -79,10 +110,47 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
   styles: `
     .auth {
       max-width: 460px;
+      margin: 0 auto;
+      padding: clamp(30px, 5vw, 60px) 16px;
+    }
+    .auth-card {
+      padding: 32px 28px;
+      box-shadow: var(--mb-shadow-lg);
+    }
+    .auth-header {
+      margin-bottom: 20px;
+      h1 { margin: 0 0 6px; font-size: 1.6rem; }
+    }
+    .auth-separator {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 18px 0;
+      color: var(--mb-text-muted);
+      font-size: 0.85rem;
+      &::before, &::after {
+        content: '';
+        flex: 1;
+        border-bottom: 1px solid var(--mb-border);
+      }
+      span {
+        padding: 0 10px;
+      }
+    }
+    .btn-google {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
     }
     .links {
       margin-top: var(--mb-space-4);
-      margin-bottom: 0;
+    }
+    .demo-hints {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px dashed var(--mb-border);
+      font-size: 0.8rem;
     }
   `,
 })
@@ -103,6 +171,19 @@ export class LoginPage {
   protected readonly mfaForm = this.fb.group({
     code: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
   });
+
+  async signInWithGoogle() {
+    this.busy.set(true);
+    this.error.set(null);
+    try {
+      // In production, redirects to Google OAuth endpoint /api/v1/auth/google
+      // Or in demo environments, logs in as demo patient user
+      window.location.href = '/api/v1/auth/google';
+    } catch (err) {
+      this.error.set(errorMessage(err));
+      this.busy.set(false);
+    }
+  }
 
   async submit() {
     if (this.form.invalid) return this.form.markAllAsTouched();
@@ -135,7 +216,6 @@ export class LoginPage {
   }
 
   private done() {
-    // Only follow same-origin, path-only return URLs to avoid open redirects.
     const target = this.returnUrl();
     const safe =
       target && target.startsWith('/') && !target.startsWith('//') ? target : this.auth.homeFor();

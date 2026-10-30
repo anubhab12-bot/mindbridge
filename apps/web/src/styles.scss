@@ -129,3 +129,46 @@ table.table { width: 100%; border-collapse: collapse; font-size: 0.95rem;
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
+
+/* ---------------------------------------------------------------- modern UI helpers */
+.btn-google {
+  background: #ffffff !important;
+  color: #374151 !important;
+  border: 1px solid #d1d5db !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  font-weight: 500;
+  transition: all 0.2s ease;
+  &:hover {
+    background: #f9fafb !important;
+    border-color: #9ca3af !important;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+  }
+}
+
+.gradient-text {
+  background: var(--mb-gradient-hero);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.card-interactive {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--mb-shadow-lg);
+  }
+}
+
+.glass-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: rgba(15, 110, 102, 0.08);
+  border: 1px solid rgba(15, 110, 102, 0.2);
+  color: var(--mb-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+}

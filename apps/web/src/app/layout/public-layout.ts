@@ -17,6 +17,7 @@ import { AuthService } from '../core/auth/auth.service';
           <a routerLink="/professionals" routerLinkActive="active">Find a professional</a>
           <a routerLink="/for-professionals" routerLinkActive="active">For professionals</a>
           <a routerLink="/how-it-works" routerLinkActive="active">How it works</a>
+          <a routerLink="/admin/overview" routerLinkActive="active" style="color: #6b4fa3; font-weight: 600;">Admin Portal</a>
         </nav>
         <div class="row">
           <a routerLink="/crisis" class="btn btn-crisis btn-sm">Get help now</a>
