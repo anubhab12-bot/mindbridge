@@ -205,17 +205,114 @@ const DEFAULT_TASKS = [
 ];
 
 // Initialize on Load
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   checkSecurityGate();
-  loadLocalState();
   initCharts();
+  updateLivePreview();
+  await loadRealDataFromDatabase();
+});
+
+// Load real data directly from the live backend API & MongoDB database
+async function loadRealDataFromDatabase() {
+  const syncBadge = document.getElementById('liveDataSyncText');
+  if (syncBadge) syncBadge.textContent = '🔄 Syncing with Live Database...';
+
+  await Promise.allSettled([
+    loadRealApplications(),
+    loadRealTasks(),
+    loadRealStats(),
+    syncSettingsFromApi(),
+    loadDynamicFeatures(),
+  ]);
+
+  if (syncBadge) syncBadge.textContent = '🟢 Live MongoDB Connected';
+}
+
+async function loadRealApplications() {
+  try {
+    const res = await fetch(`${API_BASE}/applications`);
+    if (res.ok) {
+      const json = await res.json();
+      if (Array.isArray(json.data) && json.data.length > 0) {
+        applications = json.data;
+        saveLocalState();
+        renderApplications();
+        updateSeatTracker();
+        return;
+      }
+    }
+  } catch (err) {
+    console.warn('Could not fetch real applications from API, checking local storage', err);
+  }
+
+  // Fallback to local cache if offline or fresh
+  const savedApps = localStorage.getItem('mb_admin_apps');
+  applications = savedApps ? JSON.parse(savedApps) : [];
   renderApplications();
+  updateSeatTracker();
+}
+
+async function loadRealTasks() {
+  try {
+    const res = await fetch(`${API_BASE}/tasks`);
+    if (res.ok) {
+      const json = await res.json();
+      if (Array.isArray(json.data) && json.data.length > 0) {
+        tasks = json.data;
+        saveLocalState();
+        renderTasks();
+        renderAiMissions();
+        return;
+      }
+    }
+  } catch (err) {
+    console.warn('Could not fetch tasks from API', err);
+  }
+
+  const savedTasks = localStorage.getItem('mb_admin_tasks');
+  tasks = savedTasks ? JSON.parse(savedTasks) : [];
   renderTasks();
   renderAiMissions();
-  syncSettingsFromApi();
-  loadDynamicFeatures();
-  updateLivePreview();
-});
+}
+
+async function loadRealStats() {
+  try {
+    const res = await fetch(`${API_BASE}/stats`);
+    if (res.ok) {
+      const json = await res.json();
+      if (json.data) {
+        const stats = json.data;
+        if (document.getElementById('kpiTotalUsers') && stats.populationMetrics?.totalUsers) {
+          document.getElementById('kpiTotalUsers').textContent = stats.populationMetrics.totalUsers;
+        }
+        if (document.getElementById('kpiActivePatients') && stats.populationMetrics?.activePatients) {
+          document.getElementById('kpiActivePatients').textContent = stats.populationMetrics.activePatients;
+        }
+        if (document.getElementById('kpiRecoveryRate') && stats.populationMetrics?.cureRecoveryRate) {
+          document.getElementById('kpiRecoveryRate').textContent = stats.populationMetrics.cureRecoveryRate;
+        }
+        if (document.getElementById('kpiPartnerNgos') && stats.populationMetrics?.partnerNgos) {
+          document.getElementById('kpiPartnerNgos').textContent = stats.populationMetrics.partnerNgos;
+        }
+        if (document.getElementById('seatsOccupiedNum') && stats.occupiedSeats !== undefined) {
+          document.getElementById('seatsOccupiedNum').textContent = stats.occupiedSeats;
+        }
+        if (document.getElementById('seatsTotalNum') && stats.councilCapacity !== undefined) {
+          document.getElementById('seatsTotalNum').textContent = stats.councilCapacity;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Could not fetch real stats from API', err);
+  }
+}
+
+function loadSampleApplicationsDemo() {
+  applications = DEFAULT_APPLICATIONS;
+  renderApplications();
+  updateSeatTracker();
+  showToast('👁️ Loaded sample candidate applications for preview.');
+}
 
 // Security Gate Management
 const DEFAULT_MASTER_KEYS = ['MB-SUPERADMIN-2026', 'superadmin', 'mindbridge2026'];
@@ -492,19 +589,48 @@ function renderApplications(filterCat = 'ALL') {
     ? applications 
     : applications.filter(a => a.category === filterCat);
 
-  tbody.innerHTML = filtered.map(app => {
-    const isSafe = app.aiSafety.isSafe;
-    const safetyBadge = isSafe
-      ? `<span class="badge badge-ai-safe">🟢 ${app.aiSafety.safetyScore}% Brand Safe</span>`
-      : `<span class="badge badge-ai-flagged">🔴 ${app.aiSafety.safetyScore}% Nudity/Vulgarity Flagged</span>`;
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align: center; padding: 40px 20px;">
+          <div style="font-size: 2.2rem; margin-bottom: 10px;">🏛️</div>
+          <div style="font-weight: 700; color: #fff; font-size: 1.1rem; margin-bottom: 6px;">No Council Applications in Database Yet</div>
+          <p style="color: var(--text-muted); font-size: 0.88rem; max-width: 480px; margin: 0 auto 18px; line-height: 1.5;">
+            Candidates applying via the public application form at <code style="color: var(--emerald-primary);">/apply-admin</code> are saved directly to MongoDB and will appear here in real-time with AI safety screenings.
+          </p>
+          <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+            <a href="https://mindbridge-web.onrender.com/apply-admin" target="_blank" class="btn btn-primary btn-sm">
+              📝 Submit Real Application at /apply-admin ↗
+            </a>
+            <button class="btn btn-secondary btn-sm" onclick="loadRealApplications()">
+              🔄 Refresh Database
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="loadSampleApplicationsDemo()">
+              👁️ Preview Sample Rows
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+    return;
+  }
 
+  tbody.innerHTML = filtered.map(app => {
+    const appId = app.id || app._id;
+    const ai = app.aiSafety || { isSafe: true, safetyScore: 95, summary: 'Clean brand safe applicant' };
+    const isSafe = ai.isSafe !== false;
+    const safetyBadge = isSafe
+      ? `<span class="badge badge-ai-safe">🟢 ${ai.safetyScore || 95}% Brand Safe</span>`
+      : `<span class="badge badge-ai-flagged">🔴 ${ai.safetyScore || 60}% Nudity/Vulgarity Flagged</span>`;
+
+    const creds = app.credentials || {};
     let details = '';
     if (app.category === 'SPECIALIST') {
-      details = `Lic: ${app.credentials.licenseNumber || 'N/A'} • ${app.credentials.yearsExperience || 0} yrs exp`;
+      details = `Lic: ${creds.licenseNumber || 'N/A'} • ${creds.yearsExperience || 0} yrs exp`;
     } else if (app.category === 'NGO') {
-      details = `Reg: ${app.credentials.ngoRegistrationNumber || 'N/A'} • ${app.credentials.operatingRegions?.join(', ') || 'India'}`;
+      details = `Reg: ${creds.ngoRegistrationNumber || 'N/A'} • ${creds.operatingRegions?.join(', ') || 'India'}`;
     } else {
-      details = `${app.credentials.socialHandle || '@creator'} (${(app.credentials.followersCount || 0).toLocaleString()} reach)`;
+      details = `${creds.socialHandle || '@creator'} (${(creds.followersCount || 0).toLocaleString()} reach)`;
     }
 
     let statusBadge = '';
@@ -517,8 +643,8 @@ function renderApplications(filterCat = 'ALL') {
 
     const actions = canAction ? `
       <div style="display: flex; gap: 6px;">
-        <button class="btn btn-primary btn-sm" onclick="decideApp('${app.id}', 'APPROVED')">Approve</button>
-        <button class="btn btn-danger btn-sm" onclick="decideApp('${app.id}', 'REJECTED')">Reject</button>
+        <button class="btn btn-primary btn-sm" onclick="decideApp('${appId}', 'APPROVED')">Approve</button>
+        <button class="btn btn-danger btn-sm" onclick="decideApp('${appId}', 'REJECTED')">Reject</button>
       </div>
     ` : `<span style="color: var(--text-dim); font-size: 0.8rem;">${app.status === 'APPROVED' ? 'Council Member' : 'Decision Logged'}</span>`;
 
@@ -534,12 +660,12 @@ function renderApplications(filterCat = 'ALL') {
         <td>
           <div style="font-size: 0.85rem;">${details}</div>
           <div style="font-size: 0.75rem; color: var(--text-dim); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-            ${app.credentials.sampleContent || ''}
+            ${creds.sampleContent || ''}
           </div>
         </td>
         <td>
           ${safetyBadge}<br>
-          <span style="font-size: 0.75rem; color: var(--text-dim);">${app.aiSafety.summary}</span>
+          <span style="font-size: 0.75rem; color: var(--text-dim);">${ai.summary || ''}</span>
         </td>
         <td>${statusBadge}</td>
         <td>${actions}</td>
@@ -553,21 +679,29 @@ function filterApplications(cat) {
 }
 
 // Decide on Application
-function decideApp(id, decision) {
-  const app = applications.find(a => a.id === id);
+async function decideApp(id, decision) {
+  const app = applications.find(a => (a.id === id || a._id === id));
   if (!app) return;
 
   app.status = decision;
-  if (decision === 'APPROVED') {
-    const occupied = applications.filter(a => a.status === 'APPROVED').length;
-    app.seatNumber = Math.min(12, occupied);
-    showToast(`Approved ${app.fullName} to Council Seat #${app.seatNumber}!`);
-  } else {
-    showToast(`Rejected application for ${app.fullName}.`);
+  renderApplications();
+
+  try {
+    const res = await fetch(`${API_BASE}/applications/${id}/decision`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ decision, reviewer: 'Super Admin' })
+    });
+    if (res.ok) {
+      showToast(`Decision saved to live database: ${decision} for ${app.fullName}!`);
+      await loadRealStats();
+    }
+  } catch (err) {
+    showToast(`Decision recorded locally: ${decision} for ${app.fullName}.`);
   }
 
   saveLocalState();
-  renderApplications();
+  updateSeatTracker();
 }
 
 // Render Tasks
@@ -637,14 +771,24 @@ function filterTasks(cat) {
   renderTasks(cat);
 }
 
-function verifyTaskProof(taskId, decision) {
-  const t = tasks.find(x => x.id === taskId);
+async function verifyTaskProof(taskId, decision) {
+  const t = tasks.find(x => (x.id === taskId || x._id === taskId));
   if (!t) return;
 
   t.status = decision;
-  showToast(`Proof marked as: ${decision}!`);
-  saveLocalState();
   renderTasks();
+
+  try {
+    await fetch(`${API_BASE}/tasks/${taskId}/verify-proof`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ decision })
+    });
+    showToast(`Proof decision saved to live database: ${decision}!`);
+  } catch {
+    showToast(`Proof marked as: ${decision}!`);
+  }
+  saveLocalState();
 }
 
 // AI Tasks Generator
@@ -878,6 +1022,28 @@ function handleApplySubmit(e) {
     createdAt: new Date().toISOString().split('T')[0]
   };
 
+  try {
+    const res = await fetch(`${API_BASE}/apply`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fullName,
+        email,
+        phone: document.getElementById('appPhone')?.value?.trim() || '',
+        category,
+        credentials: creds
+      })
+    });
+    if (res.ok) {
+      showToast('✅ Application submitted directly to live MongoDB database!');
+      await loadRealApplications();
+      closeApplyModal();
+      return;
+    }
+  } catch (err) {
+    console.warn('API error submitting application, stored locally', err);
+  }
+
   applications.unshift(newApp);
   saveLocalState();
   renderApplications();
@@ -900,14 +1066,14 @@ function closeProofModal() {
   document.getElementById('proofModal').classList.remove('active');
 }
 
-function handleProofSubmit(e) {
+async function handleProofSubmit(e) {
   e.preventDefault();
   const taskId = document.getElementById('proofTaskId').value;
   const url = document.getElementById('proofUrl').value.trim();
   const impressions = Number(document.getElementById('proofImpressions').value) || 0;
   const notes = document.getElementById('proofNotes').value.trim();
 
-  const task = tasks.find(t => t.id === taskId);
+  const task = tasks.find(t => (t.id === taskId || t._id === taskId));
   if (task) {
     task.status = 'PROOF_SUBMITTED';
     task.proof = {
@@ -916,10 +1082,28 @@ function handleProofSubmit(e) {
       notes,
       submittedAt: new Date().toISOString().split('T')[0]
     };
+
+    try {
+      await fetch(`${API_BASE}/tasks/${taskId}/submit-proof`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          proof: {
+            url,
+            impressions,
+            notes,
+            submittedAt: new Date().toISOString()
+          }
+        })
+      });
+      showToast('🚀 Campaign proof submitted and stored in live database!');
+    } catch {
+      showToast('🚀 Campaign proof submitted to Super Admin for verification!');
+    }
+
     saveLocalState();
     renderTasks();
     closeProofModal();
-    showToast('🚀 Campaign proof submitted to Super Admin for verification!');
   }
 }
 

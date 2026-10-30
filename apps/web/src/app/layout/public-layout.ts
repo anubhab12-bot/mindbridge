@@ -46,11 +46,30 @@ import { AuthService } from '../core/auth/auth.service';
           @if (auth.isAuthenticated()) {
             <a [routerLink]="auth.homeFor()" class="btn btn-sm">My dashboard</a>
           } @else {
-            <a routerLink="/login" class="btn btn-ghost btn-sm">Sign in</a>
+            <a routerLink="/login" class="btn btn-ghost btn-sm btn-auth-hide">Sign in</a>
             <a routerLink="/register" class="btn btn-sm btn-primary-elevated">Get started</a>
           }
+          <button class="mobile-nav-toggle" (click)="toggleMobileNav()" aria-label="Toggle navigation">
+            {{ mobileNavOpen() ? '✕' : '☰' }}
+          </button>
         </div>
       </div>
+
+      <!-- Mobile Navigation Drawer -->
+      @if (mobileNavOpen()) {
+        <nav class="mobile-nav-drawer" aria-label="Mobile Navigation">
+          <a routerLink="/self-help" routerLinkActive="active" (click)="closeMobileNav()">Self-help</a>
+          <a routerLink="/professionals" routerLinkActive="active" (click)="closeMobileNav()">Find a professional</a>
+          <a routerLink="/how-it-works" routerLinkActive="active" (click)="closeMobileNav()">How it works</a>
+          <a routerLink="/impact" routerLinkActive="active" (click)="closeMobileNav()">📊 Impact Telemetry</a>
+          <a routerLink="/apply-admin" routerLinkActive="active" (click)="closeMobileNav()" class="nav-council-link">
+            🏛️ Apply for Admin Seat
+          </a>
+          <a href="/admin-portal/index.html" target="_blank" (click)="closeMobileNav()" class="mobile-admin-link">
+            👑 Open Admin Portal 🔒
+          </a>
+        </nav>
+      }
     </header>
     <main id="main" tabindex="-1"><router-outlet /></main>
     <footer class="site-footer">
@@ -253,8 +272,59 @@ import { AuthService } from '../core/auth/auth.service';
       gap: 20px;
     }
 
+    .announcement-close {
+      flex-shrink: 0;
+    }
+
+    .mobile-nav-toggle {
+      display: none;
+      background: transparent;
+      border: 1px solid var(--mb-border);
+      color: var(--mb-text);
+      font-size: 1.25rem;
+      padding: 4px 10px;
+      border-radius: var(--mb-radius-sm);
+      cursor: pointer;
+      line-height: 1;
+    }
+    .mobile-nav-drawer {
+      display: flex;
+      flex-direction: column;
+      background: var(--mb-surface);
+      border-bottom: 1px solid var(--mb-border);
+      padding: 14px 20px;
+      gap: 12px;
+      box-shadow: var(--mb-shadow-lg);
+      animation: mobileSlide 0.2s ease-out;
+      a {
+        text-decoration: none;
+        color: var(--mb-text);
+        font-weight: 600;
+        font-size: 0.95rem;
+        padding: 6px 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+        &:hover { color: var(--mb-primary); }
+      }
+    }
+    .mobile-admin-link {
+      color: #6b4fa3 !important;
+      font-weight: 700 !important;
+    }
+    @keyframes mobileSlide {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     @media (max-width: 860px) {
       .nav {
+        display: none;
+      }
+      .mobile-nav-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .btn-auth-hide {
         display: none;
       }
     }
@@ -275,6 +345,19 @@ import { AuthService } from '../core/auth/auth.service';
       backdrop-filter: blur(12px);
       transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
       animation: pillFloat 4s ease-in-out infinite alternate;
+    }
+    @media (max-width: 640px) {
+      .dynamic-floating-pill {
+        bottom: 12px;
+        right: 12px;
+        left: 12px;
+        max-width: calc(100vw - 24px);
+        padding: 6px 12px;
+        box-sizing: border-box;
+      }
+      .pill-title {
+        max-width: 170px;
+      }
     }
     @keyframes pillFloat {
       0% { transform: translateY(0); }
@@ -348,6 +431,15 @@ export class PublicLayoutComponent implements OnInit {
   protected readonly bannerTitle = signal('🌟 24/7 National Mental Health Helplines Active');
   protected readonly bannerMsg = signal('Free, confidential support via Tele-MANAS (14416) & Kiran (1800-599-0019) is available across all Indian states.');
   protected readonly floatingPill = signal<any | null>(null);
+  protected readonly mobileNavOpen = signal(false);
+
+  toggleMobileNav() {
+    this.mobileNavOpen.set(!this.mobileNavOpen());
+  }
+
+  closeMobileNav() {
+    this.mobileNavOpen.set(false);
+  }
 
   async ngOnInit() {
     try {

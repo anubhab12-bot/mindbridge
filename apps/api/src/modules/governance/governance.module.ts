@@ -12,6 +12,7 @@ import {
   DynamicSettings,
   DynamicSettingsSchema,
 } from './schemas/dynamic-settings.schema.js';
+import { User, UserSchema } from '../users/schemas/user.schema.js';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import {
       { name: AdminApplication.name, schema: AdminApplicationSchema },
       { name: AdminTask.name, schema: AdminTaskSchema },
       { name: DynamicSettings.name, schema: DynamicSettingsSchema },
+      { name: User.name, schema: UserSchema },
     ]),
   ],
   controllers: [GovernanceController],

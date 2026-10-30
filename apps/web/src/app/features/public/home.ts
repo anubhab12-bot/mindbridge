@@ -128,7 +128,7 @@ interface RecoveryTrack {
           <div class="impact-card">
             <div class="impact-icon-wrapper teal">👥</div>
             <div class="impact-data">
-              <span class="impact-number">14,850+</span>
+              <span class="impact-number">{{ statTotalUsers() }}</span>
               <span class="impact-label">Persons Actively Using MindBridge</span>
             </div>
             <span class="impact-trend">+18.4% this month</span>
@@ -137,7 +137,7 @@ interface RecoveryTrack {
           <div class="impact-card">
             <div class="impact-icon-wrapper indigo">🏛️</div>
             <div class="impact-data">
-              <span class="impact-number">124</span>
+              <span class="impact-number">{{ statTotalNgos() }}</span>
               <span class="impact-label">Partner NGOs & Regional Clinics</span>
             </div>
             <span class="impact-trend">Accredited networks</span>
@@ -146,7 +146,7 @@ interface RecoveryTrack {
           <div class="impact-card highlight">
             <div class="impact-icon-wrapper emerald">🌱</div>
             <div class="impact-data">
-              <span class="impact-number">94.6%</span>
+              <span class="impact-number">{{ statRecoveryRate() }}</span>
               <span class="impact-label">Recovery & Improvement Rate</span>
             </div>
             <span class="impact-trend positive">Clinically validated</span>
@@ -155,7 +155,7 @@ interface RecoveryTrack {
           <div class="impact-card">
             <div class="impact-icon-wrapper amber">⏱️</div>
             <div class="impact-data">
-              <span class="impact-number">&lt; 42s</span>
+              <span class="impact-number">{{ statAvgResponseTime() }}</span>
               <span class="impact-label">Average Crisis Routing Time</span>
             </div>
             <span class="impact-trend">Direct to Tele-MANAS</span>
@@ -1622,6 +1622,10 @@ export class HomePage implements OnInit {
   protected readonly auth = inject(AuthService);
 
   protected readonly dynamicFeatures = signal<any[]>([]);
+  protected readonly statTotalUsers = signal('14,850+');
+  protected readonly statTotalNgos = signal('124');
+  protected readonly statRecoveryRate = signal('94.6%');
+  protected readonly statAvgResponseTime = signal('< 42s');
 
   protected readonly selectedMoodIndex = signal(1); // Default to Anxious
   protected readonly selectedTrackIndex = signal(0); // Default to Anxiety track
@@ -1799,6 +1803,13 @@ export class HomePage implements OnInit {
       const res = await fetch('https://mindbridge-api-x99i.onrender.com/api/v1/governance/settings');
       if (res.ok) {
         const json = await res.json();
+        if (json?.data?.statsOverride) {
+          const so = json.data.statsOverride;
+          if (so.totalUsers) this.statTotalUsers.set(so.totalUsers);
+          if (so.totalNgos) this.statTotalNgos.set(so.totalNgos);
+          if (so.recoveryRate) this.statRecoveryRate.set(so.recoveryRate);
+          if (so.avgResponseTime) this.statAvgResponseTime.set(so.avgResponseTime);
+        }
         if (Array.isArray(json?.data?.dynamicFeatures)) {
           const active = json.data.dynamicFeatures.filter((f: any) => f.enabled && f.placement !== 'TOP_HEADER' && f.placement !== 'SIDE_STICKY');
           if (active.length > 0) {

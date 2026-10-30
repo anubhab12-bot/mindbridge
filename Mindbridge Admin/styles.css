@@ -485,12 +485,15 @@ body {
 }
 
 /* Tables */
-.table-wrapper {
+.table-wrapper, .table-container {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius-sm);
 }
 
 table {
   width: 100%;
+  min-width: 760px;
   border-collapse: collapse;
   text-align: left;
   font-size: 0.88rem;
@@ -638,6 +641,12 @@ tr:hover td {
   font-family: inherit;
   font-size: 0.9rem;
   transition: var(--transition);
+}
+
+.form-select option {
+  background-color: #111827;
+  color: #f3f4f6;
+  padding: 8px;
 }
 
 .form-input:focus, .form-textarea:focus, .form-select:focus {
@@ -1066,4 +1075,69 @@ tr:hover td {
   color: #94a3b8;
   border: 1px solid rgba(100, 116, 139, 0.3);
 }
+
+/* ==========================================================================
+   Comprehensive Mobile & Tablet Responsive Optimizations
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .top-nav {
+    padding: 12px 18px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .rbac-controls {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding: 6px 8px;
+  }
+  .council-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .seats-tracker {
+    width: 100%;
+  }
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 16px 14px;
+  }
+  .sub-nav {
+    padding: 0 14px;
+    gap: 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .council-info h1 {
+    font-size: 1.3rem;
+  }
+  .kpi-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .seats-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  .sim-viewport.mobile-mode {
+    max-width: 100%;
+  }
+  .simulator-stage {
+    padding: 12px 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+  .seats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
 

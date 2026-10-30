@@ -1,4 +1,4 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import type { CouncilApplicationCredentials } from '@mindbridge/shared-types';
@@ -21,14 +21,14 @@ import type { CouncilApplicationCredentials } from '@mindbridge/shared-types';
       <div class="seats-status-card card">
         <div class="seats-row">
           <div>
-            <span class="seats-title">Council Capacity: <strong>7 of 12 Seats Occupied</strong></span>
-            <p class="small muted" style="margin-top: 4px;">5 remaining seats: 1 Clinical Specialist, 2 Regional NGOs, 2 Brand-Safe Creators.</p>
+            <span class="seats-title">Council Capacity: <strong>{{ occupiedSeats() }} of {{ totalSeats() }} Seats Occupied</strong></span>
+            <p class="small muted" style="margin-top: 4px;">{{ availableSeats() }} remaining seats available for Specialists, Partner NGOs, and Brand-Safe Creators.</p>
           </div>
           <div class="seats-visual">
-            <span class="seat-badge specialist">3 Specialists</span>
-            <span class="seat-badge ngo">2 NGOs</span>
-            <span class="seat-badge influencer">2 Creators</span>
-            <span class="seat-badge available">5 Open Seats</span>
+            <span class="seat-badge specialist">Specialists</span>
+            <span class="seat-badge ngo">NGOs</span>
+            <span class="seat-badge influencer">Creators</span>
+            <span class="seat-badge available">{{ availableSeats() }} Open Spots</span>
           </div>
         </div>
       </div>
@@ -329,7 +329,7 @@ import type { CouncilApplicationCredentials } from '@mindbridge/shared-types';
     }
   `,
 })
-export class ApplyAdminPage {
+export class ApplyAdminPage implements OnInit {
   private readonly fb = inject(FormBuilder).nonNullable;
 
   protected readonly busy = signal(false);
@@ -338,6 +338,26 @@ export class ApplyAdminPage {
   protected readonly applicantEmail = signal('');
   protected readonly aiFlagged = signal(false);
   protected readonly aiSummary = signal('');
+
+  protected readonly occupiedSeats = signal(7);
+  protected readonly totalSeats = signal(12);
+  protected readonly availableSeats = signal(5);
+
+  async ngOnInit() {
+    try {
+      const res = await fetch('https://mindbridge-api-x99i.onrender.com/api/v1/governance/stats');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data) {
+          if (typeof json.data.occupiedSeats === 'number') this.occupiedSeats.set(json.data.occupiedSeats);
+          if (typeof json.data.councilCapacity === 'number') this.totalSeats.set(json.data.councilCapacity);
+          if (typeof json.data.availableSeats === 'number') this.availableSeats.set(json.data.availableSeats);
+        }
+      }
+    } catch {
+      // Fallback defaults
+    }
+  }
 
   protected readonly form = this.fb.group({
     fullName: ['', Validators.required],

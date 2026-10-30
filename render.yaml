@@ -73,7 +73,15 @@ services:
         value: https://mindbridge-ai.onrender.com
       # Free instances can be cold for ~1 minute; give the AI service time to wake up.
       - key: AI_SERVICE_TIMEOUT_MS
-        value: "60000"
+        value: "5000"
+      - key: AI_PROVIDER
+        sync: false
+      - key: AI_MODEL
+        sync: false
+      - key: AI_API_KEY
+        sync: false
+      - key: AI_BASE_URL
+        sync: false
       - key: COOKIE_SECURE
         value: "true"
       - key: CORS_ORIGINS
@@ -96,7 +104,7 @@ services:
       - key: ADMIN_PASSWORD
         sync: false
       - key: DEMO_SEED
-        value: "true"
+        value: "false"
 
   # ------------------------------------------------------------------ ai-service (FastAPI)
   - type: web
@@ -122,7 +130,13 @@ services:
           name: mindbridge-api
           envVarKey: AI_SERVICE_TOKEN
       - key: AI_PROVIDER
-        value: mock
+        sync: false
+      - key: AI_MODEL
+        sync: false
+      - key: AI_API_KEY
+        sync: false
+      - key: AI_BASE_URL
+        sync: false
 
   # ------------------------------------------------------------------ Redis (rate limits)
   - type: keyvalue

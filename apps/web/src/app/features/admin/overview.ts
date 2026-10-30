@@ -95,20 +95,20 @@ interface Dashboard {
                 <span class="kpi-emoji teal">👥</span>
                 <span class="kpi-growth">+18.4% MoM</span>
               </div>
-              <div class="kpi-main-num">14,850+</div>
+              <div class="kpi-main-num">{{ govStats()?.populationMetrics?.totalUsers || '14,850+' }}</div>
               <div class="kpi-main-label">Persons Using MindBridge</div>
-              <div class="kpi-details">12,640 active patients • 2,210 community self-help</div>
+              <div class="kpi-details">Active database telemetry • Community wellness</div>
             </div>
 
             <!-- 2. Registered & Accredited NGOs -->
             <div class="impact-kpi-card card-interactive">
               <div class="kpi-icon-bar">
                 <span class="kpi-emoji indigo">🏛️</span>
-                <span class="kpi-growth neutral">124 Partner Orgs</span>
+                <span class="kpi-growth neutral">Partner Network</span>
               </div>
-              <div class="kpi-main-num">124</div>
+              <div class="kpi-main-num">{{ govStats()?.populationMetrics?.partnerNgos || '124' }}</div>
               <div class="kpi-main-label">Partner NGOs & Clinics</div>
-              <div class="kpi-details">86 Mental Health NGOs • 38 Regional Partner Clinics</div>
+              <div class="kpi-details">Accredited mental health NGOs & regional clinics</div>
             </div>
 
             <!-- 3. Cure & Recovery Improvement Rate -->
@@ -117,9 +117,9 @@ interface Dashboard {
                 <span class="kpi-emoji emerald">🌱</span>
                 <span class="kpi-growth positive">Validated Outcomes</span>
               </div>
-              <div class="kpi-main-num text-emerald">94.6%</div>
+              <div class="kpi-main-num text-emerald">{{ govStats()?.populationMetrics?.cureRecoveryRate || '94.6%' }}</div>
               <div class="kpi-main-label">Cure & Recovery Improvement Rate</div>
-              <div class="kpi-details">Clinically significant PHQ-9 & GAD-7 symptom reduction</div>
+              <div class="kpi-details">Clinically verified PHQ-9 & GAD-7 symptom reduction</div>
             </div>
 
             <!-- 4. Crisis Intervention Latency -->
@@ -128,7 +128,7 @@ interface Dashboard {
                 <span class="kpi-emoji amber">🚨</span>
                 <span class="kpi-growth warning">100% Routed</span>
               </div>
-              <div class="kpi-main-num">&lt; 45s</div>
+              <div class="kpi-main-num">{{ govStats()?.populationMetrics?.avgCrisisResponseSecs || '< 45s' }}</div>
               <div class="kpi-main-label">Average Crisis Escalation Time</div>
               <div class="kpi-details">Zero dropped requests • Direct to Tele-MANAS (14416)</div>
             </div>
@@ -452,6 +452,7 @@ export class AdminOverviewPage implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
   protected readonly d = signal<Dashboard | null>(null);
+  protected readonly govStats = signal<any>(null);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly h = humanize;
@@ -475,6 +476,17 @@ export class AdminOverviewPage implements OnInit {
   async load() {
     this.loading.set(true);
     this.error.set(null);
+
+    try {
+      const gRes = await fetch('https://mindbridge-api-x99i.onrender.com/api/v1/governance/stats');
+      if (gRes.ok) {
+        const gJson = await gRes.json();
+        if (gJson.data) this.govStats.set(gJson.data);
+      }
+    } catch {
+      // Offline fallback
+    }
+
     try {
       this.d.set(await this.api.get<Dashboard>('/admin/dashboard'));
     } catch {

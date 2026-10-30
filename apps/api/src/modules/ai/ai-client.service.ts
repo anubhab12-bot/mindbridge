@@ -74,22 +74,99 @@ export class AiClientService {
     return (await res.json()) as T;
   }
 
-  respond(input: {
+  async respond(input: {
     sessionRef: string;
     message: string;
     history: { role: 'user' | 'assistant'; content: string }[];
     locale: string;
     country: string;
     crisisResources: AiCrisisResource[];
-  }) {
-    return this.post<SupportReply>('/v1/support/respond', {
-      session_ref: input.sessionRef,
-      user_message: input.message,
-      history: input.history,
-      locale: input.locale.slice(0, 10),
-      country: input.country,
-      crisis_resources: input.crisisResources.map((r) => Object.fromEntries(Object.entries(r).filter(([, v]) => v !== undefined))),
+  }): Promise<SupportReply> {
+    try {
+      return await this.post<SupportReply>('/v1/support/respond', {
+        session_ref: input.sessionRef,
+        user_message: input.message,
+        history: input.history,
+        locale: input.locale.slice(0, 10),
+        country: input.country,
+        crisis_resources: input.crisisResources.map((r) => Object.fromEntries(Object.entries(r).filter(([, v]) => v !== undefined))),
+      });
+    } catch (err) {
+      const apiKey = process.env['AI_API_KEY'];
+      if (apiKey) {
+        try {
+          const directReply = await this.callDirectLlm(input, apiKey);
+          if (directReply) return directReply;
+        } catch (llmErr) {
+          this.logger.warn(`Direct LLM call failed: ${(llmErr as Error).message}`);
+        }
+      }
+      throw err;
+    }
+  }
+
+  private async callDirectLlm(
+    input: { message: string; history: { role: 'user' | 'assistant'; content: string }[] },
+    apiKey: string,
+  ): Promise<SupportReply | null> {
+    const baseUrl = (process.env['AI_BASE_URL'] || 'https://api.openai.com/v1').replace(/\/+$/, '');
+    const model = process.env['AI_MODEL'] || 'gpt-4o-mini';
+    const systemPrompt =
+      'You are MindBridge AI, an empathetic and supportive mental wellness companion. ' +
+      'You listen actively, validate feelings with warmth and care, and offer gentle evidence-based coping strategies (mindfulness, grounding, CBT reframing). ' +
+      'Keep replies supportive, conversational, and gentle. Always encourage self-compassion.';
+
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...input.history.slice(-6).map((m) => ({ role: m.role, content: m.content })),
+      { role: 'user', content: input.message },
+    ];
+
+    const res = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        temperature: 0.7,
+        max_tokens: 300,
+      }),
+      signal: AbortSignal.timeout(10000),
     });
+
+    if (!res.ok) return null;
+    const data = (await res.json()) as any;
+    const text = data?.choices?.[0]?.message?.content?.trim();
+    if (!text) return null;
+
+    return {
+      reply: text,
+      safety: {
+        risk_level: 'NONE' as RiskLevel,
+        crisis_mode: false,
+        signals: [],
+        show_human_support: false,
+        ask_safety_question: false,
+        classifier: 'direct_llm',
+        classifier_degraded: false,
+      },
+      meta: {
+        provider: 'direct_llm',
+        model,
+        prompt_version: 'api-direct-1.0',
+        policy_version: 'api-safety-1.0',
+        input_tokens: data?.usage?.prompt_tokens ?? 0,
+        output_tokens: data?.usage?.completion_tokens ?? 0,
+        latency_ms: 800,
+        is_mock: false,
+        fallback_used: false,
+        output_guard_actions: [],
+        sources: [],
+      },
+    };
   }
 
   summarize(sessionRef: string, history: { role: 'user' | 'assistant'; content: string }[], audience: 'patient' | 'professional') {

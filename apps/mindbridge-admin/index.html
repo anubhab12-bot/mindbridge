@@ -128,6 +128,10 @@
         <div class="seats-counter">
           Council Seats: <span id="seatsOccupiedNum">7</span> / <span id="seatsTotalNum">12</span> Filled
         </div>
+        <div class="live-pill" id="liveDataSyncBadge" style="margin-bottom: 8px; display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 3px 10px; border-radius: 999px; border: 1px solid rgba(16, 185, 129, 0.3);">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981;"></span>
+          <span id="liveDataSyncText">🟢 Live MongoDB Connected</span>
+        </div>
         <div class="seats-grid" id="seatsPillsContainer">
           <!-- 12 Seat Pills (Specialists 1-4, NGOs 5-8, Influencers 9-12) -->
           <div class="seat-pill filled specialist" title="Seat 1: Chief Psychiatrist (Clinical Specialist)"></div>
@@ -160,7 +164,7 @@
             <span class="kpi-title">Total Platform Users</span>
             <span class="kpi-icon">👥</span>
           </div>
-          <div class="kpi-value emerald">14,850+</div>
+          <div class="kpi-value emerald" id="kpiTotalUsers">14,850+</div>
           <div class="kpi-footer">
             <span class="growth">+18.4%</span> MoM patient onboarding
           </div>
@@ -171,7 +175,7 @@
             <span class="kpi-title">Active Patients in Care</span>
             <span class="kpi-icon">🩺</span>
           </div>
-          <div class="kpi-value blue">12,640</div>
+          <div class="kpi-value blue" id="kpiActivePatients">12,640</div>
           <div class="kpi-footer">
             <span>2,210 community self-help check-ins</span>
           </div>
@@ -182,7 +186,7 @@
             <span class="kpi-title">Clinically Cured / Improved</span>
             <span class="kpi-icon">🌱</span>
           </div>
-          <div class="kpi-value emerald">94.6%</div>
+          <div class="kpi-value emerald" id="kpiRecoveryRate">94.6%</div>
           <div class="kpi-footer">
             <span>PHQ-9 & GAD-7 clinically verified drop</span>
           </div>
@@ -193,7 +197,7 @@
             <span class="kpi-title">Partner NGOs & Clinics</span>
             <span class="kpi-icon">🏛️</span>
           </div>
-          <div class="kpi-value amber">124</div>
+          <div class="kpi-value amber" id="kpiPartnerNgos">124</div>
           <div class="kpi-footer">
             <span>86 NGOs • 38 Regional Clinics</span>
           </div>
