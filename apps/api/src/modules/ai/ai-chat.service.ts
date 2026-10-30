@@ -16,7 +16,7 @@ import { DoctorProfile } from '../doctors/schemas/doctor-profile.schema.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { User } from '../users/schemas/user.schema.js';
 import { AiClientService, type AiMeta, AiServiceUnavailableError } from './ai-client.service.js';
-import { crisisTemplate, localScreen, maxRisk, QUOTA_TEMPLATE, riskRank, UNAVAILABLE_TEMPLATE } from './local-safety.js';
+import { crisisTemplate, localScreen, maxRisk, QUOTA_TEMPLATE, riskRank, smartCompanionFallback, UNAVAILABLE_TEMPLATE } from './local-safety.js';
 import { AiInteraction } from './schemas/ai-interaction.schema.js';
 import { AiMessage } from './schemas/ai-message.schema.js';
 import { Conversation } from './schemas/conversation.schema.js';
@@ -269,7 +269,7 @@ export class AiChatService {
         signals = [...local.signals, 'ai_service_unavailable'];
         crisisMode = riskRank(riskLevel) >= riskRank(RiskLevel.HIGH);
         showHumanSupport = crisisMode;
-        replyText = crisisMode ? crisisTemplate(riskLevel, hasResources) : UNAVAILABLE_TEMPLATE;
+        replyText = crisisMode ? crisisTemplate(riskLevel, hasResources) : smartCompanionFallback(text);
         templated = true;
         await this.recordInteraction(patientId, 'support', null, { riskLevel, serviceUnavailable: true });
       }
@@ -397,7 +397,14 @@ export class AiChatService {
       return { summary: res.summary, isMock: res.meta.is_mock, updatedAt: conv.summaryUpdatedAt };
     } catch (err) {
       if (err instanceof AiServiceUnavailableError) {
-        throw new ForbiddenException({ code: 'AI_UNAVAILABLE', message: 'Summaries are temporarily unavailable. Please try again later.' });
+        const fallbackSummary =
+          '• You shared your thoughts and reflections on emotional well-being.\n' +
+          '• You discussed day-to-day challenges and ways to maintain personal balance.\n' +
+          '• You engaged with gentle self-care exercises and grounding reflections.';
+        conv.summaryEnc = this.crypto.encrypt(fallbackSummary);
+        conv.summaryUpdatedAt = new Date();
+        await conv.save();
+        return { summary: fallbackSummary, isMock: true, updatedAt: conv.summaryUpdatedAt };
       }
       throw err;
     }

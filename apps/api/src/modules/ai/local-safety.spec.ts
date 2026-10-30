@@ -1,6 +1,6 @@
 import { RiskLevel } from '@mindbridge/shared-types';
 import { describe, expect, it } from 'vitest';
-import { crisisTemplate, localScreen, maxRisk, QUOTA_TEMPLATE, UNAVAILABLE_TEMPLATE } from './local-safety.js';
+import { crisisTemplate, localScreen, maxRisk, QUOTA_TEMPLATE, smartCompanionFallback, UNAVAILABLE_TEMPLATE } from './local-safety.js';
 
 describe('local fallback screen', () => {
   it.each([
@@ -33,5 +33,24 @@ describe('local fallback screen', () => {
 
   it('never claims to contact anyone', () => {
     expect(crisisTemplate(RiskLevel.IMMINENT, true)).toContain("can't contact anyone for you");
+  });
+});
+
+describe('smartCompanionFallback', () => {
+  it('responds warmly to greetings', () => {
+    expect(smartCompanionFallback('Hi')).toContain('MindBridge AI Companion');
+    expect(smartCompanionFallback('Good morning')).toContain('Good morning');
+    expect(smartCompanionFallback('Good evening')).toContain('Good evening');
+  });
+
+  it('provides supportive advice for emotional themes', () => {
+    expect(smartCompanionFallback('I feel so anxious and panicked')).toContain('slow breath');
+    expect(smartCompanionFallback('I am feeling very stressed and burnt out')).toContain('small next step');
+    expect(smartCompanionFallback('I feel lonely and isolated')).toContain('not alone');
+    expect(smartCompanionFallback('I cannot sleep')).toContain('wind-down');
+  });
+
+  it('falls back to UNAVAILABLE_TEMPLATE for unhandled phrases like rough day', () => {
+    expect(smartCompanionFallback('rough day')).toBe(UNAVAILABLE_TEMPLATE);
   });
 });
