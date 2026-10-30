@@ -1,0 +1,12 @@
+{
+  "name": "mindbridge-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MindBridge mental health platform workspace",
+  "scripts": {
+    "build:shared": "npm --prefix packages/shared-types ci && npm --prefix packages/shared-types run build",
+    "build:web": "npm --prefix packages/shared-types run build && npm --prefix apps/web ci && npm --prefix apps/web run build -- --configuration production",
+    "build:api": "npm --prefix packages/shared-types run build && npm --prefix apps/api ci && npm --prefix apps/api run build",
+    "build": "npm run build:shared && npm run build:web && npm run build:api"
+  }
+}

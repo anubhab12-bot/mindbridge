@@ -1,0 +1,48 @@
+services:
+  # Web Frontend (Angular SPA)
+  - type: web
+    name: mindbridge-web
+    env: static
+    plan: free
+    buildCommand: cd packages/shared-types && npm ci && npm run build && cd ../../apps/web && npm ci && npm run build -- --configuration production
+    staticPublishPath: apps/web/dist/web/browser
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+
+  # Backend API (NestJS)
+  - type: web
+    name: mindbridge-api
+    env: node
+    plan: free
+    buildCommand: cd packages/shared-types && npm ci && npm run build && cd ../../apps/api && npm ci && npm run build
+    startCommand: cd apps/api && node dist/main.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGO_URI
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: MFA_TOKEN_SECRET
+        generateValue: true
+      - key: FIELD_ENCRYPTION_KEY
+        generateValue: true
+      - key: FILE_SIGNING_SECRET
+        generateValue: true
+
+  # AI Service (FastAPI)
+  - type: web
+    name: mindbridge-ai
+    env: python
+    plan: free
+    buildCommand: cd apps/ai-service && pip install uv && uv sync --frozen --no-dev
+    startCommand: cd apps/ai-service && uv run uvicorn app.asgi:app --host 0.0.0.0 --port $PORT
