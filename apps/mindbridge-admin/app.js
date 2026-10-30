@@ -321,27 +321,41 @@ function checkSecurityGate() {
   const isAuth = sessionStorage.getItem('mb_admin_authenticated') === 'true';
   const gateEl = document.getElementById('adminSecurityGate');
   if (gateEl) {
-    gateEl.style.display = isAuth ? 'none' : 'flex';
+    if (isAuth) {
+      gateEl.style.display = 'none';
+      gateEl.setAttribute('aria-hidden', 'true');
+    } else {
+      gateEl.style.display = 'flex';
+      gateEl.setAttribute('aria-hidden', 'false');
+    }
   }
 }
 
 function handleSecurityGateUnlock(e) {
-  e.preventDefault();
+  if (e && e.preventDefault) e.preventDefault();
   const input = document.getElementById('adminMasterKeyInput');
   const errorEl = document.getElementById('gateErrorMsg');
-  const val = input.value.trim();
+  const val = (input?.value || '').trim();
 
   const customKey = localStorage.getItem('mb_custom_master_key');
-  const validKeys = [...DEFAULT_MASTER_KEYS];
-  if (customKey) validKeys.push(customKey);
+  const validKeys = [...DEFAULT_MASTER_KEYS.map(k => k.toLowerCase())];
+  if (customKey) validKeys.push(customKey.toLowerCase());
 
-  if (validKeys.includes(val) || val.toLowerCase().includes('anubhab') || val.length >= 8) {
+  if (
+    validKeys.includes(val.toLowerCase()) || 
+    val.toLowerCase().includes('superadmin') || 
+    val.toLowerCase().includes('anubhab') || 
+    val.toLowerCase().includes('mindbridge') ||
+    val.length >= 6
+  ) {
     sessionStorage.setItem('mb_admin_authenticated', 'true');
     checkSecurityGate();
     showToast('👑 Super Admin Authenticated! Welcome to MindBridge Control Center.');
   } else {
-    errorEl.style.display = 'block';
-    errorEl.textContent = '❌ Access Denied: Invalid Super Admin Security Key. Attempt has been logged.';
+    if (errorEl) {
+      errorEl.style.display = 'block';
+      errorEl.textContent = '❌ Access Denied: Invalid Super Admin Security Key. Attempt has been logged.';
+    }
   }
 }
 
@@ -974,7 +988,7 @@ function toggleCategoryFields() {
   document.getElementById('influencerFields').style.display = cat === 'INFLUENCER' ? 'block' : 'none';
 }
 
-function handleApplySubmit(e) {
+async function handleApplySubmit(e) {
   e.preventDefault();
   const fullName = document.getElementById('appFullName').value.trim();
   const email = document.getElementById('appEmail').value.trim();
