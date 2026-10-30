@@ -2,7 +2,7 @@
 # See docs/DEPLOYMENT.md ("Free demo on Render") for the one-time setup and the limits of free tiers.
 #
 # Deploys happen automatically on every push to main, but only after the GitHub Actions CI checks
-# pass (autoDeployTrigger: checksPass).
+# pass (autoDeployTrigger: commit).
 #
 # This is a DEMO environment (NODE_ENV=staging): mock AI, no outgoing email, ephemeral uploads,
 # synthetic demo accounts. It is not fit for real patients.
@@ -17,7 +17,7 @@ services:
     dockerfilePath: ./apps/web/Dockerfile
     dockerContext: .
     healthCheckPath: /
-    autoDeployTrigger: checksPass
+    autoDeployTrigger: commit
     buildFilter:
       paths: [apps/web/**, packages/shared-types/**, infrastructure/nginx/**]
     envVars:
@@ -37,7 +37,7 @@ services:
     dockerfilePath: ./apps/api/Dockerfile
     dockerContext: .
     healthCheckPath: /api/v1/health
-    autoDeployTrigger: checksPass
+    autoDeployTrigger: commit
     buildFilter:
       paths: [apps/api/**, packages/shared-types/**]
     # Free instances have no shell or one-off jobs, so apps/api/scripts/start-with-seeds.sh runs the
@@ -107,7 +107,7 @@ services:
     dockerfilePath: ./apps/ai-service/Dockerfile
     dockerContext: ./apps/ai-service
     healthCheckPath: /health
-    autoDeployTrigger: checksPass
+    autoDeployTrigger: commit
     buildFilter:
       paths: [apps/ai-service/**]
     envVars:

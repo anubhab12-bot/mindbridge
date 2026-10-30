@@ -1,6 +1,7 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import type { CouncilApplicationCredentials } from '@mindbridge/shared-types';
 
 @Component({
   selector: 'mb-apply-admin',
@@ -188,7 +189,7 @@ import { RouterLink } from '@angular/router';
       </div>
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
     .apply-page {
       max-width: 720px;
@@ -361,7 +362,7 @@ export class ApplyAdminPage {
     this.applicantName.set(val.fullName);
     this.applicantEmail.set(val.email);
 
-    const credentials: Record<string, any> = {};
+    const credentials: CouncilApplicationCredentials = {};
     if (val.category === 'SPECIALIST') {
       credentials.licenseNumber = val.licenseNumber;
       credentials.yearsExperience = val.yearsExperience;

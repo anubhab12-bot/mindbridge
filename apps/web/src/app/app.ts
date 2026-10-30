@@ -6,7 +6,7 @@ import { ToastOutletComponent } from './shared/ui/toast-outlet';
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, ToastOutletComponent, ConfirmDialogComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `<router-outlet /><mb-toasts /><mb-confirm-dialog />`,
 })
 export class App {}

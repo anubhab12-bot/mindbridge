@@ -172,3 +172,69 @@ table.table { width: 100%; border-collapse: collapse; font-size: 0.95rem;
   font-size: 0.85rem;
   font-weight: 600;
 }
+
+/* ---------------------------------------------------------------- High-End Animations & Soundwaves */
+@keyframes mb-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes mb-pulse-ring {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+  70% { transform: scale(1); box-shadow: 0 0 0 16px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+@keyframes mb-soundwave {
+  0%, 100% { height: 6px; }
+  50% { height: 26px; }
+}
+
+.animate-float {
+  animation: mb-float 4.5s ease-in-out infinite;
+}
+
+.animate-glow-ring {
+  animation: mb-pulse-ring 2.5s infinite;
+}
+
+/* Soundwave visualizer bars */
+.soundwave-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 28px;
+}
+.soundwave-bar {
+  width: 4px;
+  background: linear-gradient(180deg, #10b981 0%, #0d9488 100%);
+  border-radius: 999px;
+  animation: mb-soundwave 1.2s ease-in-out infinite;
+}
+.soundwave-bar:nth-child(1) { animation-delay: 0.1s; height: 10px; }
+.soundwave-bar:nth-child(2) { animation-delay: 0.3s; height: 22px; }
+.soundwave-bar:nth-child(3) { animation-delay: 0.5s; height: 16px; }
+.soundwave-bar:nth-child(4) { animation-delay: 0.2s; height: 26px; }
+.soundwave-bar:nth-child(5) { animation-delay: 0.4s; height: 14px; }
+
+@keyframes mb-glow-border {
+  0%, 100% { border-color: rgba(16, 185, 129, 0.4); box-shadow: 0 0 20px rgba(16, 185, 129, 0.15); }
+  50% { border-color: rgba(59, 130, 246, 0.4); box-shadow: 0 0 25px rgba(59, 130, 246, 0.2); }
+}
+
+@keyframes mb-gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.glow-animated-border {
+  animation: mb-glow-border 4s ease-in-out infinite;
+}
+
+.gradient-animated-bg {
+  background: linear-gradient(135deg, #0f766e, #1e3a8a, #4338ca, #0f766e);
+  background-size: 300% 300%;
+  animation: mb-gradient-shift 12s ease infinite;
+}
+

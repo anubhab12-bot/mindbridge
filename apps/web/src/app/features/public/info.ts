@@ -56,7 +56,18 @@ import { ProfessionalCategory, SCOPE_OF_PRACTICE } from '@mindbridge/shared-type
           replies are clearly labelled.
         </p>
       </section>
-      <p><a routerLink="/register" class="btn">Get started</a></p>
+      <section class="card glow-animated-border" style="margin: 24px 0; background: linear-gradient(180deg, var(--mb-surface) 0%, rgba(240, 253, 250, 0.6) 100%);">
+        <div class="row-between" style="flex-wrap: wrap; gap: 12px;">
+          <div>
+            <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #059669; font-weight: 700;">🔴 Live Walkthrough Simulator</span>
+            <h3 style="margin: 6px 0 4px;">Interactive Multilingual AI & Video Demo</h3>
+            <p class="muted small" style="margin: 0;">Experience the full platform journey in Hindi, Bengali, or English on our animated showcase.</p>
+          </div>
+          <a routerLink="/" class="btn btn-primary btn-sm">Watch Video & Try AI Character →</a>
+        </div>
+      </section>
+
+      <p><a routerLink="/register" class="btn btn-primary-elevated">Get started free</a></p>
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
