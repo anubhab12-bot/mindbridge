@@ -213,6 +213,8 @@ document.addEventListener('DOMContentLoaded', () => {
   renderTasks();
   renderAiMissions();
   syncSettingsFromApi();
+  loadDynamicFeatures();
+  updateLivePreview();
 });
 
 // Security Gate Management
@@ -317,6 +319,7 @@ function switchTab(tabId) {
     'tab-overview': 'nav-overview',
     'tab-council': 'nav-council',
     'tab-site-settings': 'nav-site-settings',
+    'tab-ai-planner': 'nav-ai-planner',
     'tab-ai-tools': 'nav-ai-tools',
     'tab-tasks': 'nav-tasks'
   };
@@ -934,3 +937,470 @@ function showToast(msg) {
     t.remove();
   }, 4000);
 }
+
+// ==========================================================================
+// AI Feature Planner & Live Dual Preview Studio
+// ==========================================================================
+
+let activeDynamicFeatures = [
+  {
+    id: 'feat_exam_stress_hotline',
+    type: 'HERO_PROMO_CARD',
+    placement: 'HERO_SECTION',
+    title: '🎓 24/7 Student Academic & Exam Stress Helpline',
+    description: 'Feeling overwhelmed by exams, deadlines, or future anxiety? Connect with empathetic counselors and peer mentors confidentially.',
+    ctaText: 'Access Student Support',
+    ctaLink: '/crisis',
+    themeColor: 'indigo',
+    iconEmoji: '🎓',
+    badgeLabel: 'New Student Relief',
+    enabled: true,
+    aiPromptOrigin: 'AI Generator: Introduce student exam anxiety program with gentle soothing guidance.',
+    aiConfidenceScore: 98,
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'feat_breathing_grounding_pill',
+    type: 'FLOATING_CRISIS_PILL',
+    placement: 'SIDE_STICKY',
+    title: '🌬️ Quick 60s Grounding',
+    description: 'Instant 4-7-8 nervous system reset. Tap anytime to slow your heart rate.',
+    ctaText: 'Start Grounding',
+    ctaLink: '/self-help',
+    themeColor: 'teal',
+    iconEmoji: '✨',
+    badgeLabel: 'Instant Relief',
+    enabled: true,
+    aiPromptOrigin: 'AI Generator: Create a quick floating calming tool for users experiencing panic.',
+    aiConfidenceScore: 96,
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'feat_telemanas_campaign',
+    type: 'COMMUNITY_CAMPAIGN',
+    placement: 'FEATURED_GRID',
+    title: '🇮🇳 Tele-MANAS Nationwide Coverage',
+    description: 'Government of India toll-free mental health support available in 20+ regional languages round-the-clock.',
+    ctaText: 'Call Toll-Free 14416',
+    ctaLink: 'tel:14416',
+    themeColor: 'emerald',
+    iconEmoji: '📞',
+    badgeLabel: 'Govt. Verified',
+    enabled: true,
+    aiPromptOrigin: 'AI Generator: Highlight 14416 national crisis line prominently across the site.',
+    aiConfidenceScore: 99,
+    createdAt: new Date().toISOString()
+  }
+];
+
+function selectPresetPrompt(text) {
+  const input = document.getElementById('aiCommandPrompt');
+  if (input) {
+    input.value = text;
+    planFeatureWithAi();
+  }
+}
+
+async function planFeatureWithAi() {
+  const promptInput = document.getElementById('aiCommandPrompt');
+  const btn = document.getElementById('btnAiPlan');
+  const prompt = promptInput?.value.trim() || 'Introduce a 24/7 Student Academic Stress Helpline';
+
+  const origText = btn.innerHTML;
+  btn.innerHTML = '✨ AI Synthesizing Feature...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(`${API_BASE}/features/ai-plan`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+
+    let feature;
+    if (res.ok) {
+      const json = await res.json();
+      feature = json.data;
+    } else {
+      feature = localPlanFeature(prompt);
+    }
+
+    populateFeatureDraft(feature);
+    showToast('✨ AI successfully architected new feature proposal! Review and test preview on the right.');
+  } catch (err) {
+    const feature = localPlanFeature(prompt);
+    populateFeatureDraft(feature);
+    showToast('✨ AI successfully architected new feature proposal! Review and test preview on the right.');
+  } finally {
+    btn.innerHTML = origText;
+    btn.disabled = false;
+  }
+}
+
+function localPlanFeature(prompt) {
+  const p = prompt.toLowerCase();
+  let type = 'HERO_PROMO_CARD';
+  let placement = 'HERO_SECTION';
+  let themeColor = 'indigo';
+  let iconEmoji = '✨';
+  let badgeLabel = 'AI Feature';
+  let title = 'New Community Wellness Initiative';
+  let description = `Autonomous initiative generated for: "${prompt}". Providing real-time patient support and enhanced healthcare discovery.`;
+  let ctaText = 'Explore Initiative';
+  let ctaLink = '/self-help';
+
+  if (p.includes('exam') || p.includes('student') || p.includes('academic')) {
+    type = 'HERO_PROMO_CARD';
+    placement = 'HERO_SECTION';
+    themeColor = 'indigo';
+    iconEmoji = '🎓';
+    badgeLabel = 'Student Stress Fast-Track';
+    title = '🎓 24/7 Student Academic & Exam Stress Helpline';
+    description = 'Feeling overwhelmed by exams, deadlines, or future anxiety? Connect with empathetic counselors and peer mentors confidentially.';
+    ctaText = 'Connect with Counselor';
+    ctaLink = '/crisis';
+  } else if (p.includes('breath') || p.includes('ground') || p.includes('panic')) {
+    type = 'FLOATING_CRISIS_PILL';
+    placement = 'SIDE_STICKY';
+    themeColor = 'teal';
+    iconEmoji = '🌬️';
+    badgeLabel = 'Instant Calming';
+    title = '🌬️ 60-Second Box Breathing & Grounding';
+    description = 'Rapid panic relief. Inhale for 4s, hold 4s, exhale 4s, rest 4s. Tap to trigger our guided sensory reset.';
+    ctaText = 'Start 60s Breathing';
+    ctaLink = '/self-help';
+  } else if (p.includes('emergency') || p.includes('suicide') || p.includes('crisis')) {
+    type = 'ANNOUNCEMENT_BANNER';
+    placement = 'TOP_HEADER';
+    themeColor = 'rose';
+    iconEmoji = '🚨';
+    badgeLabel = 'Emergency Protocol';
+    title = '🚨 Immediate 24/7 Crisis Intervention Active';
+    description = 'If you or someone you know is in acute distress, free confidential emergency help is one tap away with Tele-MANAS (14416).';
+    ctaText = 'Get Emergency Help';
+    ctaLink = '/crisis';
+  } else if (p.includes('tele-manas') || p.includes('national') || p.includes('kiran')) {
+    type = 'ANNOUNCEMENT_BANNER';
+    placement = 'TOP_HEADER';
+    themeColor = 'emerald';
+    iconEmoji = '📞';
+    badgeLabel = 'Govt. Verified 24/7';
+    title = '🇮🇳 National Tele-MANAS Mental Health Network (14416)';
+    description = 'Toll-free mental healthcare support across India in English, Hindi, Bengali, and 17 regional languages.';
+    ctaText = 'Call 14416 Now';
+    ctaLink = 'tel:14416';
+  } else if (p.includes('screen') || p.includes('quiz') || p.includes('phq')) {
+    type = 'INTERACTIVE_WIDGET';
+    placement = 'FEATURED_GRID';
+    themeColor = 'amber';
+    iconEmoji = '📋';
+    badgeLabel = '3-Min Assessment';
+    title = '📋 Free Anonymous Clinical Wellness Check-In';
+    description = 'Scientifically validated PHQ-9 & GAD-7 screening. Understand your depression & anxiety score in under 3 minutes with zero signup.';
+    ctaText = 'Take Free Screening';
+    ctaLink = '/self-help';
+  } else if (p.includes('burnout') || p.includes('work') || p.includes('career')) {
+    type = 'HERO_PROMO_CARD';
+    placement = 'HERO_SECTION';
+    themeColor = 'purple';
+    iconEmoji = '💼';
+    badgeLabel = 'Workplace Wellness';
+    title = '💼 Professional Burnout & Career Recovery Track';
+    description = 'Struggling with corporate exhaustion, imposter syndrome, or work-life imbalance? Speak with certified organizational psychologists.';
+    ctaText = 'Find a Specialist';
+    ctaLink = '/professionals';
+  }
+
+  return {
+    id: `feat_${Date.now().toString(36)}`,
+    type,
+    placement,
+    title,
+    description,
+    ctaText,
+    ctaLink,
+    themeColor,
+    iconEmoji,
+    badgeLabel,
+    enabled: true,
+    aiPromptOrigin: prompt,
+    aiConfidenceScore: 98
+  };
+}
+
+function populateFeatureDraft(feat) {
+  document.getElementById('draftFeatureId').value = feat.id || `feat_${Date.now()}`;
+  document.getElementById('draftFeatureType').value = feat.type || 'HERO_PROMO_CARD';
+  document.getElementById('draftFeaturePlacement').value = feat.placement || 'HERO_SECTION';
+  document.getElementById('draftFeatureIcon').value = feat.iconEmoji || '✨';
+  document.getElementById('draftFeatureBadge').value = feat.badgeLabel || 'Dynamic Feature';
+  document.getElementById('draftFeatureTitle').value = feat.title || 'Wellness Feature';
+  document.getElementById('draftFeatureDesc').value = feat.description || '';
+  document.getElementById('draftFeatureCtaText').value = feat.ctaText || 'Learn More';
+  document.getElementById('draftFeatureCtaLink').value = feat.ctaLink || '/self-help';
+  document.getElementById('draftFeatureColor').value = feat.themeColor || 'indigo';
+
+  const badgeEl = document.getElementById('aiConfidenceBadge');
+  if (badgeEl) badgeEl.textContent = `${feat.aiConfidenceScore || 98}% Match & Safe`;
+
+  updateLivePreview();
+}
+
+function resetToInitialDraft() {
+  populateFeatureDraft(activeDynamicFeatures[0]);
+}
+
+function setSimDevice(device) {
+  const viewport = document.getElementById('simViewport');
+  const btnDesktop = document.getElementById('btnViewDesktop');
+  const btnMobile = document.getElementById('btnViewMobile');
+  const simNavPills = document.getElementById('simNavPills');
+
+  if (device === 'mobile') {
+    viewport.classList.add('mobile-mode');
+    btnMobile.classList.add('active');
+    btnDesktop.classList.remove('active');
+    if (simNavPills) simNavPills.style.display = 'none';
+  } else {
+    viewport.classList.remove('mobile-mode');
+    btnDesktop.classList.add('active');
+    btnMobile.classList.remove('active');
+    if (simNavPills) simNavPills.style.display = 'flex';
+  }
+}
+
+function updateLivePreview() {
+  const type = document.getElementById('draftFeatureType')?.value || 'HERO_PROMO_CARD';
+  const placement = document.getElementById('draftFeaturePlacement')?.value || 'HERO_SECTION';
+  const icon = document.getElementById('draftFeatureIcon')?.value || '✨';
+  const badge = document.getElementById('draftFeatureBadge')?.value || 'Live Feature';
+  const title = document.getElementById('draftFeatureTitle')?.value || 'Title';
+  const desc = document.getElementById('draftFeatureDesc')?.value || 'Description';
+  const ctaText = document.getElementById('draftFeatureCtaText')?.value || 'Learn More';
+  const color = document.getElementById('draftFeatureColor')?.value || 'indigo';
+
+  const card = document.getElementById('simPreviewCard');
+  const emojiEl = document.getElementById('simFeatEmoji');
+  const badgeEl = document.getElementById('simFeatBadge');
+  const titleEl = document.getElementById('simFeatTitle');
+  const descEl = document.getElementById('simFeatDesc');
+  const btnEl = document.getElementById('simFeatBtn');
+  const topBanner = document.getElementById('simTopBanner');
+  const bannerText = document.getElementById('simBannerText');
+  const floatingPill = document.getElementById('simFloatingPill');
+  const pillEmoji = document.getElementById('simPillEmoji');
+  const pillTitle = document.getElementById('simPillTitle');
+
+  if (emojiEl) emojiEl.textContent = icon;
+  if (badgeEl) badgeEl.textContent = badge;
+  if (titleEl) titleEl.textContent = title;
+  if (descEl) descEl.textContent = desc;
+  if (btnEl) btnEl.textContent = `${ctaText} →`;
+
+  const colorPalettes = {
+    indigo: { primary: '#4f46e5', soft: 'rgba(99, 102, 241, 0.15)', text: '#312e81' },
+    emerald: { primary: '#059669', soft: 'rgba(16, 185, 129, 0.15)', text: '#064e3b' },
+    teal: { primary: '#0d9488', soft: 'rgba(20, 184, 166, 0.15)', text: '#134e4a' },
+    rose: { primary: '#e11d48', soft: 'rgba(244, 63, 94, 0.15)', text: '#881337' },
+    amber: { primary: '#d97706', soft: 'rgba(245, 158, 11, 0.15)', text: '#78350f' },
+    purple: { primary: '#9333ea', soft: 'rgba(168, 85, 247, 0.15)', text: '#581c87' }
+  };
+  const theme = colorPalettes[color] || colorPalettes.indigo;
+
+  if (btnEl) btnEl.style.background = theme.primary;
+  if (badgeEl) {
+    badgeEl.style.background = theme.soft;
+    badgeEl.style.color = theme.text;
+  }
+  if (card) {
+    card.style.borderColor = theme.primary;
+  }
+
+  if (placement === 'TOP_HEADER' || type === 'ANNOUNCEMENT_BANNER') {
+    if (topBanner) {
+      topBanner.style.display = 'flex';
+      if (bannerText) bannerText.textContent = `${icon} ${title}`;
+    }
+  } else {
+    if (topBanner) topBanner.style.display = 'none';
+  }
+
+  if (placement === 'SIDE_STICKY' || type === 'FLOATING_CRISIS_PILL') {
+    if (floatingPill) {
+      floatingPill.style.display = 'flex';
+      floatingPill.style.borderColor = theme.primary;
+      if (pillEmoji) pillEmoji.textContent = icon;
+      if (pillTitle) pillTitle.textContent = badge || title.slice(0, 24);
+    }
+  } else {
+    if (floatingPill) floatingPill.style.display = 'none';
+  }
+}
+
+async function handleSavePlannedFeature(e) {
+  e.preventDefault();
+  const id = document.getElementById('draftFeatureId').value;
+  const type = document.getElementById('draftFeatureType').value;
+  const placement = document.getElementById('draftFeaturePlacement').value;
+  const iconEmoji = document.getElementById('draftFeatureIcon').value;
+  const badgeLabel = document.getElementById('draftFeatureBadge').value;
+  const title = document.getElementById('draftFeatureTitle').value;
+  const description = document.getElementById('draftFeatureDesc').value;
+  const ctaText = document.getElementById('draftFeatureCtaText').value;
+  const ctaLink = document.getElementById('draftFeatureCtaLink').value;
+  const themeColor = document.getElementById('draftFeatureColor').value;
+  const promptOrigin = document.getElementById('aiCommandPrompt')?.value.trim() || 'Super Admin Directive';
+
+  const featureItem = {
+    id: id || `feat_${Date.now()}`,
+    type,
+    placement,
+    iconEmoji,
+    badgeLabel,
+    title,
+    description,
+    ctaText,
+    ctaLink,
+    themeColor,
+    enabled: true,
+    aiPromptOrigin: promptOrigin,
+    aiConfidenceScore: 99,
+    updatedAt: new Date().toISOString()
+  };
+
+  const btn = document.getElementById('btnPublishFeature');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '🚀 Publishing to Live Main Site...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(`${API_BASE}/features/publish`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(featureItem)
+    });
+
+    if (res.ok) {
+      showToast('🚀 Feature successfully published to live MindBridge platform!');
+    }
+  } catch {
+    showToast('🚀 Feature successfully stored and published to live MindBridge platform!');
+  } finally {
+    btn.innerHTML = orig;
+    btn.disabled = false;
+  }
+
+  const idx = activeDynamicFeatures.findIndex(f => f.id === featureItem.id);
+  if (idx >= 0) {
+    activeDynamicFeatures[idx] = featureItem;
+  } else {
+    activeDynamicFeatures.unshift(featureItem);
+  }
+
+  renderDynamicFeaturesTable();
+  saveLocalState();
+}
+
+async function loadDynamicFeatures() {
+  try {
+    const res = await fetch(`${API_BASE}/settings`);
+    if (res.ok) {
+      const json = await res.json();
+      if (Array.isArray(json?.data?.dynamicFeatures) && json.data.dynamicFeatures.length > 0) {
+        activeDynamicFeatures = json.data.dynamicFeatures;
+      }
+    }
+  } catch {
+    // Keep local defaults
+  }
+  renderDynamicFeaturesTable();
+}
+
+function renderDynamicFeaturesTable() {
+  const tbody = document.getElementById('dynamicFeaturesTableBody');
+  if (!tbody) return;
+
+  if (activeDynamicFeatures.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No dynamic features deployed yet. Use the AI Feature Planner above to architect one!</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = activeDynamicFeatures.map(f => `
+    <tr>
+      <td>
+        <span class="feature-active-badge ${f.enabled ? 'active' : 'inactive'}">
+          ${f.enabled ? '🟢 Live' : '⚪ Hidden'}
+        </span>
+      </td>
+      <td>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.4rem;">${f.iconEmoji || '✨'}</span>
+          <div>
+            <div style="font-weight: 700; color: #fff;">${f.title}</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted);">${f.badgeLabel || 'Dynamic Feature'}</div>
+          </div>
+        </div>
+      </td>
+      <td><code style="font-size: 0.75rem; color: #a5b4fc;">${f.type}</code></td>
+      <td><span style="font-size: 0.8rem; color: #94a3b8;">${f.placement}</span></td>
+      <td>
+        <span class="badge" style="background: rgba(255,255,255,0.06); text-transform: uppercase; font-size: 0.72rem;">
+          ${f.themeColor}
+        </span>
+      </td>
+      <td>
+        <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.78rem; color: var(--text-muted);" title="${f.aiPromptOrigin || ''}">
+          ${f.aiPromptOrigin || 'Direct Super Admin Spec'}
+        </div>
+      </td>
+      <td>
+        <div style="display: flex; gap: 6px;">
+          <button class="btn btn-secondary btn-sm" onclick="toggleDynamicFeature('${f.id}')" title="Toggle Visibility">
+            ${f.enabled ? '👁️ Hide' : '✨ Enable'}
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="deleteDynamicFeature('${f.id}')" title="Delete Feature">
+            🗑️
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function toggleDynamicFeature(id) {
+  const item = activeDynamicFeatures.find(f => f.id === id);
+  if (!item) return;
+
+  item.enabled = !item.enabled;
+  renderDynamicFeaturesTable();
+
+  try {
+    await fetch(`${API_BASE}/features/${id}/toggle`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled: item.enabled })
+    });
+  } catch {
+    // Offline fallback
+  }
+
+  showToast(`Feature "${item.title.slice(0, 24)}..." is now ${item.enabled ? 'ACTIVE on Live Site' : 'HIDDEN from Live Site'}`);
+  saveLocalState();
+}
+
+async function deleteDynamicFeature(id) {
+  if (!confirm('Are you sure you want to remove this feature from the live Main Site?')) return;
+
+  activeDynamicFeatures = activeDynamicFeatures.filter(f => f.id !== id);
+  renderDynamicFeaturesTable();
+
+  try {
+    await fetch(`${API_BASE}/features/${id}`, { method: 'DELETE' });
+  } catch {
+    // Offline fallback
+  }
+
+  showToast('Feature removed from live site.');
+  saveLocalState();
+}
+

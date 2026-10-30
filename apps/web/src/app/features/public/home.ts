@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, signal, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 
@@ -611,6 +611,33 @@ interface RecoveryTrack {
       </div>
     </section>
 
+    <!-- DYNAMIC SUPER ADMIN AI FEATURES & INITIATIVES -->
+    @if (dynamicFeatures().length > 0) {
+      <section class="container dynamic-features-section">
+        <div class="section-header center">
+          <span class="eyebrow-accent">⚡ Executive Council Live Directives</span>
+          <h2>Active Community Initiatives & Crisis Fast-Tracks</h2>
+          <p class="muted">Live features introduced and deployed dynamically via the Super Admin AI Feature Planner.</p>
+        </div>
+
+        <div class="dynamic-features-grid">
+          @for (item of dynamicFeatures(); track item.id) {
+            <article class="dynamic-feature-card" [class]="'df-theme-' + item.themeColor">
+              <div class="df-card-top">
+                <span class="df-emoji">{{ item.iconEmoji }}</span>
+                <span class="df-badge">{{ item.badgeLabel || 'Dynamic Initiative' }}</span>
+              </div>
+              <h3 class="df-title">{{ item.title }}</h3>
+              <p class="df-desc">{{ item.description }}</p>
+              <div class="df-card-bottom">
+                <a [href]="item.ctaLink" class="btn btn-sm df-cta-btn">{{ item.ctaText }} →</a>
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+    }
+
     <!-- CORE FEATURES -->
     <section class="container page">
       <div class="section-header center">
@@ -1070,6 +1097,70 @@ interface RecoveryTrack {
       }
     }
 
+    /* Dynamic Features Section */
+    .dynamic-features-section {
+      padding: 40px 0 20px;
+    }
+    .dynamic-features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+      margin-top: 24px;
+    }
+    .dynamic-feature-card {
+      background: var(--mb-surface);
+      border: 1px solid var(--mb-border);
+      border-radius: var(--mb-radius-lg);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+      &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.09);
+      }
+    }
+    .df-theme-indigo { border-top: 4px solid #6366f1; background: linear-gradient(180deg, rgba(99, 102, 241, 0.03) 0%, var(--mb-surface) 100%); }
+    .df-theme-emerald { border-top: 4px solid #10b981; background: linear-gradient(180deg, rgba(16, 185, 129, 0.03) 0%, var(--mb-surface) 100%); }
+    .df-theme-teal { border-top: 4px solid #14b8a6; background: linear-gradient(180deg, rgba(20, 184, 166, 0.03) 0%, var(--mb-surface) 100%); }
+    .df-theme-rose { border-top: 4px solid #f43f5e; background: linear-gradient(180deg, rgba(244, 63, 94, 0.03) 0%, var(--mb-surface) 100%); }
+    .df-theme-amber { border-top: 4px solid #f59e0b; background: linear-gradient(180deg, rgba(245, 158, 11, 0.03) 0%, var(--mb-surface) 100%); }
+    .df-theme-purple { border-top: 4px solid #a855f7; background: linear-gradient(180deg, rgba(168, 85, 247, 0.03) 0%, var(--mb-surface) 100%); }
+
+    .df-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .df-emoji { font-size: 1.8rem; }
+    .df-badge {
+      font-size: 0.72rem;
+      font-weight: 750;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: var(--mb-primary-soft);
+      color: var(--mb-primary-strong);
+    }
+    .df-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin: 0 0 8px;
+    }
+    .df-desc {
+      color: var(--mb-text-muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+      flex-grow: 1;
+      margin-bottom: 18px;
+    }
+    .df-cta-btn {
+      align-self: flex-start;
+      font-weight: 650;
+    }
+
     .features {
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: var(--mb-space-5);
@@ -1527,8 +1618,10 @@ interface RecoveryTrack {
     }
   `,
 })
-export class HomePage {
+export class HomePage implements OnInit {
   protected readonly auth = inject(AuthService);
+
+  protected readonly dynamicFeatures = signal<any[]>([]);
 
   protected readonly selectedMoodIndex = signal(1); // Default to Anxious
   protected readonly selectedTrackIndex = signal(0); // Default to Anxiety track
@@ -1698,6 +1791,23 @@ export class HomePage {
       if (lang === 'hi') return 'नमस्ते! मैं अनन्य हूँ। पढ़ाई, करियर की चिंता या दैनिक तनाव से परेशान हैं? चलिए इसे छोटे-छोटे आसान कदमों में बांटते हैं ताकि आपकी ऊर्जा और आत्मविश्वास फिर से लौट सके।';
       if (lang === 'bn') return 'হ্যালো! আমি অনন্যা। পড়াশোনা, ক্যারিয়ারের চাপ কিংবা অতিরিক্ত দুশ্চিন্তা হচ্ছে? চলুন একসাথে বিষয়গুলোকে সহজ করে সমাধান করি, যাতে আপনার আত্মবিশ্বাস ফিরে আসে।';
       return "Hey there! I'm Ananya. Struggling with exam stress, burnout, or daily chaos? Let's break it down into easy, bite-sized steps so you can regain your spark and focus.";
+    }
+  }
+
+  async ngOnInit() {
+    try {
+      const res = await fetch('https://mindbridge-api-x99i.onrender.com/api/v1/governance/settings');
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json?.data?.dynamicFeatures)) {
+          const active = json.data.dynamicFeatures.filter((f: any) => f.enabled && f.placement !== 'TOP_HEADER' && f.placement !== 'SIDE_STICKY');
+          if (active.length > 0) {
+            this.dynamicFeatures.set(active);
+          }
+        }
+      }
+    } catch {
+      // Fallback
     }
   }
 }

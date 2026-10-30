@@ -74,10 +74,25 @@ import { AuthService } from '../core/auth/auth.service';
           <a routerLink="/legal/terms">Terms</a>
           <a routerLink="/legal/ai">How we use AI</a>
           <a routerLink="/crisis">Crisis support (14416)</a>
-          <a routerLink="/admin/overview">Public Impact Telemetry</a>
+          <a routerLink="/impact">Public Impact Telemetry</a>
         </nav>
       </div>
     </footer>
+
+    <!-- DYNAMIC SUPER ADMIN FLOATING PILL (SIDE_STICKY) -->
+    @if (floatingPill(); as pill) {
+      <div class="dynamic-floating-pill" [class]="'pill-theme-' + pill.themeColor">
+        <a [href]="pill.ctaLink" class="floating-pill-content">
+          <span class="pill-icon">{{ pill.iconEmoji }}</span>
+          <div class="pill-text-col">
+            <span class="pill-badge-tag">{{ pill.badgeLabel || 'Instant Tool' }}</span>
+            <strong class="pill-title">{{ pill.title }}</strong>
+          </div>
+          <span class="pill-arrow">→</span>
+        </a>
+        <button class="pill-close-btn" (click)="dismissFloatingPill()" title="Dismiss">×</button>
+      </div>
+    }
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
@@ -243,6 +258,87 @@ import { AuthService } from '../core/auth/auth.service';
         display: none;
       }
     }
+
+    /* Dynamic Floating Pill */
+    .dynamic-floating-pill {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 6px 14px 6px 10px;
+      border-radius: 999px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(12px);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      animation: pillFloat 4s ease-in-out infinite alternate;
+    }
+    @keyframes pillFloat {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-4px); }
+    }
+    .dynamic-floating-pill:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 14px 30px -5px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.25);
+    }
+    .pill-theme-teal { border-left: 4px solid #14b8a6; }
+    .pill-theme-indigo { border-left: 4px solid #6366f1; }
+    .pill-theme-rose { border-left: 4px solid #f43f5e; }
+    .pill-theme-emerald { border-left: 4px solid #10b981; }
+    .pill-theme-amber { border-left: 4px solid #f59e0b; }
+    .pill-theme-purple { border-left: 4px solid #a855f7; }
+
+    .floating-pill-content {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .pill-icon {
+      font-size: 1.3rem;
+    }
+    .pill-text-col {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+    .pill-badge-tag {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+    }
+    .pill-title {
+      font-size: 0.82rem;
+      font-weight: 650;
+      color: #f8fafc;
+      max-width: 220px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .pill-arrow {
+      color: #38bdf8;
+      font-weight: 700;
+      margin-left: 4px;
+    }
+    .pill-close-btn {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 1.1rem;
+      margin-left: 8px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 2px 4px;
+      border-radius: 4px;
+      &:hover { color: #f8fafc; }
+    }
   `,
 })
 export class PublicLayoutComponent implements OnInit {
@@ -251,6 +347,7 @@ export class PublicLayoutComponent implements OnInit {
   protected readonly bannerVisible = signal(true);
   protected readonly bannerTitle = signal('🌟 24/7 National Mental Health Helplines Active');
   protected readonly bannerMsg = signal('Free, confidential support via Tele-MANAS (14416) & Kiran (1800-599-0019) is available across all Indian states.');
+  protected readonly floatingPill = signal<any | null>(null);
 
   async ngOnInit() {
     try {
@@ -263,6 +360,25 @@ export class PublicLayoutComponent implements OnInit {
           if (b.title) this.bannerTitle.set(b.title);
           if (b.message) this.bannerMsg.set(b.message);
         }
+
+        // Check for active dynamic features
+        if (Array.isArray(json?.data?.dynamicFeatures)) {
+          const activeFeatures = json.data.dynamicFeatures.filter((f: any) => f.enabled);
+
+          // Top Header priority
+          const topHeaderFeature = activeFeatures.find((f: any) => f.placement === 'TOP_HEADER' || f.type === 'ANNOUNCEMENT_BANNER');
+          if (topHeaderFeature) {
+            this.bannerVisible.set(true);
+            this.bannerTitle.set(topHeaderFeature.title);
+            this.bannerMsg.set(topHeaderFeature.description);
+          }
+
+          // Floating Pill priority
+          const pillFeature = activeFeatures.find((f: any) => f.placement === 'SIDE_STICKY' || f.type === 'FLOATING_CRISIS_PILL');
+          if (pillFeature) {
+            this.floatingPill.set(pillFeature);
+          }
+        }
       }
     } catch {
       // Fallback to default
@@ -271,5 +387,9 @@ export class PublicLayoutComponent implements OnInit {
 
   dismissBanner() {
     this.bannerVisible.set(false);
+  }
+
+  dismissFloatingPill() {
+    this.floatingPill.set(null);
   }
 }

@@ -96,6 +96,9 @@
     <a class="tab-link" onclick="switchTab('tab-site-settings')" id="nav-site-settings">
       🌐 Dynamic Main Site Controls
     </a>
+    <a class="tab-link" onclick="switchTab('tab-ai-planner')" id="nav-ai-planner">
+      🚀 AI Feature Planner & Site Maker
+    </a>
     <a class="tab-link" onclick="switchTab('tab-ai-tools')" id="nav-ai-tools">
       ⚡ AI Automations & Screener
     </a>
@@ -384,6 +387,286 @@
               <input type="text" class="form-input" id="statResponse" value="< 45s">
             </div>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: AI FEATURE PLANNER & LIVE MAIN SITE MAKER -->
+    <section id="tab-ai-planner" class="tab-content" style="display: none;">
+      
+      <!-- AI Command Center Hero -->
+      <div class="ai-planner-hero">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 1.5rem;">⚡</span>
+              <h2 style="font-size: 1.35rem; font-weight: 800; color: #fff; margin: 0;">AI Feature Planner & Live Site Maker</h2>
+              <span class="badge badge-ai-safe">Super Admin Autonomous Studio</span>
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.88rem; margin: 6px 0 0;">
+              Command AI to architect new live features, crisis fast-tracks, or interactive self-care widgets. Preview and test on simulated Desktop and Mobile viewports before publishing directly to the live MindBridge platform.
+            </p>
+          </div>
+        </div>
+
+        <!-- Natural Language Command Box -->
+        <div class="form-group" style="margin-bottom: 8px;">
+          <label class="form-label" style="font-weight: 700; color: #e2e8f0; display: flex; justify-content: space-between;">
+            <span>💬 Super Admin Directive to AI:</span>
+            <span style="color: var(--emerald-primary); font-size: 0.75rem;">AI Model: MindBridge Clinical & Governance Synthesizer</span>
+          </label>
+          <textarea 
+            id="aiCommandPrompt" 
+            class="form-textarea" 
+            rows="3" 
+            placeholder="e.g. Introduce a 24/7 Student Academic Stress Helpline with indigo styling, instant counseling button, and gentle exam relief guidance..."
+            style="font-size: 0.95rem; line-height: 1.5; border: 1px solid rgba(99, 102, 241, 0.4);"></textarea>
+        </div>
+
+        <!-- Quick Directive Preset Chips -->
+        <div style="margin-top: 10px;">
+          <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #94a3b8; letter-spacing: 0.05em;">Quick Presets:</span>
+          <div class="preset-chips-row">
+            <button class="preset-chip" onclick="selectPresetPrompt('Introduce a 24/7 Student Academic and Exam Stress Fast-Track with indigo styling and counseling connect')">
+              🎓 Student Exam Stress Hotline
+            </button>
+            <button class="preset-chip" onclick="selectPresetPrompt('Create an instant 60-second box breathing grounding tool for users experiencing sudden panic')">
+              🌬️ 60s Box Breathing Grounding Tool
+            </button>
+            <button class="preset-chip" onclick="selectPresetPrompt('Emergency suicide prevention broadcast linking to Tele-MANAS 14416 national hotline')">
+              🚨 Suicide Prevention Emergency Alert
+            </button>
+            <button class="preset-chip" onclick="selectPresetPrompt('Highlight nationwide Tele-MANAS toll-free 14416 across 20+ regional languages')">
+              🇮🇳 Tele-MANAS 14416 National Helpline
+            </button>
+            <button class="preset-chip" onclick="selectPresetPrompt('Free anonymous 3-minute PHQ-9 depression and anxiety clinical screening tool')">
+              📋 Free PHQ-9 Depression Screener
+            </button>
+            <button class="preset-chip" onclick="selectPresetPrompt('Corporate workplace burnout recovery track with certified organizational psychologists')">
+              💼 Corporate Burnout Recovery Track
+            </button>
+            <button class="preset-chip" onclick="selectPresetPrompt('Grassroots NGO Alliance spotlight uniting 124 mental health non-profits for free therapy')">
+              🤝 Grassroots NGO Alliance Spotlight
+            </button>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
+          <button class="btn btn-primary" onclick="planFeatureWithAi()" id="btnAiPlan">
+            ✨ Ask AI to Plan Feature
+          </button>
+        </div>
+      </div>
+
+      <!-- Studio Grid: Feature Tuner (Left) + Live Dual Viewport Simulator (Right) -->
+      <div class="ai-studio-grid">
+        
+        <!-- Left: AI Structured Draft & Tuning Form -->
+        <div class="section-card" style="margin-bottom: 0;">
+          <div class="section-header" style="margin-bottom: 16px;">
+            <div>
+              <div class="section-title" style="font-size: 1.1rem;">
+                <span>🛠️</span> Feature Specification & Customizer
+              </div>
+              <p class="chart-subtitle" id="aiPlannerStatusSubtitle">AI Draft Proposal Ready for Review</p>
+            </div>
+            <span class="badge badge-ai-safe" id="aiConfidenceBadge">98% Match</span>
+          </div>
+
+          <form onsubmit="handleSavePlannedFeature(event)">
+            <input type="hidden" id="draftFeatureId" value="feat_exam_stress_hotline">
+
+            <div class="form-group">
+              <label class="form-label">Component Type</label>
+              <select class="form-select" id="draftFeatureType" onchange="updateLivePreview()">
+                <option value="HERO_PROMO_CARD">Hero Promo Card (Prominent Card in Hero)</option>
+                <option value="ANNOUNCEMENT_BANNER">Announcement Banner (Top Header Bar)</option>
+                <option value="FLOATING_CRISIS_PILL">Floating Crisis Pill (Sticky Floating Badge)</option>
+                <option value="INTERACTIVE_WIDGET">Interactive Widget (Self-Care & Screening Tool)</option>
+                <option value="COMMUNITY_CAMPAIGN">Community Campaign (Featured Healthcare Grid)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Site Placement</label>
+              <select class="form-select" id="draftFeaturePlacement" onchange="updateLivePreview()">
+                <option value="HERO_SECTION">Hero Section (Above Fold)</option>
+                <option value="TOP_HEADER">Top Header (Sticky Alert)</option>
+                <option value="SIDE_STICKY">Side Sticky (Floating on Bottom-Right)</option>
+                <option value="FEATURED_GRID">Featured Grid (Middle of Main Page)</option>
+                <option value="BOTTOM_CTA">Bottom Action Bar</option>
+              </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 80px 1fr; gap: 12px;">
+              <div class="form-group">
+                <label class="form-label">Icon</label>
+                <input type="text" class="form-input" id="draftFeatureIcon" value="🎓" style="text-align: center; font-size: 1.4rem;" oninput="updateLivePreview()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Badge Label</label>
+                <input type="text" class="form-input" id="draftFeatureBadge" value="Student Stress Fast-Track" oninput="updateLivePreview()">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Headline / Title</label>
+              <input type="text" class="form-input" id="draftFeatureTitle" value="🎓 24/7 Student Academic & Exam Stress Helpline" oninput="updateLivePreview()">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Description / Guidance</label>
+              <textarea class="form-textarea" rows="3" id="draftFeatureDesc" oninput="updateLivePreview()">Feeling overwhelmed by exams, deadlines, or future anxiety? Connect with empathetic counselors and peer mentors confidentially.</textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div class="form-group">
+                <label class="form-label">Action Button Text</label>
+                <input type="text" class="form-input" id="draftFeatureCtaText" value="Connect with Counselor" oninput="updateLivePreview()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Action Link URL</label>
+                <input type="text" class="form-input" id="draftFeatureCtaLink" value="/crisis" oninput="updateLivePreview()">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Theme Color</label>
+              <select class="form-select" id="draftFeatureColor" onchange="updateLivePreview()">
+                <option value="indigo">Indigo (Calm & Academic)</option>
+                <option value="emerald">Emerald (Verified Healing & Government)</option>
+                <option value="teal">Teal (Grounding & Mindfulness)</option>
+                <option value="rose">Rose (Emergency & High Urgency)</option>
+                <option value="amber">Amber (Screening & Assessment)</option>
+                <option value="purple">Purple (Workplace & Creative Resilience)</option>
+              </select>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+              <button type="submit" class="btn btn-primary" style="flex: 1; justify-content: center;" id="btnPublishFeature">
+                🚀 Publish to Live Main Site
+              </button>
+              <button type="button" class="btn btn-secondary" onclick="resetToInitialDraft()">
+                🔄 Reset
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Right: Interactive Dual Viewport Simulator -->
+        <div class="simulator-box">
+          <div class="simulator-topbar">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 1rem;">📱</span>
+              <strong style="font-size: 0.88rem; color: #e2e8f0;">Live Main Site Dual Simulator</strong>
+            </div>
+
+            <div class="device-toggle-group">
+              <button class="device-btn active" id="btnViewDesktop" onclick="setSimDevice('desktop')">
+                🖥️ Desktop (1200px)
+              </button>
+              <button class="device-btn" id="btnViewMobile" onclick="setSimDevice('mobile')">
+                📱 Mobile (390px)
+              </button>
+            </div>
+          </div>
+
+          <!-- Simulator Stage -->
+          <div class="simulator-stage">
+            <div class="sim-viewport" id="simViewport">
+              
+              <!-- Sim Top Announcement (Shown if placement is TOP_HEADER or type is ANNOUNCEMENT_BANNER) -->
+              <div class="sim-top-banner" id="simTopBanner" style="display: flex;">
+                <span id="simBannerText">🌟 National Crisis Network Active · Tele-MANAS (14416)</span>
+                <span style="font-size: 0.7rem; font-weight: 700; text-decoration: underline;">Call Now →</span>
+              </div>
+
+              <!-- Sim Main Header -->
+              <header class="sim-header">
+                <div class="sim-brand">
+                  <span>◐</span> MindBridge
+                </div>
+                <div class="sim-nav-pills" id="simNavPills">
+                  <span>Self-help</span>
+                  <span>Doctors</span>
+                  <span>How it works</span>
+                </div>
+                <a href="#" class="sim-crisis-btn">Get help now</a>
+              </header>
+
+              <!-- Sim Hero Area -->
+              <div class="sim-hero-area">
+                <div class="sim-hero-eyebrow">Verified Healthcare & 124+ Partner NGOs</div>
+                <h1 class="sim-hero-title">A calmer place to heal, reflect and <span style="color: #047857;">find real support.</span></h1>
+                <p class="sim-hero-desc">
+                  MindBridge bridges verified psychiatrists, accredited mental health NGOs, and an intelligent 24/7 companion with end-to-end encrypted reflection.
+                </p>
+
+                <!-- LIVE FEATURE PREVIEW CONTAINER (Dynamically injected and updated) -->
+                <div class="sim-feature-target" id="simPreviewCard">
+                  <div class="sim-preview-tag">✨ Live Preview Component</div>
+                  <div class="sim-feature-inner">
+                    <div class="sim-feat-top">
+                      <span class="sim-feat-emoji" id="simFeatEmoji">🎓</span>
+                      <span class="sim-feat-badge" id="simFeatBadge" style="background: rgba(99, 102, 241, 0.15); color: #4338ca;">Student Stress Fast-Track</span>
+                    </div>
+                    <h3 class="sim-feat-title" id="simFeatTitle">🎓 24/7 Student Academic & Exam Stress Helpline</h3>
+                    <p class="sim-feat-desc" id="simFeatDesc">
+                      Feeling overwhelmed by exams, deadlines, or future anxiety? Connect with empathetic counselors and peer mentors confidentially.
+                    </p>
+                    <a href="#" class="sim-feat-btn" id="simFeatBtn" style="background: #4f46e5;">Connect with Counselor →</a>
+                  </div>
+                </div>
+
+                <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 14px;">
+                  🔒 AES-256 Encrypted · 🛡️ Verified Medical Licenses · 🤝 124 Partner NGOs
+                </div>
+              </div>
+
+              <!-- Sim Bottom Floating Pill Preview (if SIDE_STICKY) -->
+              <div class="sim-floating-pill-target" id="simFloatingPill" style="display: none;">
+                <span id="simPillEmoji">🌬️</span>
+                <span id="simPillTitle">60s Grounding Reset</span>
+                <span style="color: #38bdf8;">→</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Dynamic Features Manager Table -->
+      <div class="section-card" style="margin-top: 24px;">
+        <div class="section-header">
+          <div>
+            <div class="section-title">
+              <span>📋</span> Active Dynamic Features on Main Site
+            </div>
+            <p class="chart-subtitle">
+              Manage all dynamic features currently live on MindBridge. Toggle active visibility or delete items.
+            </p>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="loadDynamicFeatures()">
+            🔄 Refresh List
+          </button>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th>Icon & Feature Title</th>
+                <th>Type</th>
+                <th>Placement</th>
+                <th>Theme</th>
+                <th>AI Prompt Origin</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="dynamicFeaturesTableBody">
+              <!-- Rendered by app.js -->
+            </tbody>
+          </table>
         </div>
       </div>
     </section>

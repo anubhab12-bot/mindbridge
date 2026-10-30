@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { GovernanceService } from './governance.service.js';
 import { Public } from '../../common/auth/decorators.js';
 import type {
   CouncilApplicationCredentials,
   CouncilTaskProof,
+  DynamicFeatureItem,
   DynamicSiteSettings,
 } from '@mindbridge/shared-types';
 
@@ -105,5 +106,37 @@ export class GovernanceController {
   @ApiOperation({ summary: 'Council governance capacity (12 spots) and live population health metrics' })
   async getStats() {
     return { data: await this.governance.getCouncilStats() };
+  }
+
+  // ------------------------------------------------------------- AI Feature Maker & Planner
+  @Public()
+  @Post('features/ai-plan')
+  @ApiOperation({ summary: 'Generate a structured dynamic feature proposal from Super Admin natural language command' })
+  async planFeatureWithAi(@Body() dto: { prompt: string }) {
+    return { data: this.governance.planFeatureWithAi(dto.prompt) };
+  }
+
+  @Public()
+  @Post('features/publish')
+  @ApiOperation({ summary: 'Publish or update a dynamic feature to the live Main Site' })
+  async publishDynamicFeature(@Body() dto: DynamicFeatureItem) {
+    return { data: await this.governance.publishDynamicFeature(dto) };
+  }
+
+  @Public()
+  @Patch('features/:id/toggle')
+  @ApiOperation({ summary: 'Toggle visibility of a dynamic feature on the live Main Site' })
+  async toggleDynamicFeature(
+    @Param('id') id: string,
+    @Body() dto: { enabled?: boolean },
+  ) {
+    return { data: await this.governance.toggleDynamicFeature(id, dto.enabled) };
+  }
+
+  @Public()
+  @Delete('features/:id')
+  @ApiOperation({ summary: 'Remove a dynamic feature from the live Main Site' })
+  async deleteDynamicFeature(@Param('id') id: string) {
+    return { data: await this.governance.deleteDynamicFeature(id) };
   }
 }

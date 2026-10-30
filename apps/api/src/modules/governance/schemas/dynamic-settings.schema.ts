@@ -66,6 +66,61 @@ export class DynamicSettings {
 
   @Prop({ default: 7 })
   occupiedSeats!: number;
+
+  @Prop({
+    type: Array,
+    default: [
+      {
+        id: 'feat_exam_stress_hotline',
+        type: 'HERO_PROMO_CARD',
+        placement: 'HERO_SECTION',
+        title: '🎓 Exam Anxiety & Academic Stress Fast-Track',
+        description: 'Facing exam pressure or career burnout? Connect anonymously with peer counselors & psychologists specializing in student mental wellness.',
+        ctaText: 'Access Student Support',
+        ctaLink: '/crisis',
+        themeColor: 'indigo',
+        iconEmoji: '🎓',
+        badgeLabel: 'New Student Relief',
+        enabled: true,
+        aiPromptOrigin: 'AI Generator: Introduce student exam anxiety program with gentle soothing guidance.',
+        aiConfidenceScore: 98,
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: 'feat_breathing_grounding_pill',
+        type: 'FLOATING_CRISIS_PILL',
+        placement: 'SIDE_STICKY',
+        title: '🌬️ Quick 60s Grounding',
+        description: 'Instant 4-7-8 nervous system reset. Tap anytime to slow your heart rate.',
+        ctaText: 'Start Grounding',
+        ctaLink: '/self-help',
+        themeColor: 'teal',
+        iconEmoji: '✨',
+        badgeLabel: 'Instant Relief',
+        enabled: true,
+        aiPromptOrigin: 'AI Generator: Create a quick floating calming tool for users experiencing panic.',
+        aiConfidenceScore: 96,
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: 'feat_telemanas_campaign',
+        type: 'COMMUNITY_CAMPAIGN',
+        placement: 'FEATURED_GRID',
+        title: '🇮🇳 Tele-MANAS Nationwide Coverage',
+        description: 'Government of India toll-free mental health support available in 20+ regional languages round-the-clock.',
+        ctaText: 'Call Toll-Free 14416',
+        ctaLink: 'tel:14416',
+        themeColor: 'emerald',
+        iconEmoji: '📞',
+        badgeLabel: 'Govt. Verified',
+        enabled: true,
+        aiPromptOrigin: 'AI Generator: Highlight 14416 national crisis line prominently across the site.',
+        aiConfidenceScore: 99,
+        createdAt: new Date().toISOString(),
+      },
+    ],
+  })
+  dynamicFeatures!: Array<any>;
 }
 
 export const DynamicSettingsSchema = SchemaFactory.createForClass(DynamicSettings);

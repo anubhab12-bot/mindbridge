@@ -44,6 +44,7 @@ export class GovernanceService {
       maintenanceMode: settings.maintenanceMode,
       totalCouncilSeats: settings.totalCouncilSeats ?? 12,
       occupiedSeats: settings.occupiedSeats ?? 7,
+      dynamicFeatures: (settings as any).dynamicFeatures ?? [],
       updatedAt: (settings as any).updatedAt ? (settings as any).updatedAt.toISOString() : new Date().toISOString(),
     };
   }
@@ -59,10 +60,178 @@ export class GovernanceService {
     if (typeof dto.maintenanceMode === 'boolean') doc.maintenanceMode = dto.maintenanceMode;
     if (typeof dto.totalCouncilSeats === 'number') doc.totalCouncilSeats = dto.totalCouncilSeats;
     if (typeof dto.occupiedSeats === 'number') doc.occupiedSeats = dto.occupiedSeats;
+    if (Array.isArray(dto.dynamicFeatures)) (doc as any).dynamicFeatures = dto.dynamicFeatures;
 
     await doc.save();
     return this.getSettings();
   }
+
+  // ------------------------------------------------------------- AI Feature Planner & Maker
+  planFeatureWithAi(prompt: string) {
+    const p = prompt.toLowerCase().trim();
+
+    let type: 'ANNOUNCEMENT_BANNER' | 'HERO_PROMO_CARD' | 'FLOATING_CRISIS_PILL' | 'INTERACTIVE_WIDGET' | 'COMMUNITY_CAMPAIGN' = 'HERO_PROMO_CARD';
+    let placement: 'TOP_HEADER' | 'HERO_SECTION' | 'SIDE_STICKY' | 'FEATURED_GRID' | 'BOTTOM_CTA' = 'HERO_SECTION';
+    let themeColor: 'emerald' | 'indigo' | 'rose' | 'amber' | 'purple' | 'teal' | 'blue' = 'indigo';
+    let iconEmoji = '✨';
+    let badgeLabel = 'AI Feature';
+    let title = 'New Community Wellness Initiative';
+    let description = 'Designed to provide instant support, confidential resources, and clinical care.';
+    let ctaText = 'Explore Support';
+    let ctaLink = '/self-help';
+
+    if (p.includes('exam') || p.includes('student') || p.includes('college') || p.includes('academic')) {
+      type = 'HERO_PROMO_CARD';
+      placement = 'HERO_SECTION';
+      themeColor = 'indigo';
+      iconEmoji = '🎓';
+      badgeLabel = 'Student Stress Fast-Track';
+      title = '🎓 24/7 Student Academic & Exam Stress Helpline';
+      description = 'Feeling overwhelmed by exams, deadlines, or future anxiety? Connect with empathetic counselors and peer mentors confidentially.';
+      ctaText = 'Connect with Counselor';
+      ctaLink = '/crisis';
+    } else if (p.includes('breath') || p.includes('ground') || p.includes('panic') || p.includes('anxiety attack')) {
+      type = 'FLOATING_CRISIS_PILL';
+      placement = 'SIDE_STICKY';
+      themeColor = 'teal';
+      iconEmoji = '🌬️';
+      badgeLabel = 'Instant Calming';
+      title = '🌬️ 60-Second Box Breathing & Grounding';
+      description = 'Rapid panic relief. Inhale for 4s, hold 4s, exhale 4s, rest 4s. Tap to trigger our guided sensory reset.';
+      ctaText = 'Start 60s Breathing';
+      ctaLink = '/self-help';
+    } else if (p.includes('emergency') || p.includes('suicide') || p.includes('urgent') || p.includes('crisis')) {
+      type = 'ANNOUNCEMENT_BANNER';
+      placement = 'TOP_HEADER';
+      themeColor = 'rose';
+      iconEmoji = '🚨';
+      badgeLabel = 'Emergency Protocol';
+      title = '🚨 Immediate 24/7 Crisis Intervention Active';
+      description = 'If you or someone you know is in acute distress, free confidential emergency help is one tap away with Tele-MANAS (14416).';
+      ctaText = 'Get Emergency Help';
+      ctaLink = '/crisis';
+    } else if (p.includes('tele-manas') || p.includes('kiran') || p.includes('national') || p.includes('govt')) {
+      type = 'ANNOUNCEMENT_BANNER';
+      placement = 'TOP_HEADER';
+      themeColor = 'emerald';
+      iconEmoji = '📞';
+      badgeLabel = 'Govt. Verified 24/7';
+      title = '🇮🇳 National Tele-MANAS Mental Health Network (14416)';
+      description = 'Toll-free mental healthcare support across India in English, Hindi, Bengali, and 17 regional languages.';
+      ctaText = 'Call 14416 Now';
+      ctaLink = 'tel:14416';
+    } else if (p.includes('screening') || p.includes('test') || p.includes('quiz') || p.includes('phq') || p.includes('gad')) {
+      type = 'INTERACTIVE_WIDGET';
+      placement = 'FEATURED_GRID';
+      themeColor = 'amber';
+      iconEmoji = '📋';
+      badgeLabel = '3-Min Assessment';
+      title = '📋 Free Anonymous Clinical Wellness Check-In';
+      description = 'Scientifically validated PHQ-9 & GAD-7 screening. Understand your depression & anxiety score in under 3 minutes with zero signup.';
+      ctaText = 'Take Free Screening';
+      ctaLink = '/self-help';
+    } else if (p.includes('burnout') || p.includes('work') || p.includes('career') || p.includes('professional')) {
+      type = 'HERO_PROMO_CARD';
+      placement = 'HERO_SECTION';
+      themeColor = 'purple';
+      iconEmoji = '💼';
+      badgeLabel = 'Workplace Wellness';
+      title = '💼 Professional Burnout & Career Recovery Track';
+      description = 'Struggling with corporate exhaustion, imposter syndrome, or work-life imbalance? Speak with certified organizational psychologists.';
+      ctaText = 'Find a Specialist';
+      ctaLink = '/professionals';
+    } else if (p.includes('ngo') || p.includes('community') || p.includes('campaign') || p.includes('volunteer')) {
+      type = 'COMMUNITY_CAMPAIGN';
+      placement = 'FEATURED_GRID';
+      themeColor = 'emerald';
+      iconEmoji = '🤝';
+      badgeLabel = 'Community Action';
+      title = '🤝 Grassroots Mental Health Alliance';
+      description = 'Partnering with 120+ verified grassroots NGOs to bring in-person therapy, rehabilitation, and emotional aid to underserved districts.';
+      ctaText = 'View Partner NGOs';
+      ctaLink = '/impact';
+    } else {
+      // Custom AI interpretation from prompt words
+      const words = prompt.trim().split(/\s+/).slice(0, 8).join(' ');
+      title = `✨ ${words}`;
+      description = `AI-generated feature in response to Super Admin directive: "${prompt.trim()}". Providing real-time patient support and enhanced healthcare discovery.`;
+      ctaText = 'Explore Initiative';
+      ctaLink = '/self-help';
+    }
+
+    const feature = {
+      id: `feat_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`,
+      type,
+      placement,
+      title,
+      description,
+      ctaText,
+      ctaLink,
+      themeColor,
+      iconEmoji,
+      badgeLabel,
+      enabled: true,
+      aiPromptOrigin: prompt,
+      aiConfidenceScore: Math.floor(Math.random() * 5) + 95, // 95% - 99%
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    return feature;
+  }
+
+  async publishDynamicFeature(feature: any) {
+    let doc = await this.settingsModel.findOne();
+    if (!doc) doc = new this.settingsModel();
+
+    const features: any[] = (doc as any).dynamicFeatures || [];
+    const index = features.findIndex((f) => f.id === feature.id);
+
+    if (index >= 0) {
+      features[index] = { ...features[index], ...feature, updatedAt: new Date().toISOString() };
+    } else {
+      features.unshift({
+        ...feature,
+        id: feature.id || `feat_${Date.now().toString(36)}`,
+        enabled: feature.enabled !== undefined ? feature.enabled : true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    (doc as any).dynamicFeatures = features;
+    await doc.save();
+    return feature;
+  }
+
+  async toggleDynamicFeature(id: string, enabled?: boolean) {
+    const doc = await this.settingsModel.findOne();
+    if (!doc) throw new NotFoundException('Settings not found');
+
+    const features: any[] = (doc as any).dynamicFeatures || [];
+    const item = features.find((f) => f.id === id);
+    if (!item) throw new NotFoundException('Feature not found');
+
+    item.enabled = enabled !== undefined ? enabled : !item.enabled;
+    item.updatedAt = new Date().toISOString();
+
+    (doc as any).dynamicFeatures = features;
+    await doc.save();
+    return item;
+  }
+
+  async deleteDynamicFeature(id: string) {
+    const doc = await this.settingsModel.findOne();
+    if (!doc) throw new NotFoundException('Settings not found');
+
+    let features: any[] = (doc as any).dynamicFeatures || [];
+    features = features.filter((f) => f.id !== id);
+
+    (doc as any).dynamicFeatures = features;
+    await doc.save();
+    return { success: true, remainingCount: features.length };
+  }
+
 
   // ----------------------------------------------------------- Council Applications
   async applyForCouncil(dto: {

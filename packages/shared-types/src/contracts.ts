@@ -221,6 +221,27 @@ export interface DynamicSiteSettings {
   maintenanceMode: boolean;
   totalCouncilSeats: number;
   occupiedSeats: number;
+  dynamicFeatures?: DynamicFeatureItem[];
   updatedAt: string;
 }
+
+export interface DynamicFeatureItem {
+  id: string;
+  type: 'ANNOUNCEMENT_BANNER' | 'HERO_PROMO_CARD' | 'FLOATING_CRISIS_PILL' | 'INTERACTIVE_WIDGET' | 'COMMUNITY_CAMPAIGN';
+  placement: 'TOP_HEADER' | 'HERO_SECTION' | 'SIDE_STICKY' | 'FEATURED_GRID' | 'BOTTOM_CTA';
+  title: string;
+  description: string;
+  ctaText: string;
+  ctaLink: string;
+  themeColor: 'emerald' | 'indigo' | 'rose' | 'amber' | 'purple' | 'teal' | 'blue';
+  iconEmoji: string;
+  badgeLabel?: string;
+  enabled: boolean;
+  aiPromptOrigin?: string;
+  aiConfidenceScore?: number;
+  metadata?: Record<string, any>;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 
