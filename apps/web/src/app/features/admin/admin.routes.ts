@@ -4,6 +4,7 @@ import { adminPermissionGuard } from '../../core/auth/guards';
 
 export const ADMIN_ROUTES: Routes = [
   { path: '', title: 'Admin · MindBridge', loadComponent: () => import('./overview').then((m) => m.AdminOverviewPage) },
+  { path: 'overview', redirectTo: '', pathMatch: 'full' },
   { path: 'verifications', title: 'Verifications · MindBridge', canActivate: [adminPermissionGuard(AdminPermission.DOCTORS_VERIFY)], loadComponent: () => import('./verifications').then((m) => m.VerificationsPage) },
   { path: 'verifications/:id', title: 'Review application · MindBridge', canActivate: [adminPermissionGuard(AdminPermission.DOCTORS_VERIFY)], loadComponent: () => import('./verifications').then((m) => m.VerificationReviewPage) },
   { path: 'users', title: 'Users · MindBridge', canActivate: [adminPermissionGuard(AdminPermission.USERS_MANAGE)], loadComponent: () => import('./users').then((m) => m.UsersPage) },
