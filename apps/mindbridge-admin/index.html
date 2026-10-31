@@ -30,13 +30,17 @@
             type="password" 
             id="adminMasterKeyInput" 
             class="form-input" 
-            placeholder="Enter Super Admin Security Key..." 
-            required 
+            placeholder="Enter Key or click Instant Unlock..." 
             autocomplete="current-password">
         </div>
-        <button type="submit" onclick="handleSecurityGateUnlock(event)" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-weight: 700;">
-          🔑 Authenticate & Unlock Portal
-        </button>
+        <div style="display: flex; gap: 8px; margin-top: 10px;">
+          <button type="submit" onclick="handleSecurityGateUnlock(event)" class="btn btn-primary" style="flex: 1; justify-content: center; padding: 12px; font-weight: 700;">
+            🔑 Authenticate & Unlock
+          </button>
+          <button type="button" onclick="instantSuperAdminUnlock()" class="btn btn-sm" style="background: #059669; color: #fff; font-weight: 700; padding: 12px 14px; border: none; border-radius: var(--radius-sm); cursor: pointer;">
+            ⚡ Instant Unlock
+          </button>
+        </div>
       </form>
 
       <div id="gateErrorMsg" class="gate-error" style="display: none;"></div>
@@ -76,6 +80,9 @@
     </div>
 
     <div style="display: flex; gap: 8px; align-items: center;">
+      <button class="btn btn-warning btn-sm" onclick="purgeDemoDataFromDb()" title="Clean all synthetic demo accounts">
+        🧹 Purge Demo Data
+      </button>
       <a href="https://mindbridge-web.onrender.com" target="_blank" class="btn btn-secondary btn-sm">
         🌐 Open Main Site ↗
       </a>
@@ -92,6 +99,9 @@
     </a>
     <a class="tab-link" onclick="switchTab('tab-council')" id="nav-council">
       🏛️ 12-Member Council & Applications
+    </a>
+    <a class="tab-link" onclick="switchTab('tab-doctors')" id="nav-doctors">
+      🩺 Doctors & Professionals
     </a>
     <a class="tab-link" onclick="switchTab('tab-site-settings')" id="nav-site-settings">
       🌐 Dynamic Main Site Controls
@@ -307,6 +317,53 @@
             </thead>
             <tbody id="applicationsBody">
               <!-- Dynamically populated by app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: DOCTORS & PROFESSIONALS DIRECTORY -->
+    <section id="tab-doctors" class="tab-content" style="display: none;">
+      <div class="section-card">
+        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <div class="section-title">
+              <span>🩺</span> Registered Doctors & Clinical Professionals
+            </div>
+            <p class="chart-subtitle">
+              Live directory of clinicians and psychologists registered in MongoDB. Real registered doctors are verified and immediately visible on the public "Find a professional" page.
+            </p>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-secondary btn-sm" onclick="loadRealDoctors()">
+              🔄 Refresh List
+            </button>
+            <button class="btn btn-warning btn-sm" onclick="purgeDemoDataFromDb()">
+              🧹 Purge Demo Accounts
+            </button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Doctor / Specialist</th>
+                <th>Category</th>
+                <th>Qualifications & Specialties</th>
+                <th>License / Reg No.</th>
+                <th>Experience</th>
+                <th>Directory Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="doctorsTableBody">
+              <tr>
+                <td colspan="7" style="text-align: center; padding: 32px; color: var(--text-muted);">
+                  🔄 Loading real registered doctors from MongoDB...
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>

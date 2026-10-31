@@ -93,15 +93,6 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
             <a routerLink="/forgot-password">Forgot password?</a>
             <a routerLink="/register">Create an account</a>
           </p>
-
-          <div class="demo-hints">
-            <p class="small muted" style="margin: 0;"><strong>Demo testing credentials:</strong></p>
-            <div class="row small muted" style="gap: 8px; margin-top: 4px;">
-              <span>Patient: <code>asha.demo&#64;mindbridge.test</code></span>
-              <span>•</span>
-              <span>Doctor: <code>meera.demo&#64;mindbridge.test</code></span>
-            </div>
-          </div>
         } @else {
           <h1>Two-step verification</h1>
           <p class="muted">Enter the 6-digit code from your authenticator app.</p>

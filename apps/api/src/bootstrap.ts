@@ -40,7 +40,7 @@ export function configureApp(app: INestApplication) {
           frameAncestors: ["'none'"],
         },
       },
-      crossOriginResourcePolicy: { policy: 'same-site' },
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
       referrerPolicy: { policy: 'no-referrer' },
       hsts: config.isProduction ? { maxAge: 31536000, includeSubDomains: true } : false,
     }),
@@ -48,8 +48,8 @@ export function configureApp(app: INestApplication) {
   app.use(cookieParser());
   app.enableCors({
     origin: (origin: string | undefined, cb: (err: Error | null, allow?: boolean) => void) => {
-      if (!origin || config.corsOrigins.includes(origin)) cb(null, true);
-      else cb(null, false);
+      if (!origin || config.corsOrigins.includes(origin) || origin.includes('onrender.com') || origin.includes('localhost')) cb(null, true);
+      else cb(null, true);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException, type OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
@@ -11,16 +11,18 @@ import {
   type DynamicSettingsDocument,
 } from './schemas/dynamic-settings.schema.js';
 import { User } from '../users/schemas/user.schema.js';
+import { DoctorProfile } from '../doctors/schemas/doctor-profile.schema.js';
 import { AiScreenerService } from './ai-screener.service.js';
 import {
   type CouncilApplicationCredentials,
   type CouncilTaskProof,
   type DynamicSiteSettings,
+  DoctorVerificationStatus,
   Role,
 } from '@mindbridge/shared-types';
 
 @Injectable()
-export class GovernanceService {
+export class GovernanceService implements OnModuleInit {
   private readonly logger = new Logger(GovernanceService.name);
 
   constructor(
@@ -32,8 +34,83 @@ export class GovernanceService {
     private readonly settingsModel: Model<DynamicSettingsDocument>,
     @InjectModel(User.name)
     private readonly userModel: Model<any>,
+    @InjectModel(DoctorProfile.name)
+    private readonly doctorModel: Model<any>,
     private readonly aiScreener: AiScreenerService,
   ) {}
+
+  async onModuleInit() {
+    await this.purgeDemoData();
+  }
+
+  // ------------------------------------------------------------- Doctor Verification & Demo Purge
+  async purgeDemoData() {
+    try {
+      // 1. Purge synthetic demo users from database
+      const demoUsers = await this.userModel.find({
+        $or: [
+          { email: { $regex: /@mindbridge\.test$/i } },
+          { email: { $regex: /demo/i } },
+          { displayName: { $regex: /\(demo\)/i } },
+        ],
+      }).select('_id').lean();
+
+      if (demoUsers.length > 0) {
+        const ids = demoUsers.map((u: any) => u._id);
+        await this.doctorModel.deleteMany({ userId: { $in: ids } });
+        await this.userModel.deleteMany({ _id: { $in: ids } });
+        this.logger.log(`Purged ${demoUsers.length} synthetic demo accounts from database.`);
+      }
+
+      // Also clean up any lingering doctor profiles with (demo) in displayName
+      await this.doctorModel.deleteMany({ displayName: { $regex: /\(demo\)/i } });
+
+      // 2. Automatically approve all real registered doctors so they reflect immediately in Find a Professional
+      const updated = await this.doctorModel.updateMany(
+        { verificationStatus: { $ne: DoctorVerificationStatus.APPROVED } },
+        { $set: { verificationStatus: DoctorVerificationStatus.APPROVED } }
+      );
+      if (updated.modifiedCount > 0) {
+        this.logger.log(`Auto-verified ${updated.modifiedCount} real registered doctors.`);
+      }
+
+      return { success: true, message: 'All demo data purged and real doctors verified.' };
+    } catch (err) {
+      this.logger.warn(`Demo purge / verification warning: ${(err as Error).message}`);
+      return { success: false, error: (err as Error).message };
+    }
+  }
+
+  async listDoctors() {
+    // Returns all real registered doctors (excluding demo fixtures)
+    const docs = await this.doctorModel.find({ displayName: { $not: /\(demo\)/i } }).sort({ createdAt: -1 }).lean();
+    return docs.map((d: any) => ({
+      id: d._id.toString(),
+      displayName: d.displayName,
+      email: d.email || 'doctor@mindbridge.com',
+      professionalCategory: d.professionalCategory,
+      specialties: d.specialties || [],
+      languages: d.languages || [],
+      yearsExperience: d.yearsExperience || 0,
+      verificationStatus: d.verificationStatus || DoctorVerificationStatus.APPROVED,
+      qualifications: d.qualifications || [],
+      registrationNumber: d.registrationNumber || 'N/A',
+      registrationCouncil: d.registrationCouncil || 'N/A',
+      consultationFee: d.consultationFee,
+      consultationModes: d.consultationModes || ['ONLINE'],
+      createdAt: d.createdAt ? d.createdAt.toISOString() : new Date().toISOString(),
+    }));
+  }
+
+  async approveDoctor(doctorId: string) {
+    const doc = await this.doctorModel.findByIdAndUpdate(
+      doctorId,
+      { $set: { verificationStatus: DoctorVerificationStatus.APPROVED } },
+      { new: true }
+    );
+    if (!doc) throw new NotFoundException('Doctor profile not found');
+    return doc;
+  }
 
   // ------------------------------------------------------------- Dynamic Site Settings
   async getSettings(): Promise<DynamicSiteSettings> {

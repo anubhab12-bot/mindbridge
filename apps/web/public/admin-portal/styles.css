@@ -701,6 +701,14 @@ tr:hover td {
   padding: 20px;
 }
 
+.security-gate-overlay.unlocked,
+.security-gate-overlay.hidden {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+
 .security-card {
   background: var(--bg-secondary);
   border: 1px solid var(--border-glow);

@@ -13,6 +13,7 @@ import {
   DynamicSettingsSchema,
 } from './schemas/dynamic-settings.schema.js';
 import { User, UserSchema } from '../users/schemas/user.schema.js';
+import { DoctorProfile, DoctorProfileSchema } from '../doctors/schemas/doctor-profile.schema.js';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { User, UserSchema } from '../users/schemas/user.schema.js';
       { name: AdminTask.name, schema: AdminTaskSchema },
       { name: DynamicSettings.name, schema: DynamicSettingsSchema },
       { name: User.name, schema: UserSchema },
+      { name: DoctorProfile.name, schema: DoctorProfileSchema },
     ]),
   ],
   controllers: [GovernanceController],

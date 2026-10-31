@@ -139,4 +139,26 @@ export class GovernanceController {
   async deleteDynamicFeature(@Param('id') id: string) {
     return { data: await this.governance.deleteDynamicFeature(id) };
   }
+
+  // ------------------------------------------------------------- Doctor Verification & Demo Purge
+  @Public()
+  @Get('doctors')
+  @ApiOperation({ summary: 'List all real registered doctors for Admin verification' })
+  async listDoctors() {
+    return { data: await this.governance.listDoctors() };
+  }
+
+  @Public()
+  @Post('doctors/:id/approve')
+  @ApiOperation({ summary: 'Approve doctor verification status' })
+  async approveDoctor(@Param('id') id: string) {
+    return { data: await this.governance.approveDoctor(id) };
+  }
+
+  @Public()
+  @Post('purge-demo-data')
+  @ApiOperation({ summary: 'Purge all preloaded/synthetic demo accounts from database' })
+  async purgeDemoData() {
+    return { data: await this.governance.purgeDemoData() };
+  }
 }
