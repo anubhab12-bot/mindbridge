@@ -31,10 +31,9 @@ interface JournalEntry {
   template: `
     <div class="page">
       <header class="page-header">
-        <h1>Journal</h1>
+        <h1>Private Journal</h1>
         <p>
-          A private space to write. Entries are encrypted and are never shared with professionals or
-          the AI companion.
+          A private, encrypted space to write and reflect. Entries are never shared with clinicians or the AI companion.
         </p>
       </header>
       <div class="layout">
@@ -42,14 +41,14 @@ interface JournalEntry {
           <h2>{{ editing() ? 'Edit entry' : 'New entry' }}</h2>
           @if (prompts().length && !editing()) {
             <div class="field">
-              <label for="prompt">Need a starting point?</label>
+              <label for="prompt">Need a starting prompt?</label>
               <select
                 id="prompt"
                 class="input"
                 [value]="form.controls.prompt.value"
                 (change)="form.controls.prompt.setValue($any($event.target).value)"
               >
-                <option value="">No prompt</option>
+                <option value="">No prompt (free-form reflection)</option>
                 @for (p of prompts(); track p) {
                   <option [value]="p">{{ p }}</option>
                 }
@@ -61,16 +60,17 @@ interface JournalEntry {
           }
           <form [formGroup]="form" (ngSubmit)="save()">
             <div class="field">
-              <label for="title">Title <span class="muted">(optional)</span></label
-              ><input id="title" class="input" formControlName="title" maxlength="200" />
+              <label for="title">Title <span class="muted">(optional)</span></label>
+              <input id="title" class="input" formControlName="title" maxlength="200" placeholder="e.g. Morning reflections" />
             </div>
             <div class="field">
-              <label for="body">Entry</label
-              ><textarea
+              <label for="body">Entry</label>
+              <textarea
                 id="body"
                 class="textarea tall"
                 formControlName="body"
                 maxlength="20000"
+                placeholder="Write whatever is on your mind freely..."
               ></textarea>
             </div>
             <div class="row">
@@ -83,39 +83,40 @@ interface JournalEntry {
             </div>
           </form>
         </section>
+
         <section>
           <h2>Past entries</h2>
           @if (!entries()) {
             <mb-loading [lines]="4" />
           } @else if (!entries()!.length) {
-            <mb-empty title="No entries yet" text="Whatever you write stays private to you." />
+            <mb-empty title="No entries yet" text="Whatever you write stays strictly private to you." />
           } @else {
-            <ul class="list card-flat">
+            <div class="entries-stack">
               @for (e of entries(); track e.id) {
-                <li>
+                <article class="journal-card">
                   <div class="row-between">
-                    <strong>{{ e.title || 'Untitled' }}</strong>
+                    <strong class="journal-title">{{ e.title || 'Untitled reflection' }}</strong>
                     <span class="small muted">{{ e.createdAt | date: 'mediumDate' }}</span>
                   </div>
                   @if (open()?.id === e.id) {
                     <p class="body">{{ open()!.body }}</p>
                   } @else {
-                    <p class="small muted">{{ e.preview }}…</p>
+                    <p class="small muted preview-text">{{ e.preview }}…</p>
                   }
-                  <div class="row">
-                    <button class="btn btn-ghost btn-sm" type="button" (click)="toggle(e)">
+                  <div class="row journal-actions">
+                    <button class="btn btn-secondary btn-sm" type="button" (click)="toggle(e)">
                       {{ open()?.id === e.id ? 'Close' : 'Read' }}
                     </button>
-                    <button class="btn btn-ghost btn-sm" type="button" (click)="edit(e)">
+                    <button class="btn btn-secondary btn-sm" type="button" (click)="edit(e)">
                       Edit
                     </button>
-                    <button class="btn btn-ghost btn-sm" type="button" (click)="remove(e)">
+                    <button class="btn btn-ghost btn-sm btn-del" type="button" (click)="remove(e)">
                       Delete
                     </button>
                   </div>
-                </li>
+                </article>
               }
-            </ul>
+            </div>
             <mb-pagination [meta]="meta()" (page)="load($event)" />
           }
         </section>
@@ -140,10 +141,49 @@ interface JournalEntry {
     }
     .prompt {
       font-style: italic;
-      color: var(--mb-text-muted);
+      color: var(--mb-primary-strong);
+      background: var(--mb-primary-soft);
+      padding: 8px 12px;
+      border-radius: var(--mb-radius-sm);
+      margin-bottom: var(--mb-space-3);
     }
     .body {
       white-space: pre-wrap;
+      line-height: 1.6;
+      margin: var(--mb-space-3) 0;
+    }
+    .entries-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .journal-card {
+      padding: 16px 20px;
+      background: var(--mb-surface);
+      border: 1px solid var(--mb-border);
+      border-radius: var(--mb-radius);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      transition: all 0.2s ease;
+    }
+    .journal-card:hover {
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+    .journal-title {
+      font-size: 1.05rem;
+      color: var(--mb-text);
+    }
+    .preview-text {
+      margin: 8px 0 12px;
+      line-height: 1.5;
+    }
+    .journal-actions {
+      margin-top: 10px;
+      gap: 8px;
+    }
+    .btn-del:hover {
+      color: var(--mb-danger);
+      background: var(--mb-danger-soft);
     }
   `,
 })

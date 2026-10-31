@@ -67,7 +67,25 @@ img { max-width: 100%; }
 }
 .btn-secondary { background: var(--mb-surface); color: var(--mb-primary); border-color: var(--mb-border);
   &:hover { background: var(--mb-primary-soft); color: var(--mb-primary-strong); } }
-.btn-ghost { background: transparent; color: var(--mb-text); &:hover { background: var(--mb-surface-2); color: var(--mb-text); } }
+.btn-ghost {
+  background: transparent;
+  color: var(--mb-text);
+  border: 1px solid transparent;
+  &:hover {
+    background: var(--mb-surface-2);
+    border-color: var(--mb-border);
+    color: var(--mb-text);
+  }
+}
+.btn-primary-elevated {
+  background: linear-gradient(135deg, var(--mb-primary), var(--mb-primary-strong));
+  color: var(--mb-on-primary);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.35);
+  }
+}
 .btn-danger { background: var(--mb-danger); color: #fff; &:hover { background: var(--mb-danger); filter: brightness(0.92); color: #fff; } }
 .btn-crisis { background: var(--mb-crisis); color: #fff; &:hover { background: var(--mb-crisis); filter: brightness(0.92); color: #fff; } }
 .btn-sm { min-height: 36px; padding: 0 14px; font-size: 0.9rem; }
