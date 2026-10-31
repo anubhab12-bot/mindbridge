@@ -52,118 +52,199 @@
     </div>
   </div>
 
-  <!-- Top Bar & RBAC Switcher -->
-  <header class="top-nav">
-    <a href="#" class="brand">
-      <div class="brand-icon">🧠</div>
-      <div class="brand-title">
-        MindBridge <span>Admin</span>
-        <span class="brand-badge" id="currentRoleBadge">SUPER ADMIN</span>
-      </div>
-    </a>
+  <!-- APPLICATION SHELL WITH SIDE NAVBAR DRAWER -->
+  <div class="admin-app-layout">
 
-    <!-- Role-Based Access Control Switcher -->
-    <div class="rbac-controls">
-      <span class="rbac-label">Active Role:</span>
-      <button class="role-btn active" onclick="switchRole('SUPER_ADMIN')" id="btnRoleSuper">
-        👑 Super Admin
-      </button>
-      <button class="role-btn role-specialist" onclick="switchRole('SPECIALIST_ADMIN')" id="btnRoleSpecialist">
-        🩺 Specialist Admin
-      </button>
-      <button class="role-btn role-ngo" onclick="switchRole('NGO_ADMIN')" id="btnRoleNgo">
-        🏛️ NGO Admin
-      </button>
-      <button class="role-btn role-influencer" onclick="switchRole('INFLUENCER_ADMIN')" id="btnRoleInfluencer">
-        🌟 Influencer Admin
-      </button>
-    </div>
-
-    <div style="display: flex; gap: 8px; align-items: center;">
-      <button class="btn btn-warning btn-sm" onclick="purgeDemoDataFromDb()" title="Clean all synthetic demo accounts">
-        🧹 Purge Demo Data
-      </button>
-      <a href="https://mindbridge-web.onrender.com" target="_blank" class="btn btn-secondary btn-sm">
-        🌐 Open Main Site ↗
-      </a>
-      <button class="btn btn-danger btn-sm" onclick="lockAdminPortal()" title="Lock Super Admin Portal">
-        🔒 Lock Portal
-      </button>
-    </div>
-  </header>
-
-  <!-- Sub Navigation Tabs -->
-  <nav class="sub-nav">
-    <a class="tab-link active" onclick="switchTab('tab-overview')" id="nav-overview">
-      📊 Executive Telemetry & Graphs
-    </a>
-    <a class="tab-link" onclick="switchTab('tab-council')" id="nav-council">
-      🏛️ 12-Member Council & Applications
-    </a>
-    <a class="tab-link" onclick="switchTab('tab-doctors')" id="nav-doctors">
-      🩺 Doctors & Professionals
-    </a>
-    <a class="tab-link" onclick="switchTab('tab-site-settings')" id="nav-site-settings">
-      🌐 Dynamic Main Site Controls
-    </a>
-    <a class="tab-link" onclick="switchTab('tab-ai-planner')" id="nav-ai-planner">
-      🚀 AI Feature Planner & Site Maker
-    </a>
-    <a class="tab-link" onclick="switchTab('tab-ai-tools')" id="nav-ai-tools">
-      ⚡ AI Automations & Screener
-    </a>
-    <a class="tab-link" onclick="switchTab('tab-tasks')" id="nav-tasks">
-      📋 Distributed Tasks & Proofs
-    </a>
-  </nav>
-
-  <!-- Main Container -->
-  <main class="container">
-
-    <!-- Council Capacity & Seat Visualizer -->
-    <section class="council-banner">
-      <div class="council-info">
-        <h1>
-          <span>🏛️</span> MindBridge Governance Council
-          <span class="badge badge-ai-safe">RBAC Active</span>
-        </h1>
-        <p>
-          Governed by <strong>1 Super Admin</strong> and an elite board of <strong>12 Selected Admins</strong> 
-          (Clinical Specialists, Partner NGOs, and Brand-Safe Influencers). 
-          Review candidate applications, verify proof of awareness, and dynamically manage platform health.
-        </p>
+    <!-- LEFT SIDE NAVBAR DRAWER -->
+    <aside class="side-drawer" id="sideDrawer">
+      <div class="drawer-header">
+        <a href="#" class="drawer-brand">
+          <div class="drawer-brand-icon">🧠</div>
+          <div class="drawer-brand-text">
+            <span class="drawer-brand-title">MindBridge</span>
+            <span class="drawer-brand-sub">Admin Portal</span>
+          </div>
+        </a>
+        <button class="drawer-close-btn" onclick="toggleSidebar(false)" aria-label="Close navigation drawer">✕</button>
       </div>
 
-      <div class="seats-tracker">
-        <div class="seats-counter">
-          Council Seats: <span id="seatsOccupiedNum">7</span> / <span id="seatsTotalNum">12</span> Filled
+      <div class="drawer-meta-card">
+        <div class="drawer-role-row">
+          <span class="drawer-role-badge" id="currentRoleBadge">SUPER ADMIN</span>
+          <span class="drawer-status-pill"><span class="dot-live"></span> Live DB</span>
         </div>
-        <div class="live-pill" id="liveDataSyncBadge" style="margin-bottom: 8px; display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 3px 10px; border-radius: 999px; border: 1px solid rgba(16, 185, 129, 0.3);">
-          <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981;"></span>
-          <span id="liveDataSyncText">🟢 Live MongoDB Connected</span>
+        <div class="drawer-seats-mini">
+          <div class="seats-mini-header">
+            <span>Council Capacity</span>
+            <strong><span id="miniSeatsOccupied">0</span> / <span id="miniSeatsTotal">12</span></strong>
+          </div>
+          <div class="seats-mini-bar">
+            <div class="seats-mini-fill" id="miniSeatsFill" style="width: 0%;"></div>
+          </div>
         </div>
-        <div class="seats-grid" id="seatsPillsContainer">
-          <!-- 12 Seat Pills (Specialists 1-4, NGOs 5-8, Influencers 9-12) -->
-          <div class="seat-pill filled specialist" title="Seat 1: Chief Psychiatrist (Clinical Specialist)"></div>
-          <div class="seat-pill filled specialist" title="Seat 2: Clinical Psychologist (Clinical Specialist)"></div>
-          <div class="seat-pill filled specialist" title="Seat 3: Neuropsychiatrist (Clinical Specialist)"></div>
-          <div class="seat-pill" title="Seat 4: Available Specialist Seat"></div>
-          
-          <div class="seat-pill filled ngo" title="Seat 5: NIMHANS Community Partner (NGO)"></div>
-          <div class="seat-pill filled ngo" title="Seat 6: Vandrevala Foundation (NGO)"></div>
-          <div class="seat-pill" title="Seat 7: Available NGO Seat"></div>
-          <div class="seat-pill" title="Seat 8: Available NGO Seat"></div>
+      </div>
 
-          <div class="seat-pill filled influencer" title="Seat 9: @MentalHealthIndia (Influencer, 340k reach)"></div>
-          <div class="seat-pill filled influencer" title="Seat 10: @WellnessWithDrMaya (Influencer, 180k reach)"></div>
-          <div class="seat-pill" title="Seat 11: Available Influencer Seat"></div>
-          <div class="seat-pill" title="Seat 12: Available Influencer Seat"></div>
-        </div>
-        <button class="btn btn-primary btn-sm" onclick="openApplyModal()">
-          + Apply for an Admin Seat
+      <!-- NAVIGATION LINKS -->
+      <nav class="drawer-nav" aria-label="Admin Navigation">
+        <div class="nav-section-title">EXECUTIVE OVERVIEW</div>
+        <a class="nav-item active" onclick="switchTab('tab-overview')" id="nav-overview">
+          <span class="nav-icon">📊</span>
+          <span class="nav-text">Executive Telemetry</span>
+        </a>
+
+        <div class="nav-section-title">GOVERNANCE & COUNCIL</div>
+        <a class="nav-item" onclick="switchTab('tab-council')" id="nav-council">
+          <span class="nav-icon">🏛️</span>
+          <span class="nav-text">12-Member Council</span>
+          <span class="nav-badge" id="councilAppsCountBadge" style="display: none;">0</span>
+        </a>
+        <a class="nav-item" onclick="switchTab('tab-doctors')" id="nav-doctors">
+          <span class="nav-icon">🩺</span>
+          <span class="nav-text">Doctors Directory</span>
+          <span class="nav-badge doctors" id="doctorsCountBadge" style="display: none;">0</span>
+        </a>
+
+        <div class="nav-section-title">LIVE PLATFORM ENGINE</div>
+        <a class="nav-item" onclick="switchTab('tab-site-settings')" id="nav-site-settings">
+          <span class="nav-icon">🌐</span>
+          <span class="nav-text">Dynamic Site Controls</span>
+        </a>
+        <a class="nav-item" onclick="switchTab('tab-ai-planner')" id="nav-ai-planner">
+          <span class="nav-icon">🚀</span>
+          <span class="nav-text">AI Feature Planner & Maker</span>
+        </a>
+        <a class="nav-item" onclick="switchTab('tab-ai-tools')" id="nav-ai-tools">
+          <span class="nav-icon">⚡</span>
+          <span class="nav-text">AI Automations & Screener</span>
+        </a>
+        <a class="nav-item" onclick="switchTab('tab-tasks')" id="nav-tasks">
+          <span class="nav-icon">📋</span>
+          <span class="nav-text">Tasks & Proof Verification</span>
+        </a>
+      </nav>
+
+      <!-- DRAWER FOOTER UTILITIES -->
+      <div class="drawer-footer">
+        <button class="drawer-btn purge" onclick="purgeDemoDataFromDb()" title="Clean all synthetic demo accounts">
+          <span>🧹</span> Purge Demo Data
+        </button>
+        <a href="https://mindbridge-web.onrender.com" target="_blank" class="drawer-btn site-link">
+          <span>🌐</span> Open Main Site ↗
+        </a>
+        <button class="drawer-btn lock" onclick="lockAdminPortal()" title="Lock Super Admin Portal">
+          <span>🔒</span> Lock Portal
         </button>
       </div>
-    </section>
+    </aside>
+
+    <!-- BACKDROP FOR MOBILE DRAWER -->
+    <div class="drawer-backdrop" id="drawerBackdrop" onclick="toggleSidebar(false)"></div>
+
+    <!-- MAIN APP CONTENT AREA -->
+    <div class="admin-main-area">
+      <!-- TOP NAV BAR -->
+      <header class="admin-header">
+        <div class="header-left">
+          <button class="drawer-toggle-btn" onclick="toggleSidebar()" aria-label="Toggle Navigation Drawer">
+            <span class="toggle-bar"></span>
+            <span class="toggle-bar"></span>
+            <span class="toggle-bar"></span>
+          </button>
+          <div class="header-title-box">
+            <h1 class="header-page-title" id="currentPageTitle">Executive Telemetry & Graphs</h1>
+            <p class="header-page-sub" id="currentPageSubtitle">Live clinical metrics, patient recovery curves & platform telemetry</p>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <!-- Active Role Selector -->
+          <div class="rbac-controls">
+            <span class="rbac-label">Active Role:</span>
+            <button class="role-btn active" onclick="switchRole('SUPER_ADMIN')" id="btnRoleSuper">
+              👑 Super Admin
+            </button>
+            <button class="role-btn role-specialist" onclick="switchRole('SPECIALIST_ADMIN')" id="btnRoleSpecialist">
+              🩺 Specialist
+            </button>
+            <button class="role-btn role-ngo" onclick="switchRole('NGO_ADMIN')" id="btnRoleNgo">
+              🏛️ NGO
+            </button>
+            <button class="role-btn role-influencer" onclick="switchRole('INFLUENCER_ADMIN')" id="btnRoleInfluencer">
+              🌟 Creator
+            </button>
+          </div>
+
+          <div class="header-quick-actions">
+            <button class="btn btn-warning btn-sm" onclick="purgeDemoDataFromDb()" title="Clean all synthetic demo accounts">
+              🧹 Purge Demo
+            </button>
+            <a href="https://mindbridge-web.onrender.com" target="_blank" class="btn btn-secondary btn-sm">
+              🌐 Main Site ↗
+            </a>
+            <button class="btn btn-danger btn-sm" onclick="lockAdminPortal()" title="Lock Super Admin Portal">
+              🔒 Lock
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Container -->
+      <main class="container">
+
+        <!-- Council Capacity & Seat Visualizer -->
+        <section class="council-banner">
+          <div class="council-info">
+            <h1>
+              <span>🏛️</span> MindBridge Governance Council
+              <span class="badge badge-ai-safe">RBAC Active</span>
+            </h1>
+            <p>
+              Governed by <strong>1 Super Admin</strong> and an elite board of <strong>Selected Admins</strong> 
+              (Clinical Specialists, Partner NGOs, and Brand-Safe Influencers). 
+              Review candidate applications, verify proof of awareness, and dynamically manage platform health.
+            </p>
+          </div>
+
+          <div class="seats-tracker">
+            <div class="seats-counter-wrap">
+              <div class="seats-counter">
+                Council Seats: <strong id="seatsOccupiedNum">0</strong> / <strong id="seatsTotalNum">12</strong> Filled
+              </div>
+              <!-- Super Admin Manual Seat Stepper & Controls -->
+              <div class="manual-seats-control" title="Super Admin manual seat entry">
+                <span class="manual-control-label">Manual Seats:</span>
+                <div class="stepper-group">
+                  <button type="button" class="stepper-btn" onclick="adjustManualSeats(-1)" title="Decrease filled seats">−</button>
+                  <input type="number" id="manualSeatsOccupied" min="0" max="30" value="0" class="stepper-input" oninput="handleManualSeatInput()" aria-label="Occupied Seats">
+                  <span class="stepper-slash">/</span>
+                  <input type="number" id="manualSeatsTotal" min="1" max="30" value="12" class="stepper-input total" oninput="handleManualSeatInput()" aria-label="Total Seats">
+                  <button type="button" class="stepper-btn" onclick="adjustManualSeats(1)" title="Increase filled seats">+</button>
+                </div>
+                <button type="button" class="btn btn-primary btn-sm save-seats-pill-btn" onclick="saveManualCouncilSeats()" id="btnSaveManualSeats">
+                  💾 Save
+                </button>
+              </div>
+            </div>
+
+            <div class="live-pill" id="liveDataSyncBadge" style="margin-bottom: 8px; display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 3px 10px; border-radius: 999px; border: 1px solid rgba(16, 185, 129, 0.3);">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981;"></span>
+              <span id="liveDataSyncText">🟢 Live MongoDB Connected</span>
+            </div>
+
+            <div class="seats-grid" id="seatsPillsContainer">
+              <!-- Dynamically rendered by app.js based on manualSeatsOccupied & manualSeatsTotal -->
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
+              <button class="btn btn-primary btn-sm" onclick="openApplyModal()">
+                + Apply for an Admin Seat
+              </button>
+              <a href="/apply-admin" target="_blank" class="btn btn-secondary btn-sm">
+                View Public Apply Page ↗
+              </a>
+            </div>
+          </div>
+        </section>
 
     <!-- TAB 1: EXECUTIVE OVERVIEW & LIVE CHARTS -->
     <section id="tab-overview" class="tab-content">
@@ -243,9 +324,10 @@
         <div class="chart-card">
           <div class="chart-header">
             <div>
-              <div class="chart-title">Recovery Rate by Symptom Cluster</div>
-              <div class="chart-subtitle">Clinically significant alleviation</div>
+              <div class="chart-title">Live MongoDB Population & Community Distribution</div>
+              <div class="chart-subtitle">Active patients, verified clinicians, council members & partner NGOs</div>
             </div>
+            <span class="badge badge-ai-safe">Real Data</span>
           </div>
           <div class="chart-container">
             <canvas id="symptomsChart"></canvas>
@@ -257,9 +339,10 @@
         <div class="chart-card">
           <div class="chart-header">
             <div>
-              <div class="chart-title">Platform Patient Onboarding vs Completed Care Programs</div>
-              <div class="chart-subtitle">Monthly cumulative patient registration & discharge</div>
+              <div class="chart-title">Platform Scale & Entity Growth (MongoDB Live Metrics)</div>
+              <div class="chart-subtitle">Real registered accounts, active care seekers & candidate applications</div>
             </div>
+            <span class="badge badge-ai-safe">Live Query</span>
           </div>
           <div class="chart-container">
             <canvas id="growthChart"></canvas>
@@ -269,9 +352,10 @@
         <div class="chart-card">
           <div class="chart-header">
             <div>
-              <div class="chart-title">Regional NGO & Helpline Network</div>
-              <div class="chart-subtitle">Community outreach distribution</div>
+              <div class="chart-title">Council Capacity & Application Screening Funnel</div>
+              <div class="chart-subtitle">Board seats allocation, pending candidates & AI content safety screening</div>
             </div>
+            <span class="badge badge-ai-safe">Real-Time</span>
           </div>
           <div class="chart-container">
             <canvas id="regionalChart"></canvas>
@@ -446,6 +530,20 @@
             <div class="form-group">
               <label class="form-label">Emergency Response Time</label>
               <input type="text" class="form-input" id="statResponse" value="< 45s">
+            </div>
+
+            <div class="form-group" style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-color);">
+              <label class="form-label" style="font-weight: 700; color: #fff;">🏛️ Council Board Seats (Manual Override)</label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                  <label class="form-label" style="font-size: 0.8rem;">Occupied Seats</label>
+                  <input type="number" class="form-input" id="settingOccupiedSeats" min="0" max="30" value="0">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size: 0.8rem;">Total Council Capacity</label>
+                  <input type="number" class="form-input" id="settingTotalSeats" min="1" max="30" value="12">
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -824,7 +922,9 @@
       </div>
     </section>
 
-  </main>
+      </main>
+    </div> <!-- /.admin-main-area -->
+  </div> <!-- /.admin-app-layout -->
 
   <!-- MODAL: Apply for Council Seat -->
   <div class="modal-overlay" id="applyModal">

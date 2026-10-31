@@ -124,7 +124,7 @@ export class GovernanceService implements OnModuleInit {
       featuredNgos: settings.featuredNgos,
       maintenanceMode: settings.maintenanceMode,
       totalCouncilSeats: settings.totalCouncilSeats ?? 12,
-      occupiedSeats: settings.occupiedSeats ?? 7,
+      occupiedSeats: typeof settings.occupiedSeats === 'number' ? settings.occupiedSeats : 0,
       dynamicFeatures: (settings as any).dynamicFeatures ?? [],
       updatedAt: (settings as any).updatedAt ? (settings as any).updatedAt.toISOString() : new Date().toISOString(),
     };
@@ -484,7 +484,9 @@ export class GovernanceService implements OnModuleInit {
       ]);
 
     const totalSeats = settingsDoc?.totalCouncilSeats ?? 12;
-    const occupiedSeats = Math.min(totalSeats, approvedCouncil);
+    const occupiedSeats = typeof settingsDoc?.occupiedSeats === 'number'
+      ? settingsDoc.occupiedSeats
+      : approvedCouncil;
     const availableSeats = Math.max(0, totalSeats - occupiedSeats);
 
     // Override or live database calculation

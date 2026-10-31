@@ -37,7 +37,7 @@ import { AuthService } from '../core/auth/auth.service';
           <a routerLink="/apply-admin" routerLinkActive="active" class="nav-council-link">
             <span>🏛️ Apply for Admin</span>
           </a>
-          <a href="/admin-portal/index.html" target="_blank" class="nav-admin-link">
+          <a href="/admin-portal" target="_blank" class="nav-admin-link">
             <span class="admin-pill">👑 Admin Portal 🔒</span>
           </a>
         </nav>
@@ -65,7 +65,7 @@ import { AuthService } from '../core/auth/auth.service';
           <a routerLink="/apply-admin" routerLinkActive="active" (click)="closeMobileNav()" class="nav-council-link">
             🏛️ Apply for Admin Seat
           </a>
-          <a href="/admin-portal/index.html" target="_blank" (click)="closeMobileNav()" class="mobile-admin-link">
+          <a href="/admin-portal" target="_blank" (click)="closeMobileNav()" class="mobile-admin-link">
             👑 Open Admin Portal 🔒
           </a>
         </nav>
@@ -83,7 +83,7 @@ import { AuthService } from '../core/auth/auth.service';
             </p>
           </div>
           <div class="footer-links">
-            <a href="/admin-portal/index.html" target="_blank" class="footer-council-btn">
+            <a href="/admin-portal" target="_blank" class="footer-council-btn">
               🏛️ Open MindBridge Admin Portal ↗
             </a>
           </div>

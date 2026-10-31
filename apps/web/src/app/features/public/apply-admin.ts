@@ -57,7 +57,7 @@ import type { CouncilApplicationCredentials } from '@mindbridge/shared-types';
             </p>
             <div class="row center" style="margin-top: 24px; gap: 12px;">
               <a routerLink="/" class="btn btn-secondary">Return to Home</a>
-              <a href="/admin-portal/index.html" target="_blank" class="btn btn-primary">Open Admin Portal ↗</a>
+              <a href="/admin-portal" target="_blank" class="btn btn-primary">Open Admin Portal ↗</a>
             </div>
           </div>
         } @else {
@@ -339,9 +339,9 @@ export class ApplyAdminPage implements OnInit {
   protected readonly aiFlagged = signal(false);
   protected readonly aiSummary = signal('');
 
-  protected readonly occupiedSeats = signal(7);
+  protected readonly occupiedSeats = signal(0);
   protected readonly totalSeats = signal(12);
-  protected readonly availableSeats = signal(5);
+  protected readonly availableSeats = signal(12);
 
   async ngOnInit() {
     try {

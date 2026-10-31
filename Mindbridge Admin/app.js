@@ -1,3 +1,9 @@
+// Clean URL: Strip /index.html if present
+if (window.location.pathname.endsWith('/index.html')) {
+  const cleanPath = window.location.pathname.replace(/\/index\.html$/, '') || '/admin-portal';
+  window.history.replaceState(null, '', cleanPath + window.location.search + window.location.hash);
+}
+
 // API Base URL
 const API_BASE = 'https://mindbridge-api-x99i.onrender.com/api/v1/governance';
 
@@ -22,7 +28,7 @@ let siteSettings = {
     avgResponseTime: '< 45s'
   },
   totalCouncilSeats: 12,
-  occupiedSeats: 7
+  occupiedSeats: 0
 };
 
 // Seed Applications for Initial Demo
@@ -295,11 +301,38 @@ async function loadRealStats() {
         if (document.getElementById('kpiPartnerNgos') && stats.populationMetrics?.partnerNgos) {
           document.getElementById('kpiPartnerNgos').textContent = stats.populationMetrics.partnerNgos;
         }
-        if (document.getElementById('seatsOccupiedNum') && stats.occupiedSeats !== undefined) {
-          document.getElementById('seatsOccupiedNum').textContent = stats.occupiedSeats;
+        if (typeof stats.occupiedSeats === 'number') {
+          siteSettings.occupiedSeats = stats.occupiedSeats;
         }
-        if (document.getElementById('seatsTotalNum') && stats.councilCapacity !== undefined) {
-          document.getElementById('seatsTotalNum').textContent = stats.councilCapacity;
+        if (typeof stats.councilCapacity === 'number') {
+          siteSettings.totalCouncilSeats = stats.councilCapacity;
+        }
+        updateSeatTracker();
+        updateRealCharts(stats);
+
+        // Update drawer mini counter
+        const miniOcc = document.getElementById('miniSeatsOccupied');
+        const miniTot = document.getElementById('miniSeatsTotal');
+        const miniFill = document.getElementById('miniSeatsFill');
+        if (miniOcc) miniOcc.textContent = siteSettings.occupiedSeats;
+        if (miniTot) miniTot.textContent = siteSettings.totalCouncilSeats;
+        if (miniFill) {
+          const pct = Math.min(100, Math.round((siteSettings.occupiedSeats / Math.max(1, siteSettings.totalCouncilSeats)) * 100));
+          miniFill.style.width = `${pct}%`;
+        }
+
+        // Update badges
+        const appsBadge = document.getElementById('councilAppsCountBadge');
+        if (appsBadge) {
+          const pending = stats.applications?.pending ?? 0;
+          appsBadge.textContent = pending;
+          appsBadge.style.display = pending > 0 ? 'inline-block' : 'none';
+        }
+        const docBadge = document.getElementById('doctorsCountBadge');
+        if (docBadge) {
+          const docCount = stats.liveDatabaseMetrics?.verifiedDoctors ?? 0;
+          docBadge.textContent = docCount;
+          docBadge.style.display = docCount > 0 ? 'inline-block' : 'none';
         }
       }
     }
@@ -430,38 +463,197 @@ function switchRole(role) {
   }
 }
 
+// Sidebar Drawer Toggle
+function toggleSidebar(forceState) {
+  const drawer = document.getElementById('sideDrawer');
+  const backdrop = document.getElementById('drawerBackdrop');
+  if (!drawer) return;
+  const isOpen = typeof forceState === 'boolean' ? forceState : !drawer.classList.contains('open');
+  if (isOpen) {
+    drawer.classList.add('open');
+    backdrop?.classList.add('active');
+  } else {
+    drawer.classList.remove('open');
+    backdrop?.classList.remove('active');
+  }
+}
+
 // Tab Switching
 function switchTab(tabId) {
   document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
   document.querySelectorAll('.tab-link').forEach(link => link.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(link => link.classList.remove('active'));
 
   const activeTab = document.getElementById(tabId);
   if (activeTab) activeTab.style.display = 'block';
 
   const navMap = {
-    'tab-overview': 'nav-overview',
-    'tab-council': 'nav-council',
-    'tab-doctors': 'nav-doctors',
-    'tab-site-settings': 'nav-site-settings',
-    'tab-ai-planner': 'nav-ai-planner',
-    'tab-ai-tools': 'nav-ai-tools',
-    'tab-tasks': 'nav-tasks'
+    'tab-overview': { id: 'nav-overview', title: 'Executive Telemetry & Graphs', subtitle: 'Live clinical metrics, patient recovery curves & platform telemetry' },
+    'tab-council': { id: 'nav-council', title: '12-Member Council & Applications', subtitle: 'Candidate applications, AI content safety screening & seat approvals' },
+    'tab-doctors': { id: 'nav-doctors', title: 'Doctors & Clinical Professionals Directory', subtitle: 'Real clinicians and psychologists verified in live MongoDB database' },
+    'tab-site-settings': { id: 'nav-site-settings', title: 'Dynamic Main Site Control Center', subtitle: 'Live emergency banner, telemetry overrides & manual council seat settings' },
+    'tab-ai-planner': { id: 'nav-ai-planner', title: 'AI Feature Planner & Live Site Maker', subtitle: 'Command AI to design features with simulated dual-viewport preview' },
+    'tab-ai-tools': { id: 'nav-ai-tools', title: 'AI Automations & Safety Screener', subtitle: 'Automated awareness campaign generator and vulgarity/adult content auditor' },
+    'tab-tasks': { id: 'nav-tasks', title: 'Distributed Council Tasks & Proofs', subtitle: 'Specialist audits, NGO emergency camps, and creator awareness proofs' }
   };
 
-  const navEl = document.getElementById(navMap[tabId]);
-  if (navEl) navEl.classList.add('active');
+  const info = navMap[tabId];
+  if (info) {
+    const navEl = document.getElementById(info.id);
+    if (navEl) navEl.classList.add('active');
+
+    const pageTitle = document.getElementById('currentPageTitle');
+    const pageSubtitle = document.getElementById('currentPageSubtitle');
+    if (pageTitle) pageTitle.textContent = info.title;
+    if (pageSubtitle) pageSubtitle.textContent = info.subtitle;
+  }
 
   if (tabId === 'tab-doctors') {
     loadRealDoctors();
   }
+
+  // Auto close drawer on mobile/tablet after navigating
+  if (window.innerWidth <= 1024) {
+    toggleSidebar(false);
+  }
 }
 
-// Seat Tracker UI
-function updateSeatTracker() {
-  const occupied = applications.filter(a => a.status === 'APPROVED').length + 4; // Baseline
-  document.getElementById('seatsOccupiedNum').textContent = Math.min(12, occupied);
-  document.getElementById('seatsTotalNum').textContent = siteSettings.totalCouncilSeats || 12;
+// Seat Tracker UI & Stepper Controls
+function renderSeatPills(occupied, total) {
+  const container = document.getElementById('seatsPillsContainer');
+  if (!container) return;
+  container.innerHTML = '';
+  const totalCount = Math.max(1, total);
+  const third = Math.ceil(totalCount / 3);
+
+  for (let i = 1; i <= totalCount; i++) {
+    const pill = document.createElement('div');
+    pill.className = 'seat-pill';
+    if (i <= occupied) {
+      pill.classList.add('filled');
+      if (i <= third) {
+        pill.classList.add('specialist');
+        pill.title = `Seat ${i}: Clinical Specialist (Filled)`;
+      } else if (i <= third * 2) {
+        pill.classList.add('ngo');
+        pill.title = `Seat ${i}: Partner NGO (Filled)`;
+      } else {
+        pill.classList.add('influencer');
+        pill.title = `Seat ${i}: Brand-Safe Creator (Filled)`;
+      }
+    } else {
+      pill.title = `Seat ${i}: Available Council Seat`;
+    }
+    container.appendChild(pill);
+  }
 }
+
+function updateSeatTracker() {
+  const occupied = typeof siteSettings.occupiedSeats === 'number' ? siteSettings.occupiedSeats : 0;
+  const total = siteSettings.totalCouncilSeats || 12;
+
+  const occupiedEl = document.getElementById('seatsOccupiedNum');
+  const totalEl = document.getElementById('seatsTotalNum');
+  const manualOccInput = document.getElementById('manualSeatsOccupied');
+  const manualTotInput = document.getElementById('manualSeatsTotal');
+  const miniOccEl = document.getElementById('miniSeatsOccupied');
+  const miniTotEl = document.getElementById('miniSeatsTotal');
+  const miniFillEl = document.getElementById('miniSeatsFill');
+
+  if (occupiedEl) occupiedEl.textContent = occupied;
+  if (totalEl) totalEl.textContent = total;
+  if (manualOccInput && document.activeElement !== manualOccInput) manualOccInput.value = occupied;
+  if (manualTotInput && document.activeElement !== manualTotInput) manualTotInput.value = total;
+  if (miniOccEl) miniOccEl.textContent = occupied;
+  if (miniTotEl) miniTotEl.textContent = total;
+  if (miniFillEl) {
+    const pct = Math.min(100, Math.round((occupied / Math.max(1, total)) * 100));
+    miniFillEl.style.width = `${pct}%`;
+  }
+
+  renderSeatPills(occupied, total);
+}
+
+function adjustManualSeats(delta) {
+  const occInput = document.getElementById('manualSeatsOccupied');
+  const totInput = document.getElementById('manualSeatsTotal');
+  const currentOcc = parseInt(occInput?.value || '0', 10);
+  const currentTot = parseInt(totInput?.value || '12', 10);
+  const nextOcc = Math.max(0, Math.min(currentTot, currentOcc + delta));
+  if (occInput) occInput.value = nextOcc;
+  handleManualSeatInput();
+}
+
+function handleManualSeatInput() {
+  const occInput = document.getElementById('manualSeatsOccupied');
+  const totInput = document.getElementById('manualSeatsTotal');
+  const occ = Math.max(0, parseInt(occInput?.value || '0', 10));
+  const tot = Math.max(1, parseInt(totInput?.value || '12', 10));
+
+  const occupiedEl = document.getElementById('seatsOccupiedNum');
+  const totalEl = document.getElementById('seatsTotalNum');
+  const miniOccEl = document.getElementById('miniSeatsOccupied');
+  const miniTotEl = document.getElementById('miniSeatsTotal');
+  const miniFillEl = document.getElementById('miniSeatsFill');
+
+  if (occupiedEl) occupiedEl.textContent = occ;
+  if (totalEl) totalEl.textContent = tot;
+  if (miniOccEl) miniOccEl.textContent = occ;
+  if (miniTotEl) miniTotEl.textContent = tot;
+  if (miniFillEl) {
+    const pct = Math.min(100, Math.round((occ / tot) * 100));
+    miniFillEl.style.width = `${pct}%`;
+  }
+
+  renderSeatPills(occ, tot);
+}
+
+async function saveManualCouncilSeats() {
+  const occInput = document.getElementById('manualSeatsOccupied');
+  const totInput = document.getElementById('manualSeatsTotal');
+  const occ = Math.max(0, parseInt(occInput?.value || '0', 10));
+  const tot = Math.max(1, parseInt(totInput?.value || '12', 10));
+
+  siteSettings.occupiedSeats = occ;
+  siteSettings.totalCouncilSeats = tot;
+
+  const btn = document.getElementById('btnSaveManualSeats');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ Saving...';
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        occupiedSeats: occ,
+        totalCouncilSeats: tot
+      })
+    });
+    if (res.ok) {
+      showToast(`✅ Council seats saved: ${occ} / ${tot} in live database!`);
+    } else {
+      showToast(`💾 Saved locally: ${occ} / ${tot}`);
+    }
+  } catch (err) {
+    console.warn('Could not save seats to API', err);
+    showToast(`💾 Saved locally: ${occ} / ${tot}`);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '💾 Save';
+    }
+    loadRealStats();
+  }
+}
+
+// Chart Instances
+let chartRecoveryInstance = null;
+let chartSymptomsInstance = null;
+let chartGrowthInstance = null;
+let chartRegionalInstance = null;
 
 // Initialize Interactive Charts
 function initCharts() {
@@ -473,149 +665,231 @@ function initCharts() {
     // Chart 1: Recovery Trajectory
     const recoveryCtx = document.getElementById('recoveryChart')?.getContext('2d');
     if (recoveryCtx) {
-    new Chart(recoveryCtx, {
-      type: 'line',
-      data: {
-        labels: ['Baseline (Wk 0)', 'Week 2', 'Week 4', 'Week 6', 'Week 8', 'Week 10', 'Week 12 (Discharge)'],
-        datasets: [
-          {
-            label: 'PHQ-9 Depression Severity (0-27 scale)',
-            data: [18.4, 15.2, 11.0, 7.8, 5.2, 4.1, 3.2],
-            borderColor: '#10b981',
-            backgroundColor: 'rgba(16, 185, 129, 0.15)',
-            borderWidth: 3,
-            fill: true,
-            tension: 0.35,
-            pointBackgroundColor: '#10b981',
-            pointRadius: 5
+      if (chartRecoveryInstance) chartRecoveryInstance.destroy();
+      chartRecoveryInstance = new Chart(recoveryCtx, {
+        type: 'line',
+        data: {
+          labels: ['Baseline (Wk 0)', 'Week 2', 'Week 4', 'Week 6', 'Week 8', 'Week 10', 'Week 12 (Discharge)'],
+          datasets: [
+            {
+              label: 'PHQ-9 Depression Severity (0-27 scale)',
+              data: [18.4, 15.2, 11.0, 7.8, 5.2, 4.1, 3.2],
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.15)',
+              borderWidth: 3,
+              fill: true,
+              tension: 0.35,
+              pointBackgroundColor: '#10b981',
+              pointRadius: 5
+            },
+            {
+              label: 'GAD-7 Anxiety Severity (0-21 scale)',
+              data: [16.8, 13.9, 9.6, 6.4, 4.8, 3.6, 2.8],
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              borderWidth: 3,
+              fill: true,
+              tension: 0.35,
+              pointBackgroundColor: '#3b82f6',
+              pointRadius: 5
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#9ca3af', font: { family: 'Inter', size: 12 } } },
+            tooltip: {
+              backgroundColor: '#1f2937',
+              titleColor: '#fff',
+              bodyColor: '#10b981',
+              padding: 12,
+              borderColor: 'rgba(255,255,255,0.1)',
+              borderWidth: 1
+            }
           },
-          {
-            label: 'GAD-7 Anxiety Severity (0-21 scale)',
-            data: [16.8, 13.9, 9.6, 6.4, 4.8, 3.6, 2.8],
-            borderColor: '#3b82f6',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            borderWidth: 3,
-            fill: true,
-            tension: 0.35,
-            pointBackgroundColor: '#3b82f6',
-            pointRadius: 5
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' }, title: { display: true, text: 'Clinical Score', color: '#9ca3af' } }
           }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { labels: { color: '#9ca3af', font: { family: 'Inter', size: 12 } } },
-          tooltip: {
-            backgroundColor: '#1f2937',
-            titleColor: '#fff',
-            bodyColor: '#10b981',
-            padding: 12,
-            borderColor: 'rgba(255,255,255,0.1)',
-            borderWidth: 1
-          }
+        }
+      });
+    }
+
+    // Chart 2: Live Population Breakdown
+    const symptomsCtx = document.getElementById('symptomsChart')?.getContext('2d');
+    if (symptomsCtx) {
+      if (chartSymptomsInstance) chartSymptomsInstance.destroy();
+      chartSymptomsInstance = new Chart(symptomsCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Active Patients', 'Verified Doctors', 'Council Admins', 'Partner NGOs'],
+          datasets: [{
+            data: [1, 1, 0, 12],
+            backgroundColor: ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b'],
+            borderColor: '#111827',
+            borderWidth: 3
+          }]
         },
-        scales: {
-          x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
-          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' }, title: { display: true, text: 'Clinical Score', color: '#9ca3af' } }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 11 } } }
+          }
         }
-      }
-    });
-  }
+      });
+    }
 
-  // Chart 2: Symptoms Alleviation Doughnut
-  const symptomsCtx = document.getElementById('symptomsChart')?.getContext('2d');
-  if (symptomsCtx) {
-    new Chart(symptomsCtx, {
-      type: 'doughnut',
-      data: {
-        labels: ['Anxiety & Panic (96.4%)', 'Work Stress & Burnout (97.0%)', 'Depressive Lifting (93.2%)', 'PTSD & Trauma (91.8%)'],
-        datasets: [{
-          data: [96.4, 97.0, 93.2, 91.8],
-          backgroundColor: ['#10b981', '#0d9488', '#3b82f6', '#8b5cf6'],
-          borderColor: '#111827',
-          borderWidth: 3
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 11 } } }
-        }
-      }
-    });
-  }
-
-  // Chart 3: Growth vs Cured
-  const growthCtx = document.getElementById('growthChart')?.getContext('2d');
-  if (growthCtx) {
-    new Chart(growthCtx, {
-      type: 'bar',
-      data: {
-        labels: ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct 2026'],
-        datasets: [
-          {
-            label: 'Total Onboarded Patients',
-            data: [4200, 6800, 9400, 11800, 13400, 14850],
-            backgroundColor: 'rgba(59, 130, 246, 0.7)',
-            borderRadius: 6
+    // Chart 3: Live Scale & Growth
+    const growthCtx = document.getElementById('growthChart')?.getContext('2d');
+    if (growthCtx) {
+      if (chartGrowthInstance) chartGrowthInstance.destroy();
+      chartGrowthInstance = new Chart(growthCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Registered Users', 'Active Patients', 'Verified Clinicians', 'Council Applicants', 'Occupied Council Seats'],
+          datasets: [
+            {
+              label: 'Live MongoDB Entities',
+              data: [1, 1, 0, 0, 0],
+              backgroundColor: [
+                'rgba(59, 130, 246, 0.8)',
+                'rgba(16, 185, 129, 0.85)',
+                'rgba(139, 92, 246, 0.85)',
+                'rgba(245, 158, 11, 0.85)',
+                'rgba(16, 185, 129, 0.95)'
+              ],
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#9ca3af' } }
           },
-          {
-            label: 'Patients Successfully Improved / Discharged',
-            data: [3800, 6200, 8800, 11100, 12600, 14048],
-            backgroundColor: 'rgba(16, 185, 129, 0.85)',
-            borderRadius: 6
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } }
           }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { labels: { color: '#9ca3af' } }
-        },
-        scales: {
-          x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
-          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } }
         }
-      }
-    });
-  }
+      });
+    }
 
-  // Chart 4: Regional Outreach
-  const regionalCtx = document.getElementById('regionalChart')?.getContext('2d');
-  if (regionalCtx) {
-    new Chart(regionalCtx, {
-      type: 'polarArea',
-      data: {
-        labels: ['South India (48 Clinics)', 'West India (34 Clinics)', 'North India (28 Clinics)', 'East India (14 Clinics)'],
-        datasets: [{
-          data: [48, 34, 28, 14],
-          backgroundColor: [
-            'rgba(16, 185, 129, 0.7)',
-            'rgba(59, 130, 246, 0.7)',
-            'rgba(245, 158, 11, 0.7)',
-            'rgba(139, 92, 246, 0.7)'
-          ],
-          borderColor: '#111827'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 10 } } }
+    // Chart 4: Council Capacity & Screening Funnel
+    const regionalCtx = document.getElementById('regionalChart')?.getContext('2d');
+    if (regionalCtx) {
+      if (chartRegionalInstance) chartRegionalInstance.destroy();
+      chartRegionalInstance = new Chart(regionalCtx, {
+        type: 'polarArea',
+        data: {
+          labels: ['Occupied Seats', 'Available Seats', 'Pending Reviews', 'AI Flagged'],
+          datasets: [{
+            data: [0, 12, 0, 0],
+            backgroundColor: [
+              'rgba(16, 185, 129, 0.75)',
+              'rgba(59, 130, 246, 0.4)',
+              'rgba(245, 158, 11, 0.75)',
+              'rgba(244, 63, 94, 0.75)'
+            ],
+            borderColor: '#111827'
+          }]
         },
-        scales: {
-          r: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { display: false } }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 10 } } }
+          },
+          scales: {
+            r: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { display: false } }
+          }
         }
-      }
-    });
-  }
+      });
+    }
   } catch (err) {
-    console.warn('Chart initialization skipped:', err);
+    console.warn('Chart initialization error:', err);
+  }
+}
+
+// Update Charts with Real Database Statistics
+function updateRealCharts(stats) {
+  if (!stats) return;
+
+  const realMetrics = stats.liveDatabaseMetrics || {};
+  const popMetrics = stats.populationMetrics || {};
+  const apps = stats.applications || {};
+
+  const registeredUsers = realMetrics.registeredUsers ?? 0;
+  const activePatients = realMetrics.activePatients ?? 0;
+  const verifiedDoctors = realMetrics.verifiedDoctors ?? 0;
+  const totalApps = apps.total ?? 0;
+  const pendingApps = apps.pending ?? 0;
+  const flaggedApps = apps.flaggedByAi ?? 0;
+  const occupiedSeats = typeof stats.occupiedSeats === 'number' ? stats.occupiedSeats : (siteSettings.occupiedSeats ?? 0);
+  const totalCapacity = stats.councilCapacity ?? siteSettings.totalCouncilSeats ?? 12;
+  const availableSeats = Math.max(0, totalCapacity - occupiedSeats);
+  const partnerNgos = parseInt(popMetrics.partnerNgos || '12', 10) || 12;
+
+  // Chart 1: Recovery Trajectory
+  if (chartRecoveryInstance) {
+    chartRecoveryInstance.update();
+  }
+
+  // Chart 2: Real Database Population & Role Breakdown
+  if (chartSymptomsInstance) {
+    chartSymptomsInstance.data.labels = [
+      `Active Patients (${activePatients})`,
+      `Verified Doctors (${verifiedDoctors})`,
+      `Council Admins (${occupiedSeats})`,
+      `Partner NGOs (${partnerNgos})`
+    ];
+    chartSymptomsInstance.data.datasets[0].data = [
+      Math.max(activePatients, 1),
+      Math.max(verifiedDoctors, 1),
+      Math.max(occupiedSeats, 1),
+      partnerNgos
+    ];
+    chartSymptomsInstance.update();
+  }
+
+  // Chart 3: Live MongoDB Scale & Workflow
+  if (chartGrowthInstance) {
+    chartGrowthInstance.data.labels = [
+      'Registered Users',
+      'Active Patients',
+      'Verified Clinicians',
+      'Council Applicants',
+      'Occupied Council Seats'
+    ];
+    chartGrowthInstance.data.datasets[0].data = [
+      registeredUsers,
+      activePatients,
+      verifiedDoctors,
+      totalApps,
+      occupiedSeats
+    ];
+    chartGrowthInstance.update();
+  }
+
+  // Chart 4: Council Capacity & Application Review Breakdown
+  if (chartRegionalInstance) {
+    chartRegionalInstance.data.labels = [
+      `Occupied Seats (${occupiedSeats})`,
+      `Available Seats (${availableSeats})`,
+      `Pending Reviews (${pendingApps})`,
+      `AI Flagged (${flaggedApps})`
+    ];
+    chartRegionalInstance.data.datasets[0].data = [
+      occupiedSeats,
+      availableSeats,
+      pendingApps,
+      flaggedApps
+    ];
+    chartRegionalInstance.update();
   }
 }
 
@@ -1056,6 +1330,13 @@ function populateSettingsForm() {
     document.getElementById('statNgos').value = siteSettings.statsOverride.totalNgos;
     document.getElementById('statRecovery').value = siteSettings.statsOverride.recoveryRate;
     document.getElementById('statResponse').value = siteSettings.statsOverride.avgResponseTime;
+
+    if (document.getElementById('settingOccupiedSeats')) {
+      document.getElementById('settingOccupiedSeats').value = typeof siteSettings.occupiedSeats === 'number' ? siteSettings.occupiedSeats : 0;
+    }
+    if (document.getElementById('settingTotalSeats')) {
+      document.getElementById('settingTotalSeats').value = siteSettings.totalCouncilSeats || 12;
+    }
   }
 }
 
@@ -1077,6 +1358,12 @@ async function saveSiteSettings() {
     avgResponseTime: document.getElementById('statResponse').value.trim()
   };
 
+  const settingOcc = document.getElementById('settingOccupiedSeats');
+  const settingTot = document.getElementById('settingTotalSeats');
+  if (settingOcc) siteSettings.occupiedSeats = Math.max(0, parseInt(settingOcc.value || '0', 10));
+  if (settingTot) siteSettings.totalCouncilSeats = Math.max(1, parseInt(settingTot.value || '12', 10));
+
+  updateSeatTracker();
   saveLocalState();
 
   try {
@@ -1092,6 +1379,8 @@ async function saveSiteSettings() {
     }
   } catch {
     showToast('💾 Saved locally! Live site reflects via sync.');
+  } finally {
+    loadRealStats();
   }
 }
 

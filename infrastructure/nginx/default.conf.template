@@ -46,6 +46,21 @@ server {
     try_files $uri =404;
   }
 
+  # Clean URL routing for the Admin Portal (no /index.html in address bar)
+  location = /admin {
+    return 301 /admin-portal;
+  }
+
+  location = /admin-portal {
+    add_header Cache-Control "no-store";
+    try_files /admin-portal/index.html =404;
+  }
+
+  location /admin-portal/ {
+    add_header Cache-Control "no-store";
+    try_files $uri $uri/ /admin-portal/index.html;
+  }
+
   location / {
     add_header Cache-Control "no-store";
     try_files $uri $uri/ /index.html;
