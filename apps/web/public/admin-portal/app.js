@@ -1,7 +1,10 @@
-// Clean URL: Strip /index.html if present
+// Clean URL: Strip /index.html and normalize trailing slash so relative assets always resolve correctly
 if (window.location.pathname.endsWith('/index.html')) {
   const cleanPath = window.location.pathname.replace(/\/index\.html$/, '') || '/admin-portal';
-  window.history.replaceState(null, '', cleanPath + window.location.search + window.location.hash);
+  const finalPath = cleanPath.endsWith('/') ? cleanPath : cleanPath + '/';
+  window.history.replaceState(null, '', finalPath + window.location.search + window.location.hash);
+} else if (!window.location.pathname.endsWith('/') && window.location.pathname.endsWith('admin-portal')) {
+  window.history.replaceState(null, '', window.location.pathname + '/' + window.location.search + window.location.hash);
 }
 
 // API Base URL (Prefer same-origin reverse-proxy on Render/localhost, fallback to direct API)
