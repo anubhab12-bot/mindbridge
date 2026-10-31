@@ -443,22 +443,28 @@ export class PublicLayoutComponent implements OnInit {
 
   async ngOnInit() {
     try {
-      const res = await fetch('https://mindbridge-api-x99i.onrender.com/api/v1/governance/settings');
+      let res = await fetch('/api/v1/governance/settings');
+      if (!res.ok) {
+        res = await fetch('https://mindbridge-api-x99i.onrender.com/api/v1/governance/settings');
+      }
       if (res.ok) {
-        const json = await res.json();
-        if (json?.data?.announcementBanner) {
-          const b = json.data.announcementBanner;
-          this.bannerVisible.set(b.enabled);
+        const raw = await res.json();
+        const data = raw?.data?.data || raw?.data || raw;
+        if (data?.announcementBanner) {
+          const b = data.announcementBanner;
+          this.bannerVisible.set(b.enabled !== false);
           if (b.title) this.bannerTitle.set(b.title);
           if (b.message) this.bannerMsg.set(b.message);
         }
 
         // Check for active dynamic features
-        if (Array.isArray(json?.data?.dynamicFeatures)) {
-          const activeFeatures = json.data.dynamicFeatures.filter((f: any) => f.enabled);
+        if (Array.isArray(data?.dynamicFeatures)) {
+          const activeFeatures = data.dynamicFeatures.filter((f: any) => f.enabled !== false);
 
           // Top Header priority
-          const topHeaderFeature = activeFeatures.find((f: any) => f.placement === 'TOP_HEADER' || f.type === 'ANNOUNCEMENT_BANNER');
+          const topHeaderFeature = activeFeatures.find(
+            (f: any) => f.placement === 'TOP_HEADER' || f.type === 'ANNOUNCEMENT_BANNER',
+          );
           if (topHeaderFeature) {
             this.bannerVisible.set(true);
             this.bannerTitle.set(topHeaderFeature.title);
@@ -466,7 +472,9 @@ export class PublicLayoutComponent implements OnInit {
           }
 
           // Floating Pill priority
-          const pillFeature = activeFeatures.find((f: any) => f.placement === 'SIDE_STICKY' || f.type === 'FLOATING_CRISIS_PILL');
+          const pillFeature = activeFeatures.find(
+            (f: any) => f.placement === 'SIDE_STICKY' || f.type === 'FLOATING_CRISIS_PILL',
+          );
           if (pillFeature) {
             this.floatingPill.set(pillFeature);
           }

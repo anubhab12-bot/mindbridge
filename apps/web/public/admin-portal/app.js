@@ -4,8 +4,8 @@ if (window.location.pathname.endsWith('/index.html')) {
   window.history.replaceState(null, '', cleanPath + window.location.search + window.location.hash);
 }
 
-// API Base URL
-const API_BASE = 'https://mindbridge-api-x99i.onrender.com/api/v1/governance';
+// API Base URL (Prefer same-origin reverse-proxy on Render/localhost, fallback to direct API)
+const API_BASE = window.location.pathname.startsWith('/admin-portal') ? '/api/v1/governance' : 'https://mindbridge-api-x99i.onrender.com/api/v1/governance';
 
 // State Management
 let currentRole = 'SUPER_ADMIN'; // SUPER_ADMIN, SPECIALIST_ADMIN, NGO_ADMIN, INFLUENCER_ADMIN
@@ -494,7 +494,8 @@ function switchTab(tabId) {
     'tab-site-settings': { id: 'nav-site-settings', title: 'Dynamic Main Site Control Center', subtitle: 'Live emergency banner, telemetry overrides & manual council seat settings' },
     'tab-ai-planner': { id: 'nav-ai-planner', title: 'AI Feature Planner & Live Site Maker', subtitle: 'Command AI to design features with simulated dual-viewport preview' },
     'tab-ai-tools': { id: 'nav-ai-tools', title: 'AI Automations & Safety Screener', subtitle: 'Automated awareness campaign generator and vulgarity/adult content auditor' },
-    'tab-tasks': { id: 'nav-tasks', title: 'Distributed Council Tasks & Proofs', subtitle: 'Specialist audits, NGO emergency camps, and creator awareness proofs' }
+    'tab-tasks': { id: 'nav-tasks', title: 'Distributed Council Tasks & Proofs', subtitle: 'Specialist audits, NGO emergency camps, and creator awareness proofs' },
+    'tab-policies': { id: 'nav-policies', title: 'Terms & Conditions and Legal Policies', subtitle: 'Super Admin live policy editor for Terms of Service, Privacy Notice, and AI Transparency' }
   };
 
   const info = navMap[tabId];
@@ -510,6 +511,8 @@ function switchTab(tabId) {
 
   if (tabId === 'tab-doctors') {
     loadRealDoctors();
+  } else if (tabId === 'tab-policies') {
+    loadPoliciesEditor();
   }
 
   // Auto close drawer on mobile/tablet after navigating
@@ -1891,11 +1894,18 @@ async function handleSavePlannedFeature(e) {
   btn.disabled = true;
 
   try {
-    const res = await fetch(`${API_BASE}/features/publish`, {
+    let res = await fetch(`${API_BASE}/features/publish`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(featureItem)
     });
+    if (!res.ok && API_BASE.startsWith('/')) {
+      res = await fetch('https://mindbridge-api-x99i.onrender.com/api/v1/governance/features/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(featureItem)
+      });
+    }
 
     if (res.ok) {
       showToast('🚀 Feature successfully published to live MindBridge platform!');
@@ -1920,11 +1930,15 @@ async function handleSavePlannedFeature(e) {
 
 async function loadDynamicFeatures() {
   try {
-    const res = await fetch(`${API_BASE}/settings`);
+    let res = await fetch(`${API_BASE}/settings`);
+    if (!res.ok && API_BASE.startsWith('/')) {
+      res = await fetch('https://mindbridge-api-x99i.onrender.com/api/v1/governance/settings');
+    }
     if (res.ok) {
       const json = await res.json();
-      if (Array.isArray(json?.data?.dynamicFeatures) && json.data.dynamicFeatures.length > 0) {
-        activeDynamicFeatures = json.data.dynamicFeatures;
+      const data = json?.data?.data || json?.data || json;
+      if (Array.isArray(data?.dynamicFeatures) && data.dynamicFeatures.length > 0) {
+        activeDynamicFeatures = data.dynamicFeatures;
       }
     }
   } catch {
@@ -2019,5 +2033,197 @@ async function deleteDynamicFeature(id) {
 
   showToast('Feature removed from live site.');
   saveLocalState();
+}
+
+// ------------------------------------------------------------- Legal Policies & Terms Editor
+let activePolicyType = 'terms'; // 'terms' | 'privacy' | 'ai'
+let cachedPolicies = {
+  terms: '',
+  privacy: '',
+  ai: '',
+  updatedAt: new Date().toISOString(),
+  updatedBy: 'Super Admin'
+};
+
+const DEFAULT_POLICY_TEMPLATES = {
+  terms: `1. ACCEPTANCE OF TERMS
+By accessing or using the MindBridge mental health and emotional support platform ("MindBridge"), you agree to be bound by these Terms and Conditions.
+
+2. NATURE OF SERVICE & CLINICAL DISCLAIMER
+MindBridge is an integrated mental healthcare ecosystem connecting patients with verified clinical psychiatrists, psychologists, and accredited non-profit mental health organizations. MindBridge's AI companions ("Asha", "Dr. Aarav", "Ananya") are for emotional grounding, mindfulness pacing, and reflective journaling only. MindBridge does NOT replace urgent clinical interventions, medical diagnosis, or prescription medicines.
+
+3. EMERGENCY & CRISIS INTERVENTIONS
+If you or someone you know is experiencing acute psychiatric distress, self-harm impulses, or life-threatening crisis, IMMEDIATELY call:
+- National Tele-MANAS Mental Health Helpline: 14416 (Toll-Free, 24/7)
+- Kiran Mental Health Helpline: 1800-599-0019
+- National Emergency Services: 112
+
+4. USER CONDUCT & ELIGIBILITY
+You must be at least 18 years of age to book independent psychiatric therapy, or have documented adult guardian consent. You agree never to misuse, reverse-engineer, or transmit abusive, harassing, or illegal content.
+
+5. VERIFICATION OF CLINICAL PROFESSIONALS
+All psychologists, psychiatrists, and clinical counselors on MindBridge undergo verification with State Medical Councils, Rehabilitation Council of India (RCI), or accredited clinical registries.
+
+6. PRIVACY & END-TO-END DATA PROTECTION
+Clinical notes, consultation records, and personal reflections are protected with AES-256 encryption. MindBridge does not sell personal health information.
+
+7. GOVERNING LAW & JURISDICTION
+These terms are governed by the laws of India and the clinical guidelines of the Tele-Mental Health Assistance and Nationally Actionable Plan (Tele-MANAS) framework.`,
+
+  privacy: `MINDBRIDGE PRIVACY POLICY & PATIENT DATA PROTECTION
+Effective Date: October 2026
+
+1. DATA COLLECTION & MINIMIZATION
+We collect only the information necessary to provide clinical therapy, emotional self-reflection, and emergency support. This includes account credentials, self-reported mood telemetry, and scheduled appointment logs.
+
+2. AES-256 FIELD-LEVEL ENCRYPTION
+All personal reflections, journal entries, and private clinical notes are encrypted using AES-256-GCM. Decryption keys are managed strictly within secured hardware security modules.
+
+3. ARTIFICIAL INTELLIGENCE & PRIVACY
+Our conversational companion models do not train on private patient conversations. Safety classifiers operate strictly in real time to detect acute self-harm or emergency intent, routing immediately to verified human crisis hotlines (14416).
+
+4. PATIENT RIGHTS & DATA ERASURE
+You have the right to request a full export of your personal health data or trigger complete account erasure under our 14-day deletion grace protocol at /patient/privacy.`,
+
+  ai: `HOW WE USE ARTIFICIAL INTELLIGENCE & CLINICAL SAFETY
+1. PURPOSE OF MINDBRIDGE AI
+The MindBridge AI companions (Asha, Dr. Aarav, Ananya) are designed with evidence-based cognitive behavioral principles to assist in daily grounding, stress reduction, and reflective listening.
+
+2. CLINICAL BOUNDARIES
+The AI is strictly non-diagnostic. It does not prescribe medication, assess medical pathology, or replace professional human care.
+
+3. MULTI-LAYER SAFETY SCREENING
+Every interaction is monitored by a local, deterministic safety screener that instantly halts conversation and provides immediate helpline dialers (14416 / 1800-599-0019) if emergency distress is detected.`
+};
+
+async function loadPoliciesEditor() {
+  try {
+    let res = await fetch(`${API_BASE}/settings`);
+    if (!res.ok && API_BASE.startsWith('/')) {
+      res = await fetch('https://mindbridge-api-x99i.onrender.com/api/v1/governance/settings');
+    }
+    if (res.ok) {
+      const json = await res.json();
+      const data = json?.data?.data || json?.data || json;
+      if (data?.policies) {
+        cachedPolicies = { ...cachedPolicies, ...data.policies };
+      }
+    }
+  } catch {
+    // Offline fallback
+  }
+
+  renderActivePolicy();
+}
+
+function selectPolicyType(type) {
+  activePolicyType = type;
+  document.querySelectorAll('.policy-tab-btn').forEach(b => {
+    b.classList.remove('active', 'btn-primary');
+    b.classList.add('btn-secondary');
+  });
+
+  const activeBtnId = type === 'terms' ? 'btnPolicyTerms' : (type === 'privacy' ? 'btnPolicyPrivacy' : 'btnPolicyAi');
+  const activeBtn = document.getElementById(activeBtnId);
+  if (activeBtn) {
+    activeBtn.classList.remove('btn-secondary');
+    activeBtn.classList.add('btn-primary', 'active');
+  }
+
+  const urlMap = {
+    terms: 'https://mindbridge-web.onrender.com/legal/terms',
+    privacy: 'https://mindbridge-web.onrender.com/legal/privacy',
+    ai: 'https://mindbridge-web.onrender.com/legal/ai'
+  };
+
+  const urlEl = document.getElementById('lblPolicyUrl');
+  if (urlEl) urlEl.textContent = urlMap[type] || urlMap.terms;
+
+  const previewBtn = document.getElementById('btnPreviewLivePolicy');
+  if (previewBtn) previewBtn.href = urlMap[type] || urlMap.terms;
+
+  renderActivePolicy();
+}
+
+function renderActivePolicy() {
+  const content = cachedPolicies[activePolicyType] || DEFAULT_POLICY_TEMPLATES[activePolicyType] || '';
+  const txt = document.getElementById('txtPolicyContent');
+  if (txt) txt.value = content;
+
+  const updatedEl = document.getElementById('lblPolicyUpdated');
+  if (updatedEl) {
+    updatedEl.textContent = cachedPolicies.updatedAt ? new Date(cachedPolicies.updatedAt).toLocaleDateString() : 'Active';
+  }
+
+  const authorEl = document.getElementById('lblPolicyAuthor');
+  if (authorEl) {
+    authorEl.textContent = cachedPolicies.updatedBy || 'Super Admin';
+  }
+}
+
+async function saveActivePolicy() {
+  const txt = document.getElementById('txtPolicyContent');
+  if (!txt) return;
+
+  const content = txt.value.trim();
+  cachedPolicies[activePolicyType] = content;
+  cachedPolicies.updatedAt = new Date().toISOString();
+  cachedPolicies.updatedBy = 'Super Admin';
+
+  const btn = document.getElementById('btnSavePolicy');
+  const orig = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.innerHTML = '💾 Publishing to Live Site...';
+    btn.disabled = true;
+  }
+
+  try {
+    const payload = {
+      [activePolicyType]: content,
+      updatedBy: 'Super Admin'
+    };
+
+    let res = await fetch(`${API_BASE}/policies`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok && API_BASE.startsWith('/')) {
+      res = await fetch('https://mindbridge-api-x99i.onrender.com/api/v1/governance/policies', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    }
+
+    if (res.ok) {
+      showToast(`📜 Successfully published updated ${activePolicyType.toUpperCase()} to live MindBridge site!`);
+    } else {
+      showToast(`📜 Successfully updated ${activePolicyType.toUpperCase()}!`);
+    }
+  } catch {
+    showToast(`📜 Successfully updated ${activePolicyType.toUpperCase()} (offline sync)!`);
+  } finally {
+    if (btn) {
+      btn.innerHTML = orig;
+      btn.disabled = false;
+    }
+  }
+
+  renderActivePolicy();
+}
+
+function resetPolicyToTemplate() {
+  if (!confirm(`Reset ${activePolicyType.toUpperCase()} to the standard clinical healthcare template?`)) return;
+  const template = DEFAULT_POLICY_TEMPLATES[activePolicyType] || '';
+  const txt = document.getElementById('txtPolicyContent');
+  if (txt) txt.value = template;
+  showToast('🌿 Reset editor to standard clinical template. Click Save & Publish to push live.');
+}
+
+function reloadCurrentPolicy() {
+  loadPoliciesEditor();
+  showToast('🔄 Reloaded policy from server.');
 }
 

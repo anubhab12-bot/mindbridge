@@ -44,6 +44,24 @@ export class DynamicSettings {
   };
 
   @Prop({
+    type: Object,
+    default: {
+      terms: '',
+      privacy: '',
+      ai: '',
+      updatedAt: new Date().toISOString(),
+      updatedBy: 'Super Admin',
+    },
+  })
+  policies!: {
+    terms: string;
+    privacy: string;
+    ai: string;
+    updatedAt: string;
+    updatedBy: string;
+  };
+
+  @Prop({
     type: Array,
     default: [
       { name: 'Tele-MANAS National Helpline', region: 'All India (24/7)', focus: 'Crisis Intervention & Triage' },

@@ -18,14 +18,28 @@ export class GovernanceController {
   @Get('settings')
   @ApiOperation({ summary: 'Get dynamic site settings that reflect across the MindBridge platform' })
   async getSettings() {
-    return { data: await this.governance.getSettings() };
+    return this.governance.getSettings();
   }
 
   @Public()
   @Put('settings')
   @ApiOperation({ summary: 'Update dynamic site settings (Super Admin controlled)' })
   async updateSettings(@Body() dto: Partial<DynamicSiteSettings>) {
-    return { data: await this.governance.updateSettings(dto) };
+    return this.governance.updateSettings(dto);
+  }
+
+  @Public()
+  @Get('policies/:type')
+  @ApiOperation({ summary: 'Get published legal policy with super-admin overrides' })
+  async getPolicy(@Param('type') type: string) {
+    return this.governance.getPolicy(type);
+  }
+
+  @Public()
+  @Put('policies')
+  @ApiOperation({ summary: 'Super Admin updates Terms and Conditions, Privacy Policy, or AI Disclaimers' })
+  async updatePolicies(@Body() dto: { terms?: string; privacy?: string; ai?: string; updatedBy?: string }) {
+    return this.governance.updatePolicies(dto);
   }
 
   @Public()
@@ -41,7 +55,7 @@ export class GovernanceController {
       credentials: CouncilApplicationCredentials;
     },
   ) {
-    return { data: await this.governance.applyForCouncil(dto) };
+    return this.governance.applyForCouncil(dto);
   }
 
   @Public()
@@ -51,7 +65,7 @@ export class GovernanceController {
     @Query('category') category?: string,
     @Query('status') status?: string,
   ) {
-    return { data: await this.governance.listApplications(category, status) };
+    return this.governance.listApplications(category, status);
   }
 
   @Public()
@@ -61,7 +75,7 @@ export class GovernanceController {
     @Param('id') id: string,
     @Body() dto: { decision: 'APPROVED' | 'REJECTED'; notes?: string; reviewer?: string },
   ) {
-    return { data: await this.governance.reviewApplication(id, dto.decision, dto.notes, dto.reviewer) };
+    return this.governance.reviewApplication(id, dto.decision, dto.notes, dto.reviewer);
   }
 
   @Public()
@@ -71,14 +85,14 @@ export class GovernanceController {
     @Query('category') category?: string,
     @Query('status') status?: string,
   ) {
-    return { data: await this.governance.listTasks(category, status) };
+    return this.governance.listTasks(category, status);
   }
 
   @Public()
   @Post('tasks/generate-ai')
   @ApiOperation({ summary: 'Use AI to generate awareness missions and social reel tasks for Influencers' })
   async generateAiTasks() {
-    return { data: await this.governance.generateAiTasks() };
+    return this.governance.generateAiTasks();
   }
 
   @Public()
@@ -88,7 +102,7 @@ export class GovernanceController {
     @Param('id') id: string,
     @Body() dto: { proof: CouncilTaskProof },
   ) {
-    return { data: await this.governance.submitProof(id, dto.proof) };
+    return this.governance.submitProof(id, dto.proof);
   }
 
   @Public()
@@ -98,14 +112,14 @@ export class GovernanceController {
     @Param('id') id: string,
     @Body() dto: { decision: 'VERIFIED' | 'REVISION_REQUESTED' },
   ) {
-    return { data: await this.governance.verifyProof(id, dto.decision) };
+    return this.governance.verifyProof(id, dto.decision);
   }
 
   @Public()
   @Get('stats')
   @ApiOperation({ summary: 'Council governance capacity (12 spots) and live population health metrics' })
   async getStats() {
-    return { data: await this.governance.getCouncilStats() };
+    return this.governance.getCouncilStats();
   }
 
   // ------------------------------------------------------------- AI Feature Maker & Planner
@@ -113,14 +127,14 @@ export class GovernanceController {
   @Post('features/ai-plan')
   @ApiOperation({ summary: 'Generate a structured dynamic feature proposal from Super Admin natural language command' })
   async planFeatureWithAi(@Body() dto: { prompt: string }) {
-    return { data: this.governance.planFeatureWithAi(dto.prompt) };
+    return this.governance.planFeatureWithAi(dto.prompt);
   }
 
   @Public()
   @Post('features/publish')
   @ApiOperation({ summary: 'Publish or update a dynamic feature to the live Main Site' })
   async publishDynamicFeature(@Body() dto: DynamicFeatureItem) {
-    return { data: await this.governance.publishDynamicFeature(dto) };
+    return this.governance.publishDynamicFeature(dto);
   }
 
   @Public()
@@ -130,14 +144,14 @@ export class GovernanceController {
     @Param('id') id: string,
     @Body() dto: { enabled?: boolean },
   ) {
-    return { data: await this.governance.toggleDynamicFeature(id, dto.enabled) };
+    return this.governance.toggleDynamicFeature(id, dto.enabled);
   }
 
   @Public()
   @Delete('features/:id')
   @ApiOperation({ summary: 'Remove a dynamic feature from the live Main Site' })
   async deleteDynamicFeature(@Param('id') id: string) {
-    return { data: await this.governance.deleteDynamicFeature(id) };
+    return this.governance.deleteDynamicFeature(id);
   }
 
   // ------------------------------------------------------------- Doctor Verification & Demo Purge
@@ -145,20 +159,20 @@ export class GovernanceController {
   @Get('doctors')
   @ApiOperation({ summary: 'List all real registered doctors for Admin verification' })
   async listDoctors() {
-    return { data: await this.governance.listDoctors() };
+    return this.governance.listDoctors();
   }
 
   @Public()
   @Post('doctors/:id/approve')
   @ApiOperation({ summary: 'Approve doctor verification status' })
   async approveDoctor(@Param('id') id: string) {
-    return { data: await this.governance.approveDoctor(id) };
+    return this.governance.approveDoctor(id);
   }
 
   @Public()
   @Post('purge-demo-data')
   @ApiOperation({ summary: 'Purge all preloaded/synthetic demo accounts from database' })
   async purgeDemoData() {
-    return { data: await this.governance.purgeDemoData() };
+    return this.governance.purgeDemoData();
   }
 }

@@ -64,9 +64,15 @@ export class LegalPage {
     this.loading.set(true);
     this.error.set(null);
     try {
-      this.policy.set(await this.api.get<Policy>(`/policies/${SLUGS[this.type()] ?? 'UNKNOWN'}`));
-    } catch (err) {
-      this.error.set(errorMessage(err));
+      const typeKey = this.type().toLowerCase();
+      const pol = await this.api.get<Policy>(`/governance/policies/${typeKey}`);
+      this.policy.set(pol);
+    } catch {
+      try {
+        this.policy.set(await this.api.get<Policy>(`/policies/${SLUGS[this.type()] ?? 'UNKNOWN'}`));
+      } catch (err) {
+        this.error.set(errorMessage(err));
+      }
     } finally {
       this.loading.set(false);
     }

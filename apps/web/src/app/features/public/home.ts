@@ -37,6 +37,27 @@ interface RecoveryTrack {
           <p class="lead">
             MindBridge bridges verified psychiatrists, accredited mental health NGOs, and an intelligent 24/7 companion with end-to-end encrypted private reflection.
           </p>
+
+          <!-- DYNAMIC HERO PROMO CARD (Live Deployed by Super Admin) -->
+          @if (heroPromoFeature(); as promo) {
+            <div class="hero-live-promo-card animated-fade" [class]="'promo-theme-' + (promo.themeColor || 'indigo')">
+              <div class="promo-header">
+                <span class="promo-icon">{{ promo.iconEmoji || '✨' }}</span>
+                <span class="promo-badge">{{ promo.badgeLabel || 'Dynamic Feature' }}</span>
+                <span class="promo-live-tag">● Live Feature</span>
+              </div>
+              <h3 class="promo-title">{{ promo.title }}</h3>
+              <p class="promo-desc">{{ promo.description }}</p>
+              @if (promo.ctaText) {
+                <div class="promo-action">
+                  <a [href]="promo.ctaLink || '/patient/companion'" class="btn btn-sm btn-primary-elevated">
+                    {{ promo.ctaText }} →
+                  </a>
+                </div>
+              }
+            </div>
+          }
+
           <div class="row hero-actions">
             @if (auth.isAuthenticated()) {
               <a class="btn btn-primary-elevated" [routerLink]="auth.homeFor()">Go to my dashboard →</a>
@@ -239,21 +260,21 @@ interface RecoveryTrack {
             type="button"
             class="lang-pill" 
             [class.active]="selectedLang() === 'en'"
-            (click)="selectedLang.set('en')">
+            (click)="selectLanguage('en')">
             <span class="flag">🇬🇧</span> English
           </button>
           <button 
             type="button"
             class="lang-pill" 
             [class.active]="selectedLang() === 'hi'"
-            (click)="selectedLang.set('hi')">
+            (click)="selectLanguage('hi')">
             <span class="flag">🇮🇳</span> हिंदी (Hindi)
           </button>
           <button 
             type="button"
             class="lang-pill" 
             [class.active]="selectedLang() === 'bn'"
-            (click)="selectedLang.set('bn')">
+            (click)="selectLanguage('bn')">
             <span class="flag">🇮🇳</span> বাংলা (Bengali)
           </button>
         </div>
@@ -267,7 +288,7 @@ interface RecoveryTrack {
             type="button"
             class="character-card-btn" 
             [class.active]="selectedCharacter() === 'asha'"
-            (click)="selectedCharacter.set('asha')">
+            (click)="selectCharacter('asha')">
             <div class="char-avatar-ring rose">
               <span class="char-emoji animate-float">🌸</span>
             </div>
@@ -283,7 +304,7 @@ interface RecoveryTrack {
             type="button"
             class="character-card-btn" 
             [class.active]="selectedCharacter() === 'aarav'"
-            (click)="selectedCharacter.set('aarav')">
+            (click)="selectCharacter('aarav')">
             <div class="char-avatar-ring blue">
               <span class="char-emoji animate-float">🩺</span>
             </div>
@@ -299,7 +320,7 @@ interface RecoveryTrack {
             type="button"
             class="character-card-btn" 
             [class.active]="selectedCharacter() === 'ananya'"
-            (click)="selectedCharacter.set('ananya')">
+            (click)="selectCharacter('ananya')">
             <div class="char-avatar-ring purple">
               <span class="char-emoji animate-float">✨</span>
             </div>
@@ -340,7 +361,7 @@ interface RecoveryTrack {
                   type="button"
                   class="audio-toggle-btn" 
                   (click)="toggleAudio()">
-                  {{ isAudioPlaying() ? '🔊 Voice Simulation Active' : '🔇 Audio Muted' }}
+                  {{ isAudioPlaying() ? '🔊 Speaking Now (Click to Mute)' : '🔈 Play Audio Voice' }}
                 </button>
               </div>
 
@@ -725,6 +746,59 @@ interface RecoveryTrack {
       font-size: 0.85rem;
       color: var(--mb-text-muted);
       flex-wrap: wrap;
+    }
+
+    .hero-live-promo-card {
+      margin-top: var(--mb-space-4);
+      margin-bottom: var(--mb-space-2);
+      padding: 18px 22px;
+      border-radius: var(--mb-radius-md);
+      background: linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(14, 165, 233, 0.05));
+      border: 2px dashed #6366f1;
+      position: relative;
+      box-shadow: 0 4px 20px -4px rgba(99, 102, 241, 0.2);
+    }
+    .promo-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .promo-icon {
+      font-size: 1.4rem;
+    }
+    .promo-badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #4f46e5;
+      color: #fff;
+    }
+    .promo-live-tag {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #10b981;
+      margin-left: auto;
+    }
+    .promo-title {
+      margin: 0 0 6px;
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--mb-text);
+    }
+    .promo-desc {
+      margin: 0 0 12px;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      color: var(--mb-text-muted);
+    }
+    .promo-action {
+      display: flex;
+      gap: 10px;
     }
 
     .hero-card {
@@ -1622,6 +1696,7 @@ export class HomePage implements OnInit {
   protected readonly auth = inject(AuthService);
 
   protected readonly dynamicFeatures = signal<any[]>([]);
+  protected readonly heroPromoFeature = signal<any | null>(null);
   protected readonly statTotalUsers = signal('14,850+');
   protected readonly statTotalNgos = signal('124');
   protected readonly statRecoveryRate = signal('94.6%');
@@ -1751,16 +1826,127 @@ export class HomePage implements OnInit {
   // Multilingual AI Companion State
   protected readonly selectedLang = signal<'en' | 'hi' | 'bn'>('hi');
   protected readonly selectedCharacter = signal<'asha' | 'aarav' | 'ananya'>('asha');
-  protected readonly isAudioPlaying = signal<boolean>(true);
+  protected readonly isAudioPlaying = signal<boolean>(false);
 
-  // Demo Video Walkthrough State
-  protected readonly activeVideoChapter = signal<number>(1);
-  protected readonly isVideoPlaying = signal<boolean>(true);
-  protected readonly videoProgress = signal<number>(38);
-  protected readonly videoTime = signal<string>('01:14');
+  private audioCtx: any = null;
+
+  selectLanguage(lang: 'en' | 'hi' | 'bn') {
+    this.selectedLang.set(lang);
+    this.playVoice();
+  }
+
+  selectCharacter(char: 'asha' | 'aarav' | 'ananya') {
+    this.selectedCharacter.set(char);
+    this.playVoice();
+  }
 
   toggleAudio() {
-    this.isAudioPlaying.set(!this.isAudioPlaying());
+    if (this.isAudioPlaying()) {
+      this.stopVoice();
+    } else {
+      this.playVoice();
+    }
+  }
+
+  stopVoice() {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    this.isAudioPlaying.set(false);
+  }
+
+  playVoice() {
+    if (typeof window === 'undefined') return;
+    this.isAudioPlaying.set(true);
+
+    // 1. Play soothing crystal wellness chime via Web Audio API
+    this.playHarmonicChime();
+
+    // 2. Play spoken audio via browser SpeechSynthesis
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const text = this.currentDialogue();
+      const utterance = new SpeechSynthesisUtterance(text);
+      const lang = this.selectedLang();
+      const char = this.selectedCharacter();
+
+      if (lang === 'hi') {
+        utterance.lang = 'hi-IN';
+      } else if (lang === 'bn') {
+        utterance.lang = 'bn-IN';
+      } else {
+        utterance.lang = 'en-US';
+      }
+
+      // Voice pitch and cadence per persona
+      if (char === 'asha') {
+        utterance.pitch = 1.15;
+        utterance.rate = 0.92;
+      } else if (char === 'aarav') {
+        utterance.pitch = 0.85;
+        utterance.rate = 0.95;
+      } else {
+        utterance.pitch = 1.25;
+        utterance.rate = 1.05;
+      }
+
+      // Pick localized voice if browser provides one
+      const voices = window.speechSynthesis.getVoices();
+      const prefix = lang === 'hi' ? 'hi' : (lang === 'bn' ? 'bn' : 'en');
+      const matched = voices.find(v => v.lang && v.lang.toLowerCase().startsWith(prefix));
+      if (matched) {
+        utterance.voice = matched;
+      }
+
+      utterance.onend = () => {
+        this.isAudioPlaying.set(false);
+      };
+      utterance.onerror = () => {
+        this.isAudioPlaying.set(false);
+      };
+
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  private playHarmonicChime() {
+    try {
+      const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      if (!this.audioCtx || this.audioCtx.state === 'closed') {
+        this.audioCtx = new AudioCtx();
+      }
+      if (this.audioCtx.state === 'suspended') {
+        this.audioCtx.resume();
+      }
+      const ctx = this.audioCtx;
+      const now = ctx.currentTime;
+
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      const baseFreq = this.selectedCharacter() === 'aarav' ? 220 : (this.selectedCharacter() === 'ananya' ? 528 : 432);
+      osc1.type = 'sine';
+      osc2.type = 'sine';
+      osc1.frequency.setValueAtTime(baseFreq, now);
+      osc2.frequency.setValueAtTime(baseFreq * 1.5, now);
+
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.12, now + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + 1.2);
+      osc2.stop(now + 1.2);
+    } catch {
+      // AudioContext unavailable
+    }
   }
 
   toggleVideoPlay() {
@@ -1800,21 +1986,27 @@ export class HomePage implements OnInit {
 
   async ngOnInit() {
     try {
-      const res = await fetch('https://mindbridge-api-x99i.onrender.com/api/v1/governance/settings');
+      let res = await fetch('/api/v1/governance/settings');
+      if (!res.ok) {
+        res = await fetch('https://mindbridge-api-x99i.onrender.com/api/v1/governance/settings');
+      }
       if (res.ok) {
-        const json = await res.json();
-        if (json?.data?.statsOverride) {
-          const so = json.data.statsOverride;
+        const raw = await res.json();
+        const data = raw?.data?.data || raw?.data || raw;
+        if (data?.statsOverride) {
+          const so = data.statsOverride;
           if (so.totalUsers) this.statTotalUsers.set(so.totalUsers);
           if (so.totalNgos) this.statTotalNgos.set(so.totalNgos);
           if (so.recoveryRate) this.statRecoveryRate.set(so.recoveryRate);
           if (so.avgResponseTime) this.statAvgResponseTime.set(so.avgResponseTime);
         }
-        if (Array.isArray(json?.data?.dynamicFeatures)) {
-          const active = json.data.dynamicFeatures.filter((f: any) => f.enabled && f.placement !== 'TOP_HEADER' && f.placement !== 'SIDE_STICKY');
-          if (active.length > 0) {
-            this.dynamicFeatures.set(active);
+        if (Array.isArray(data?.dynamicFeatures)) {
+          const active = data.dynamicFeatures.filter((f: any) => f.enabled !== false);
+          const heroPromo = active.find((f: any) => f.placement === 'HERO_SECTION' || f.type === 'HERO_PROMO_CARD');
+          if (heroPromo) {
+            this.heroPromoFeature.set(heroPromo);
           }
+          this.dynamicFeatures.set(active);
         }
       }
     } catch {

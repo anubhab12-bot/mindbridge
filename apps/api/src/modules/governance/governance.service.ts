@@ -113,7 +113,7 @@ export class GovernanceService implements OnModuleInit {
   }
 
   // ------------------------------------------------------------- Dynamic Site Settings
-  async getSettings(): Promise<DynamicSiteSettings> {
+  async getSettings(): Promise<DynamicSiteSettings & { policies?: any }> {
     let settings = await this.settingsModel.findOne().lean();
     if (!settings) {
       settings = (await this.settingsModel.create({})).toObject();
@@ -126,11 +126,18 @@ export class GovernanceService implements OnModuleInit {
       totalCouncilSeats: settings.totalCouncilSeats ?? 12,
       occupiedSeats: typeof settings.occupiedSeats === 'number' ? settings.occupiedSeats : 0,
       dynamicFeatures: (settings as any).dynamicFeatures ?? [],
+      policies: (settings as any).policies || {
+        terms: '',
+        privacy: '',
+        ai: '',
+        updatedAt: new Date().toISOString(),
+        updatedBy: 'Super Admin',
+      },
       updatedAt: (settings as any).updatedAt ? (settings as any).updatedAt.toISOString() : new Date().toISOString(),
     };
   }
 
-  async updateSettings(dto: Partial<DynamicSiteSettings>): Promise<DynamicSiteSettings> {
+  async updateSettings(dto: Partial<DynamicSiteSettings> & { policies?: any }): Promise<any> {
     let doc = await this.settingsModel.findOne();
     if (!doc) {
       doc = new this.settingsModel();
@@ -142,9 +149,105 @@ export class GovernanceService implements OnModuleInit {
     if (typeof dto.totalCouncilSeats === 'number') doc.totalCouncilSeats = dto.totalCouncilSeats;
     if (typeof dto.occupiedSeats === 'number') doc.occupiedSeats = dto.occupiedSeats;
     if (Array.isArray(dto.dynamicFeatures)) (doc as any).dynamicFeatures = dto.dynamicFeatures;
+    if (dto.policies) {
+      const existing = (doc as any).policies || {};
+      (doc as any).policies = { ...existing, ...dto.policies, updatedAt: new Date().toISOString() };
+    }
 
     await doc.save();
     return this.getSettings();
+  }
+
+  async getPolicy(type: string) {
+    const key = (type || 'terms').toLowerCase();
+    const doc = await this.settingsModel.findOne().lean();
+    const policies = (doc as any)?.policies || {};
+
+    const defaultTerms = `1. ACCEPTANCE OF TERMS
+By accessing or using the MindBridge mental health and emotional support platform ("MindBridge"), you agree to be bound by these Terms and Conditions.
+
+2. NATURE OF SERVICE & CLINICAL DISCLAIMER
+MindBridge is an integrated mental healthcare ecosystem connecting patients with verified clinical psychiatrists, psychologists, and accredited non-profit mental health organizations. MindBridge's AI companions ("Asha", "Dr. Aarav", "Ananya") are for emotional grounding, psychoeducation, and self-reflection only. They do not constitute a physician-patient relationship, medical diagnosis, or emergency psychiatric intervention.
+
+3. EMERGENCY & CRISIS SITUATIONS
+IF YOU ARE IN IMMEDIATE PHYSICAL DANGER, EXPERIENCING SEVERE SUICIDAL IDEATION, OR IN CRISIS:
+- Call 14416 (Tele-MANAS, 24/7 Toll-Free National Mental Health Helpline across India)
+- Call 1800-599-0019 (KIRAN Mental Health Helpline)
+- Dial 112 for national emergency response.
+
+4. USER ELIGIBILITY & CONDUCT
+Users must be at least 18 years of age or possess documented adult guardian consent. You agree never to misuse, reverse-engineer, or transmit abusive, harassing, or illegal content.
+
+5. VERIFICATION OF CLINICAL PROFESSIONALS
+All psychologists, psychiatrists, and clinical counselors on MindBridge undergo verification with State Medical Councils, Rehabilitation Council of India (RCI), or accredited clinical registries.
+
+6. PRIVACY & END-TO-END DATA PROTECTION
+Clinical notes, consultation records, and personal reflections are protected with AES-256 encryption. MindBridge does not sell personal health information.
+
+7. GOVERNING LAW & JURISDICTION
+These terms are governed by the laws of India and the clinical guidelines of the Tele-Mental Health Assistance and Nationally Actionable Plan (Tele-MANAS) framework.`;
+
+    const defaultPrivacy = `MINDBRIDGE PRIVACY POLICY & PATIENT DATA PROTECTION
+Effective Date: October 2026
+
+1. DATA COLLECTION & MINIMIZATION
+We collect only the information necessary to provide clinical therapy, emotional self-reflection, and emergency support. This includes account credentials, self-reported mood telemetry, and scheduled appointment logs.
+
+2. AES-256 FIELD-LEVEL ENCRYPTION
+All personal reflections, journal entries, and private clinical notes are encrypted using AES-256-GCM. Decryption keys are managed strictly within secured hardware security modules.
+
+3. ARTIFICIAL INTELLIGENCE & PRIVACY
+Our conversational companion models do not train on private patient conversations. Safety classifiers operate strictly in real time to detect acute self-harm or emergency intent, routing immediately to verified human crisis hotlines (14416).
+
+4. PATIENT RIGHTS & DATA ERASURE
+You have the right to request a full export of your personal health data or trigger complete account erasure under our 14-day deletion grace protocol at /patient/privacy.`;
+
+    const defaultAi = `HOW WE USE ARTIFICIAL INTELLIGENCE & CLINICAL SAFETY
+1. PURPOSE OF MINDBRIDGE AI
+The MindBridge AI companions (Asha, Dr. Aarav, Ananya) are designed with evidence-based cognitive behavioral principles to assist in daily grounding, stress reduction, and reflective listening.
+
+2. CLINICAL BOUNDARIES
+The AI is strictly non-diagnostic. It does not prescribe medication, assess medical pathology, or replace professional human care.
+
+3. MULTI-LAYER SAFETY SCREENING
+Every interaction is monitored by a local, deterministic safety screener that instantly halts conversation and provides immediate helpline dialers (14416 / 1800-599-0019) if emergency distress is detected.`;
+
+    let content = '';
+    let title = '';
+    if (key.includes('term')) {
+      title = 'Terms of Service & Clinical Conditions';
+      content = policies.terms || defaultTerms;
+    } else if (key.includes('priv')) {
+      title = 'Privacy Notice & Patient Confidentiality';
+      content = policies.privacy || defaultPrivacy;
+    } else {
+      title = 'How MindBridge Uses Artificial Intelligence';
+      content = policies.ai || defaultAi;
+    }
+
+    return {
+      type: key,
+      title,
+      version: policies.updatedAt ? new Date(policies.updatedAt).toISOString().slice(0, 10) : '2026.1',
+      effectiveAt: policies.updatedAt || new Date().toISOString(),
+      body: content,
+      updatedBy: policies.updatedBy || 'Super Admin',
+    };
+  }
+
+  async updatePolicies(dto: { terms?: string; privacy?: string; ai?: string; updatedBy?: string }) {
+    let doc = await this.settingsModel.findOne();
+    if (!doc) doc = new this.settingsModel();
+    const existing = (doc as any).policies || {};
+    (doc as any).policies = {
+      terms: dto.terms !== undefined ? dto.terms : existing.terms,
+      privacy: dto.privacy !== undefined ? dto.privacy : existing.privacy,
+      ai: dto.ai !== undefined ? dto.ai : existing.ai,
+      updatedAt: new Date().toISOString(),
+      updatedBy: dto.updatedBy || 'Super Admin',
+    };
+    await doc.save();
+    return (doc as any).policies;
   }
 
   // ------------------------------------------------------------- AI Feature Planner & Maker
