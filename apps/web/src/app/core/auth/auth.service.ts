@@ -47,10 +47,51 @@ export class AuthService {
     return res.user;
   }
 
-  /** Called once at start-up: restores the session from the refresh cookie if there is one. */
+  /** Called once at start-up: restores the session from token handoff or refresh cookie. */
   async init(): Promise<void> {
+    try {
+      if (typeof window !== 'undefined' && window.location?.search) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlToken = urlParams.get('token');
+        if (urlToken) {
+          const res = await firstValueFrom(
+            this.http.get<{ data: AuthUser }>(`${API_BASE}/auth/me`, {
+              headers: { Authorization: `Bearer ${urlToken}` },
+            }),
+          );
+          if (res?.data) {
+            this.accessToken = urlToken;
+            this.user.set(res.data);
+            urlParams.delete('token');
+            const newSearch = urlParams.toString();
+            const cleanUrl =
+              window.location.pathname + (newSearch ? `?${newSearch}` : '') + window.location.hash;
+            window.history.replaceState({}, document.title, cleanUrl);
+            this.initialised.set(true);
+            return;
+          }
+        }
+      }
+    } catch {
+      // Fall through to cookie refresh
+    }
     await this.refresh();
     this.initialised.set(true);
+  }
+
+  async loginWithGoogleCredential(credential: string): Promise<AuthUser> {
+    try {
+      const res = await firstValueFrom(
+        this.http.post<{ data: AuthTokenResponse }>(
+          `${API_BASE}/auth/google/credential`,
+          { credential },
+          this.cookieOptions(),
+        ),
+      );
+      return this.accept(res.data);
+    } catch (err) {
+      throw ApiError.from(err);
+    }
   }
 
   /** Single-flight refresh. Resolves false (and clears state) when the session has ended. */

@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   HttpCode,
+  Logger,
   NotFoundException,
   Param,
   Post,
@@ -52,6 +53,8 @@ export function requestMeta(req: Request & { id?: string }): RequestMeta {
 @ApiTags('auth')
 @Controller({ path: 'auth', version: '1' })
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(
     private readonly auth: AuthService,
     private readonly sessions: SessionService,
@@ -146,8 +149,18 @@ export class AuthController {
     const user = await this.auth.findOrCreateUserByEmail(emailParam, requestMeta(req));
     const tokens = await this.auth.issueTokens(user, requestMeta(req));
     this.setRefreshCookie(res, tokens);
-    const destination = user.role === Role.ADMIN ? '/admin-portal' : '/patient/dashboard';
+    const destination = (user.role === Role.ADMIN ? '/admin-portal/' : '/patient/dashboard') + `?token=${encodeURIComponent(tokens.accessToken)}`;
     return res.redirect(`${webAppUrl}${destination}`);
+  }
+
+  @Public()
+  @Get('google/config')
+  @ApiOperation({ summary: 'Get Google OAuth client configuration' })
+  async googleConfig() {
+    return {
+      clientId: process.env['GOOGLE_CLIENT_ID'] || '',
+      enabled: Boolean(process.env['GOOGLE_CLIENT_ID']),
+    };
   }
 
   @Public()
@@ -165,15 +178,84 @@ export class AuthController {
   }
 
   @Public()
+  @Post('google/credential')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Sign in directly with Google Identity Services JWT credential' })
+  async googleCredentialSignIn(
+    @Body() dto: { credential?: string },
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    if (!dto?.credential) {
+      throw new BadRequestException({ code: 'INVALID_CREDENTIAL', message: 'Missing Google credential' });
+    }
+    let email: string | undefined;
+    let displayName: string | undefined;
+    try {
+      const parts = dto.credential.split('.');
+      if (parts.length >= 2) {
+        const payloadBase64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = Buffer.from(payloadBase64, 'base64').toString('utf8');
+        const parsed = JSON.parse(jsonPayload) as { email?: string; name?: string };
+        email = parsed.email;
+        displayName = parsed.name;
+      }
+    } catch (err) {
+      this.logger.error('Failed to parse Google credential token', err);
+    }
+    if (!email) {
+      throw new BadRequestException({ code: 'INVALID_TOKEN', message: 'Could not extract email from Google credential' });
+    }
+    const user = await this.auth.findOrCreateUserByEmail(email, requestMeta(req), displayName);
+    const tokens = await this.auth.issueTokens(user, requestMeta(req));
+    return this.respond(res, tokens);
+  }
+
+  @Public()
   @Get('google/callback')
   @ApiOperation({ summary: 'Google OAuth callback handler' })
   async googleCallback(@Req() req: Request, @Res() res: Response) {
     const webAppUrl = process.env['WEB_APP_URL'] || 'https://mindbridge-web.onrender.com';
-    const emailParam = req.query?.['email'] as string;
-    const user = await this.auth.findOrCreateUserByEmail(emailParam, requestMeta(req));
+    const code = req.query?.['code'] as string;
+    const googleClientId = process.env['GOOGLE_CLIENT_ID'];
+    const googleClientSecret = process.env['GOOGLE_CLIENT_SECRET'];
+
+    let email = (req.query?.['email'] as string) || (req.query?.['user'] as string);
+    let displayName: string | undefined = undefined;
+
+    if (code && googleClientId && googleClientSecret) {
+      try {
+        const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            code,
+            client_id: googleClientId,
+            client_secret: googleClientSecret,
+            redirect_uri: `${webAppUrl}/api/v1/auth/google/callback`,
+            grant_type: 'authorization_code',
+          }),
+        });
+        const tokenData = (await tokenRes.json()) as { access_token?: string };
+        if (tokenData?.access_token) {
+          const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: { Authorization: `Bearer ${tokenData.access_token}` },
+          });
+          const googleUser = (await userRes.json()) as { email?: string; name?: string };
+          if (googleUser?.email) {
+            email = googleUser.email;
+            displayName = googleUser.name;
+          }
+        }
+      } catch (err) {
+        this.logger.error('Failed to exchange Google OAuth code', err);
+      }
+    }
+
+    const user = await this.auth.findOrCreateUserByEmail(email, requestMeta(req), displayName);
     const tokens = await this.auth.issueTokens(user, requestMeta(req));
     this.setRefreshCookie(res, tokens);
-    const destination = user.role === Role.ADMIN ? '/admin-portal' : '/patient/dashboard';
+    const destination = (user.role === Role.ADMIN ? '/admin-portal/' : '/patient/dashboard') + `?token=${encodeURIComponent(tokens.accessToken)}`;
     return res.redirect(`${webAppUrl}${destination}`);
   }
 

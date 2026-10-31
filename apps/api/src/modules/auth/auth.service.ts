@@ -248,10 +248,20 @@ export class AuthService {
       if (role === Role.PATIENT) {
         await this.patients.create({ userId: user._id, ageConfirmedAdult: true, preferredLanguage: 'en' });
       }
-    } else if (isSuperAdmin && user.role !== Role.ADMIN) {
-      user.role = Role.ADMIN;
-      user.adminPermissions = [...ALL_ADMIN_PERMISSIONS];
-      await user.save();
+    } else {
+      let modified = false;
+      if (isSuperAdmin && user.role !== Role.ADMIN) {
+        user.role = Role.ADMIN;
+        user.adminPermissions = [...ALL_ADMIN_PERMISSIONS];
+        modified = true;
+      }
+      if (!user.emailVerifiedAt) {
+        user.emailVerifiedAt = new Date();
+        modified = true;
+      }
+      if (modified) {
+        await user.save();
+      }
     }
     return user;
   }
