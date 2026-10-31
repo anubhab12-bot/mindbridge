@@ -1690,6 +1690,46 @@ interface RecoveryTrack {
       .dialogue-stage-box { grid-template-columns: 1fr; }
       .player-controls-bar { grid-template-columns: 1fr; gap: 10px; }
     }
+
+    :host-context([data-theme='dark']) {
+      .ai-stage-card {
+        background: linear-gradient(180deg, var(--mb-surface) 0%, rgba(15, 110, 102, 0.12) 100%);
+        border-color: rgba(79, 184, 173, 0.25);
+      }
+      .character-card-btn.active {
+        background: var(--mb-surface-2);
+        border-color: var(--mb-primary);
+      }
+      .speech-bubble {
+        background: var(--mb-surface-2);
+        border-color: var(--mb-border);
+      }
+      .speech-footer {
+        border-top-color: var(--mb-border);
+      }
+      .impact-card.highlight {
+        background: linear-gradient(180deg, rgba(15, 110, 102, 0.2) 0%, var(--mb-surface) 100%);
+        border-color: rgba(79, 184, 173, 0.35);
+      }
+      .lang-selector-bar {
+        background: var(--mb-surface-2);
+        border-color: var(--mb-border);
+      }
+      .char-avatar-ring.rose { background: #3b1820; border-color: #9f1239; }
+      .char-avatar-ring.blue { background: #0c2838; border-color: #0369a1; }
+      .char-avatar-ring.purple { background: #281938; border-color: #7e22ce; }
+      .seats-visual-box {
+        background: var(--mb-surface);
+        border-color: var(--mb-border);
+      }
+      .seat-circle.available {
+        background: var(--mb-surface-2);
+        color: var(--mb-text-muted);
+      }
+      .dialogue-stage-box {
+        background: var(--mb-surface);
+      }
+    }
   `,
 })
 export class HomePage implements OnInit {

@@ -14,6 +14,7 @@ import { NotificationsService } from '../core/services/notifications.service';
 import { RealtimeService } from '../core/services/realtime.service';
 import { ApiService } from '../core/api/api.service';
 import { ToastService } from '../core/services/toast.service';
+import { ThemeService } from '../core/services/theme.service';
 
 interface NavItem {
   label: string;
@@ -101,6 +102,16 @@ const ADMIN_NAV: NavItem[] = [
         @if (isPatient()) {
           <a routerLink="/crisis" class="btn btn-crisis btn-block help">Get help now</a>
         }
+        <div class="sidebar-theme-wrap">
+          <button
+            type="button"
+            class="sidebar-theme-btn"
+            (click)="themeService.toggleTheme()"
+            [title]="themeService.isDark() ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+          >
+            <span>{{ themeService.isDark() ? '☀️ Light Mode' : '🌙 Dark Mode' }}</span>
+          </button>
+        </div>
       </aside>
       <div class="main-col">
         <header class="topbar">
@@ -114,6 +125,16 @@ const ADMIN_NAV: NavItem[] = [
             ☰
           </button>
           <span class="spacer"></span>
+          <button
+            type="button"
+            class="theme-toggle-btn"
+            (click)="themeService.toggleTheme()"
+            [attr.aria-label]="themeService.isDark() ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+            [title]="themeService.isDark() ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+          >
+            <span class="theme-icon">{{ themeService.isDark() ? '☀️' : '🌙' }}</span>
+            <span class="theme-text">{{ themeService.isDark() ? 'Light' : 'Dark' }}</span>
+          </button>
           @if (isPatient()) {
             <a routerLink="/crisis" class="btn btn-crisis btn-sm top-help">Get help now</a>
           }
@@ -271,6 +292,60 @@ const ADMIN_NAV: NavItem[] = [
       gap: 8px;
       flex-shrink: 0;
     }
+    .sidebar-theme-wrap {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid var(--mb-border);
+    }
+    .sidebar-theme-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: var(--mb-radius-sm);
+      border: 1px solid var(--mb-border);
+      background: var(--mb-surface-2);
+      color: var(--mb-text);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      &:hover {
+        background: var(--mb-primary-soft);
+        color: var(--mb-primary-strong);
+        border-color: var(--mb-primary);
+      }
+    }
+    .theme-toggle-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 32px;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 1px solid var(--mb-border);
+      background: var(--mb-surface-2);
+      color: var(--mb-text);
+      font-size: 0.82rem;
+      font-weight: 650;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      &:hover {
+        background: var(--mb-primary-soft);
+        color: var(--mb-primary-strong);
+        border-color: var(--mb-primary);
+      }
+    }
+    .theme-icon { font-size: 0.9rem; }
+    .theme-text { font-weight: 650; }
+
+    :host-context([data-theme='dark']) .banner-content {
+      background: #2b1f0c;
+      border-color: #5c3f15;
+      color: #fde68a;
+    }
     @media (max-width: 900px) {
       .shell {
         grid-template-columns: 1fr;
@@ -299,6 +374,7 @@ export class AppShellComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly toasts = inject(ToastService);
   protected readonly auth = inject(AuthService);
+  protected readonly themeService = inject(ThemeService);
   protected readonly notifications = inject(NotificationsService);
   private readonly realtime = inject(RealtimeService);
   private readonly router = inject(Router);

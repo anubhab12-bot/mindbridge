@@ -1,6 +1,7 @@
 import { Component, inject, ChangeDetectionStrategy, signal, OnInit } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../core/auth/auth.service';
+import { ThemeService } from '../core/services/theme.service';
 
 @Component({
   selector: 'mb-public-layout',
@@ -42,6 +43,16 @@ import { AuthService } from '../core/auth/auth.service';
           </a>
         </nav>
         <div class="row header-cta-group">
+          <button
+            type="button"
+            class="theme-toggle-btn"
+            (click)="themeService.toggleTheme()"
+            [attr.aria-label]="themeService.isDark() ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+            [title]="themeService.isDark() ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+          >
+            <span class="theme-icon">{{ themeService.isDark() ? '☀️' : '🌙' }}</span>
+            <span class="theme-text">{{ themeService.isDark() ? 'Light' : 'Dark' }}</span>
+          </button>
           <a routerLink="/crisis" class="btn btn-crisis btn-sm">Get help now</a>
           @if (auth.isAuthenticated()) {
             <a [routerLink]="auth.homeFor()" class="btn btn-sm">My dashboard</a>
@@ -68,6 +79,14 @@ import { AuthService } from '../core/auth/auth.service';
           <a href="/admin-portal" target="_blank" (click)="closeMobileNav()" class="mobile-admin-link">
             👑 Open Admin Portal 🔒
           </a>
+          <button
+            type="button"
+            class="mobile-theme-btn"
+            (click)="themeService.toggleTheme()"
+          >
+            <span>Theme Preference</span>
+            <span>{{ themeService.isDark() ? '☀️ Light Mode' : '🌙 Dark Mode' }}</span>
+          </button>
         </nav>
       }
     </header>
@@ -82,7 +101,15 @@ import { AuthService } from '../core/auth/auth.service';
               Governed by the MindBridge Healthcare Council.
             </p>
           </div>
-          <div class="footer-links">
+          <div class="footer-links row">
+            <button
+              type="button"
+              class="footer-theme-btn"
+              (click)="themeService.toggleTheme()"
+              [title]="themeService.isDark() ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+            >
+              <span>{{ themeService.isDark() ? '☀️ Switch to Light' : '🌙 Switch to Dark' }}</span>
+            </button>
             <a href="/admin-portal" target="_blank" class="footer-council-btn">
               🏛️ Open MindBridge Admin Portal ↗
             </a>
@@ -422,10 +449,82 @@ import { AuthService } from '../core/auth/auth.service';
       border-radius: 4px;
       &:hover { color: #f8fafc; }
     }
+
+    /* Theme Toggle Buttons */
+    .theme-toggle-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 36px;
+      padding: 0 12px;
+      border-radius: 999px;
+      border: 1px solid var(--mb-border);
+      background: var(--mb-surface-2);
+      color: var(--mb-text);
+      font-size: 0.82rem;
+      font-weight: 650;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      &:hover {
+        background: var(--mb-primary-soft);
+        color: var(--mb-primary-strong);
+        border-color: var(--mb-primary);
+        transform: translateY(-1px);
+      }
+    }
+    .theme-icon {
+      font-size: 0.95rem;
+      line-height: 1;
+    }
+    .theme-text {
+      font-weight: 650;
+    }
+    .mobile-theme-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: var(--mb-radius);
+      border: 1px solid var(--mb-border);
+      background: var(--mb-surface-2);
+      color: var(--mb-text);
+      font-size: 0.9rem;
+      font-weight: 650;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: all 0.2s ease;
+      &:hover {
+        background: var(--mb-primary-soft);
+        color: var(--mb-primary-strong);
+        border-color: var(--mb-primary);
+      }
+    }
+    .footer-theme-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: var(--mb-surface-2);
+      color: var(--mb-text);
+      font-weight: 650;
+      font-size: 0.82rem;
+      text-decoration: none;
+      border: 1px solid var(--mb-border);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      &:hover {
+        background: var(--mb-primary-soft);
+        color: var(--mb-primary);
+        border-color: var(--mb-primary);
+      }
+    }
   `,
 })
 export class PublicLayoutComponent implements OnInit {
   protected readonly auth = inject(AuthService);
+  protected readonly themeService = inject(ThemeService);
 
   protected readonly bannerVisible = signal(true);
   protected readonly bannerTitle = signal('🌟 24/7 National Mental Health Helplines Active');

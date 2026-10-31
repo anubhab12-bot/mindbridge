@@ -2232,7 +2232,7 @@ function reloadCurrentPolicy() {
 
 // ------------------------------------------------------------- Theme Management (Light / Dark)
 function initTheme() {
-  const saved = localStorage.getItem('mb_admin_theme') || 'dark';
+  const saved = localStorage.getItem('mb_admin_theme') || localStorage.getItem('mb_theme') || 'dark';
   applyTheme(saved);
 }
 
@@ -2241,6 +2241,7 @@ function toggleTheme() {
   const nextTheme = isCurrentlyLight ? 'dark' : 'light';
   applyTheme(nextTheme);
   localStorage.setItem('mb_admin_theme', nextTheme);
+  localStorage.setItem('mb_theme', nextTheme);
   showToast(`Theme switched to ${nextTheme === 'light' ? '☀️ Light' : '🌙 Dark'} Mode`);
 }
 
