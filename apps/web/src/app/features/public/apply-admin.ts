@@ -57,7 +57,7 @@ import type { CouncilApplicationCredentials } from '@mindbridge/shared-types';
             </p>
             <div class="row center" style="margin-top: 24px; gap: 12px;">
               <a routerLink="/" class="btn btn-secondary">Return to Home</a>
-              <a href="/admin-portal" target="_blank" class="btn btn-primary">Open Admin Portal ↗</a>
+              <a href="/admin-portal/" target="_blank" class="btn btn-primary">Open Admin Portal ↗</a>
             </div>
           </div>
         } @else {

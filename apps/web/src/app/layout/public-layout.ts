@@ -38,7 +38,7 @@ import { ThemeService } from '../core/services/theme.service';
           <a routerLink="/apply-admin" routerLinkActive="active" class="nav-council-link">
             <span>🏛️ Apply for Admin</span>
           </a>
-          <a href="/admin-portal" target="_blank" class="nav-admin-link">
+          <a href="/admin-portal/" target="_blank" class="nav-admin-link">
             <span class="admin-pill">👑 Admin Portal 🔒</span>
           </a>
         </nav>
@@ -76,7 +76,7 @@ import { ThemeService } from '../core/services/theme.service';
           <a routerLink="/apply-admin" routerLinkActive="active" (click)="closeMobileNav()" class="nav-council-link">
             🏛️ Apply for Admin Seat
           </a>
-          <a href="/admin-portal" target="_blank" (click)="closeMobileNav()" class="mobile-admin-link">
+          <a href="/admin-portal/" target="_blank" (click)="closeMobileNav()" class="mobile-admin-link">
             👑 Open Admin Portal 🔒
           </a>
           <button
@@ -110,7 +110,7 @@ import { ThemeService } from '../core/services/theme.service';
             >
               <span>{{ themeService.isDark() ? '☀️ Switch to Light' : '🌙 Switch to Dark' }}</span>
             </button>
-            <a href="/admin-portal" target="_blank" class="footer-council-btn">
+            <a href="/admin-portal/" target="_blank" class="footer-council-btn">
               🏛️ Open MindBridge Admin Portal ↗
             </a>
           </div>

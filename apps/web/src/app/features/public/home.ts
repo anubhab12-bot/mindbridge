@@ -596,7 +596,7 @@ interface RecoveryTrack {
             <a routerLink="/apply-admin" class="btn btn-primary-elevated">
               📝 Apply for Council Seat (5 Spots Left) →
             </a>
-            <a href="/admin-portal" target="_blank" class="btn btn-secondary">
+            <a href="/admin-portal/" target="_blank" class="btn btn-secondary">
               🔒 Super Admin Portal ↗
             </a>
           </div>
