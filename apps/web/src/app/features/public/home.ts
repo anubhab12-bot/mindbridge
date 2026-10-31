@@ -1,6 +1,7 @@
 import { Component, inject, ChangeDetectionStrategy, signal, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { TelehealthService } from '../../core/services/telehealth.service';
 
 interface MoodOption {
   emoji: string;
@@ -59,12 +60,19 @@ interface RecoveryTrack {
           }
 
           <div class="row hero-actions">
+            <button
+              type="button"
+              class="btn-telehealth-hero"
+              (click)="telehealth.openLauncher()"
+            >
+              <span class="live-pulse-dot"></span>
+              <span>📹 Talk to Doctor Now (Video / Chat)</span>
+            </button>
             @if (auth.isAuthenticated()) {
               <a class="btn btn-primary-elevated" [routerLink]="auth.homeFor()">Go to my dashboard →</a>
             } @else {
               <a class="btn btn-primary-elevated" routerLink="/register">Get Started Free</a>
               <a class="btn btn-secondary card-interactive" routerLink="/professionals">Browse Doctors</a>
-              <a class="btn btn-ghost" routerLink="/login">Sign in</a>
             }
           </div>
           <div class="trust-micro">
@@ -92,6 +100,69 @@ interface RecoveryTrack {
           </p>
           <a class="btn btn-crisis btn-block" routerLink="/crisis">Connect with Emergency Support (14416)</a>
         </aside>
+      </div>
+    </section>
+
+    <!-- INSTANT TELEHEALTH & LIVE DOCTOR CALL SHOWCASE -->
+    <section class="telehealth-showcase-section">
+      <div class="container">
+        <div class="telehealth-card-banner card">
+          <div class="telehealth-banner-left">
+            <div class="telehealth-badge-row">
+              <span class="pulse-live-badge">🟢 3 SPECIALISTS ON DUTY RIGHT NOW</span>
+              <span class="teams-link-tag">📞 Microsoft Teams Audio/Video Integration</span>
+            </div>
+            <h2>Talk to a Verified Professional Right Now</h2>
+            <p>
+              Feeling overwhelmed, anxious, or need immediate clinical guidance? Connect with an AIIMS-verified psychiatrist or licensed clinical psychologist in under 30 seconds via secure Video Call or Live Chat.
+            </p>
+            <div class="telehealth-cta-group">
+              <button
+                type="button"
+                class="btn btn-primary-elevated btn-telehealth-cta"
+                (click)="startInstantCall('VIDEO')"
+              >
+                📹 Start Instant Video Call
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary btn-telehealth-cta"
+                (click)="startInstantCall('CHAT')"
+              >
+                💬 Start Instant Live Chat
+              </button>
+              <span class="confidential-text">🔒 100% Confidential · Direct Teams Ringing Notification</span>
+            </div>
+          </div>
+
+          <div class="telehealth-doctors-grid">
+            @for (doc of telehealth.onDutyDoctors(); track doc.id) {
+              <div class="on-duty-doc-card" (click)="selectAndCall(doc.id, 'VIDEO')">
+                <div class="doc-card-top">
+                  <span class="doc-avatar-large">{{ doc.avatar }}</span>
+                  <div class="doc-card-headings">
+                    <strong>{{ doc.name }}</strong>
+                    <span class="doc-role-small">{{ doc.role }}</span>
+                  </div>
+                  <span class="dot-online" title="Online and Ready to Talk"></span>
+                </div>
+                <div class="doc-card-stats">
+                  <span>⭐ {{ doc.rating }}</span> ·
+                  <span>{{ doc.experience }}</span> ·
+                  <span>{{ doc.languages.join(', ') }}</span>
+                </div>
+                <div class="doc-card-actions">
+                  <button type="button" class="btn-micro video" (click)="$event.stopPropagation(); selectAndCall(doc.id, 'VIDEO')">
+                    📹 Video Call
+                  </button>
+                  <button type="button" class="btn-micro chat" (click)="$event.stopPropagation(); selectAndCall(doc.id, 'CHAT')">
+                    💬 Chat
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1691,7 +1762,187 @@ interface RecoveryTrack {
       .player-controls-bar { grid-template-columns: 1fr; gap: 10px; }
     }
 
+    /* Telehealth Showcase Section */
+    .telehealth-showcase-section {
+      margin-bottom: var(--mb-space-6);
+    }
+    .telehealth-card-banner {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 32px;
+      padding: clamp(24px, 4vw, 36px);
+      background: linear-gradient(135deg, rgba(13, 148, 136, 0.08) 0%, rgba(99, 102, 241, 0.08) 100%);
+      border: 1px solid rgba(13, 148, 136, 0.25);
+      border-radius: var(--mb-radius-lg);
+      align-items: center;
+    }
+    .telehealth-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .teams-link-tag {
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #6366f1;
+      background: rgba(99, 102, 241, 0.12);
+      padding: 3px 10px;
+      border-radius: 999px;
+    }
+    .telehealth-banner-left h2 {
+      font-size: clamp(1.4rem, 2.5vw, 1.8rem);
+      margin: 0 0 10px;
+    }
+    .telehealth-banner-left p {
+      color: var(--mb-text-muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .telehealth-cta-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .btn-telehealth-cta {
+      min-height: 44px;
+      font-weight: 700;
+      padding: 0 20px;
+    }
+    .confidential-text {
+      font-size: 0.8rem;
+      color: var(--mb-text-muted);
+      display: block;
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    .telehealth-doctors-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .on-duty-doc-card {
+      background: var(--mb-surface);
+      border: 1px solid var(--mb-border);
+      border-radius: var(--mb-radius);
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: var(--mb-shadow);
+      &:hover {
+        transform: translateY(-2px);
+        border-color: var(--mb-primary);
+        box-shadow: var(--mb-shadow-lg);
+      }
+    }
+    .doc-card-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .doc-avatar-large {
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+    .doc-card-headings {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .doc-card-headings strong {
+      font-size: 0.92rem;
+      color: var(--mb-text);
+    }
+    .doc-role-small {
+      font-size: 0.78rem;
+      color: var(--mb-text-muted);
+    }
+    .dot-online {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+    }
+    .doc-card-stats {
+      font-size: 0.76rem;
+      color: var(--mb-text-muted);
+      margin-bottom: 8px;
+    }
+    .doc-card-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-micro {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--mb-border);
+      background: var(--mb-surface-2);
+      color: var(--mb-text);
+      font-size: 0.76rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      &:hover {
+        background: var(--mb-primary-soft);
+        color: var(--mb-primary);
+        border-color: var(--mb-primary);
+      }
+      &.video:hover {
+        background: #10b981;
+        color: #fff;
+        border-color: #10b981;
+      }
+    }
+
+    .btn-telehealth-hero {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #0d9488 0%, #059669 100%);
+      color: #ffffff;
+      padding: 0 20px;
+      min-height: 44px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.92rem;
+      border: none;
+      box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(13, 148, 136, 0.45);
+      }
+    }
+    .live-pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #34d399;
+      animation: pulse 1.5s infinite;
+    }
+
+    @media (max-width: 900px) {
+      .telehealth-card-banner {
+        grid-template-columns: 1fr;
+      }
+    }
+
     :host-context([data-theme='dark']) {
+      .telehealth-card-banner {
+        background: linear-gradient(135deg, rgba(13, 148, 136, 0.12) 0%, rgba(99, 102, 241, 0.1) 100%);
+        border-color: rgba(79, 184, 173, 0.3);
+      }
+      .on-duty-doc-card {
+        background: var(--mb-surface-2);
+        border-color: var(--mb-border);
+      }
       .ai-stage-card {
         background: linear-gradient(180deg, var(--mb-surface) 0%, rgba(15, 110, 102, 0.12) 100%);
         border-color: rgba(79, 184, 173, 0.25);
@@ -1734,6 +1985,15 @@ interface RecoveryTrack {
 })
 export class HomePage implements OnInit {
   protected readonly auth = inject(AuthService);
+  protected readonly telehealth = inject(TelehealthService);
+
+  startInstantCall(mode: 'VIDEO' | 'CHAT') {
+    this.telehealth.initiateCall(mode, undefined, 'Patient (You)');
+  }
+
+  selectAndCall(doctorId: string, mode: 'VIDEO' | 'CHAT') {
+    this.telehealth.initiateCall(mode, doctorId, 'Patient (You)');
+  }
 
   protected readonly dynamicFeatures = signal<any[]>([]);
   protected readonly heroPromoFeature = signal<any | null>(null);

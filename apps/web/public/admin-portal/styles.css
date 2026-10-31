@@ -1865,4 +1865,130 @@ body.light-theme .theme-toggle-btn {
   border: 1px solid #cbd5e1;
 }
 
+/* Teams Call Alert & Telehealth Styles */
+.teams-call-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 10001;
+  width: 340px;
+  background: #2b2b40;
+  color: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.teams-toast-banner {
+  background: #464775;
+  padding: 8px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+.teams-logo-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.teams-live-ping {
+  color: #38bdf8;
+  animation: blink 1s infinite alternate;
+}
+.teams-toast-body {
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.teams-avatar-radar {
+  position: relative;
+  width: 54px;
+  height: 54px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.teams-avatar {
+  font-size: 2rem;
+  z-index: 2;
+}
+.radar-wave {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid #5b5fc7;
+  animation: radarPulse 2s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+}
+.wave-2 {
+  animation-delay: 1s;
+}
+.teams-call-meta {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.caller-name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 750;
+  color: #ffffff;
+}
+.call-type {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #38bdf8;
+  margin: 2px 0;
+}
+.call-sub {
+  font-size: 0.72rem;
+  color: #cbd5e1;
+}
+.teams-toast-actions {
+  padding: 10px 14px 14px;
+  display: flex;
+  gap: 10px;
+  background: #232334;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.teams-btn {
+  flex: 1;
+  min-height: 38px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+.accept-btn {
+  background: #10b981;
+  color: #ffffff;
+}
+.accept-btn:hover { background: #059669; }
+.decline-btn {
+  background: #e11d48;
+  color: #ffffff;
+}
+.decline-btn:hover { background: #be123c; }
+.btn-telehealth-admin {
+  background: rgba(16, 185, 129, 0.18) !important;
+  color: #34d399 !important;
+  border: 1px solid rgba(16, 185, 129, 0.4) !important;
+  font-weight: 700;
+}
+.btn-telehealth-admin:hover {
+  background: #10b981 !important;
+  color: #ffffff !important;
+}
+
+
 

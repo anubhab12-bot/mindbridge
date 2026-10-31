@@ -15,6 +15,8 @@ import { RealtimeService } from '../core/services/realtime.service';
 import { ApiService } from '../core/api/api.service';
 import { ToastService } from '../core/services/toast.service';
 import { ThemeService } from '../core/services/theme.service';
+import { TelehealthService } from '../core/services/telehealth.service';
+import { TeamsTelehealthModalComponent } from '../shared/ui/teams-telehealth-modal';
 
 interface NavItem {
   label: string;
@@ -77,7 +79,7 @@ const ADMIN_NAV: NavItem[] = [
 
 @Component({
   selector: 'mb-app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, TeamsTelehealthModalComponent],
   template: `
     <a class="skip-link" href="#main">Skip to content</a>
     <div class="shell" [class.open]="menuOpen()">
@@ -85,6 +87,13 @@ const ADMIN_NAV: NavItem[] = [
         <a class="brand" [routerLink]="auth.homeFor()"
           ><span class="logo" aria-hidden="true">◐</span> MindBridge</a
         >
+        <button
+          type="button"
+          class="btn btn-sm btn-primary-elevated sidebar-telehealth-btn"
+          (click)="telehealth.openLauncher()"
+        >
+          📹 Talk to Doctor Now
+        </button>
         <nav>
           <ul>
             @for (item of nav(); track item.link) {
@@ -125,6 +134,15 @@ const ADMIN_NAV: NavItem[] = [
             ☰
           </button>
           <span class="spacer"></span>
+          <button
+            type="button"
+            class="btn btn-sm btn-telehealth-instant"
+            (click)="telehealth.openLauncher()"
+            title="Instant Video or Chat Consultation with an On-Duty Doctor"
+          >
+            <span class="live-dot-pulse"></span>
+            <span>Talk to Doctor Now</span>
+          </button>
           <button
             type="button"
             class="theme-toggle-btn"
@@ -187,6 +205,9 @@ const ADMIN_NAV: NavItem[] = [
         <main id="main" tabindex="-1" class="container page"><router-outlet /></main>
       </div>
     </div>
+
+    <!-- MICROSOFT TEAMS INCOMING CALL ALERT & TELEHEALTH CONSULTATION SUITE -->
+    <mb-teams-telehealth-modal />
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
@@ -346,6 +367,42 @@ const ADMIN_NAV: NavItem[] = [
       border-color: #5c3f15;
       color: #fde68a;
     }
+    .btn-telehealth-instant {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 32px;
+      padding: 0 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      background: rgba(16, 185, 129, 0.12);
+      color: #059669;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      &:hover {
+        background: #10b981;
+        color: #ffffff;
+        border-color: #10b981;
+      }
+    }
+    :host-context([data-theme='dark']) .btn-telehealth-instant {
+      color: #34d399;
+      background: rgba(16, 185, 129, 0.2);
+    }
+    .live-dot-pulse {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      animation: pulse 1.5s infinite;
+    }
+    .sidebar-telehealth-btn {
+      width: 100%;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
     @media (max-width: 900px) {
       .shell {
         grid-template-columns: 1fr;
@@ -375,6 +432,7 @@ export class AppShellComponent implements OnInit {
   private readonly toasts = inject(ToastService);
   protected readonly auth = inject(AuthService);
   protected readonly themeService = inject(ThemeService);
+  protected readonly telehealth = inject(TelehealthService);
   protected readonly notifications = inject(NotificationsService);
   private readonly realtime = inject(RealtimeService);
   private readonly router = inject(Router);

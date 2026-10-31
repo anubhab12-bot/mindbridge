@@ -2,10 +2,12 @@ import { Component, inject, ChangeDetectionStrategy, signal, OnInit } from '@ang
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../core/auth/auth.service';
 import { ThemeService } from '../core/services/theme.service';
+import { TelehealthService } from '../core/services/telehealth.service';
+import { TeamsTelehealthModalComponent } from '../shared/ui/teams-telehealth-modal';
 
 @Component({
   selector: 'mb-public-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, TeamsTelehealthModalComponent],
   template: `
     <a class="skip-link" href="#main">Skip to content</a>
 
@@ -45,6 +47,15 @@ import { ThemeService } from '../core/services/theme.service';
         <div class="row header-cta-group">
           <button
             type="button"
+            class="btn-telehealth-instant"
+            (click)="telehealth.openLauncher()"
+            title="Instant Video or Chat Consultation with an On-Duty Doctor"
+          >
+            <span class="live-dot-pulse"></span>
+            <span class="telehealth-label-text">📹 Talk to Doctor Now</span>
+          </button>
+          <button
+            type="button"
             class="theme-toggle-btn"
             (click)="themeService.toggleTheme()"
             [attr.aria-label]="themeService.isDark() ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
@@ -69,6 +80,14 @@ import { ThemeService } from '../core/services/theme.service';
       <!-- Mobile Navigation Drawer -->
       @if (mobileNavOpen()) {
         <nav class="mobile-nav-drawer" aria-label="Mobile Navigation">
+          <button
+            type="button"
+            class="mobile-telehealth-btn"
+            (click)="telehealth.openLauncher(); closeMobileNav()"
+          >
+            <span>📹 Instant Doctor Video / Chat</span>
+            <span class="badge badge-success">3 Online Now</span>
+          </button>
           <a routerLink="/self-help" routerLinkActive="active" (click)="closeMobileNav()">Self-help</a>
           <a routerLink="/professionals" routerLinkActive="active" (click)="closeMobileNav()">Find a professional</a>
           <a routerLink="/how-it-works" routerLinkActive="active" (click)="closeMobileNav()">How it works</a>
@@ -139,6 +158,9 @@ import { ThemeService } from '../core/services/theme.service';
         <button class="pill-close-btn" (click)="dismissFloatingPill()" title="Dismiss">×</button>
       </div>
     }
+
+    <!-- MICROSOFT TEAMS INCOMING CALL ALERT & TELEHEALTH CONSULTATION SUITE -->
+    <mb-teams-telehealth-modal />
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
@@ -520,11 +542,69 @@ import { ThemeService } from '../core/services/theme.service';
         border-color: var(--mb-primary);
       }
     }
+    .btn-telehealth-instant {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 36px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      background: rgba(16, 185, 129, 0.12);
+      color: #059669;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      &:hover {
+        background: #10b981;
+        color: #ffffff;
+        border-color: #10b981;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+      }
+    }
+    :host-context([data-theme='dark']) .btn-telehealth-instant {
+      color: #34d399;
+      background: rgba(16, 185, 129, 0.2);
+      border-color: rgba(52, 211, 153, 0.4);
+      &:hover {
+        background: #10b981;
+        color: #0c1513;
+      }
+    }
+    .live-dot-pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      animation: pulse 1.5s infinite;
+    }
+    .mobile-telehealth-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: var(--mb-radius);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(13, 148, 136, 0.1) 100%);
+      color: var(--mb-text);
+      font-size: 0.92rem;
+      font-weight: 750;
+      cursor: pointer;
+      margin-bottom: 6px;
+      &:hover {
+        border-color: var(--mb-primary);
+        background: var(--mb-primary-soft);
+      }
+    }
   `,
 })
 export class PublicLayoutComponent implements OnInit {
   protected readonly auth = inject(AuthService);
   protected readonly themeService = inject(ThemeService);
+  protected readonly telehealth = inject(TelehealthService);
 
   protected readonly bannerVisible = signal(true);
   protected readonly bannerTitle = signal('🌟 24/7 National Mental Health Helplines Active');

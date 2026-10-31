@@ -2262,3 +2262,171 @@ function applyTheme(theme) {
 // Apply theme immediately on script execution to prevent white flash
 initTheme();
 
+// =============================================================
+// MICROSOFT TEAMS INCOMING TELEHEALTH CALL RECEIVER & CONTROLLER
+// =============================================================
+let adminAudioCtx = null;
+let adminRingInterval = null;
+let currentAdminCallData = null;
+
+function triggerTestIncomingCall() {
+  const mockCall = {
+    patientName: 'Anubhab (Patient)',
+    mode: 'VIDEO',
+    doctor: { name: 'Duty Specialist (You)', role: 'Senior Clinical Specialist' }
+  };
+  showAdminIncomingTeamsCall(mockCall);
+  showToast('📞 Incoming Microsoft Teams Telehealth Call ringing...');
+}
+
+function showAdminIncomingTeamsCall(call) {
+  currentAdminCallData = call;
+  const toast = document.getElementById('adminTeamsToast');
+  const nameEl = document.getElementById('adminCallerName');
+  const modeEl = document.getElementById('adminCallMode');
+  const docEl = document.getElementById('adminDoctorAssigned');
+
+  if (nameEl) nameEl.textContent = call.patientName || 'Patient (Guest)';
+  if (modeEl) modeEl.textContent = call.mode === 'CHAT' ? '💬 Live Encrypted Chat' : '📹 Live Video Consultation';
+  if (docEl && call.doctor) docEl.textContent = `Assigned: ${call.doctor.name} (${call.doctor.role})`;
+
+  if (toast) {
+    toast.style.display = 'block';
+  }
+
+  startAdminTeamsRingtone();
+}
+
+function startAdminTeamsRingtone() {
+  stopAdminTeamsRingtone();
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    adminAudioCtx = new AudioContextClass();
+    if (adminAudioCtx.state === 'suspended') {
+      void adminAudioCtx.resume();
+    }
+
+    const playPhrase = () => {
+      if (!adminAudioCtx) return;
+      const notes = [
+        { freq: 698.46, delay: 0.0, dur: 0.12 },
+        { freq: 830.61, delay: 0.14, dur: 0.12 },
+        { freq: 1046.5, delay: 0.28, dur: 0.12 },
+        { freq: 1244.51, delay: 0.42, dur: 0.35 },
+      ];
+      const now = adminAudioCtx.currentTime;
+      notes.forEach(({ freq, delay, dur }) => {
+        if (!adminAudioCtx) return;
+        const osc = adminAudioCtx.createOscillator();
+        const gain = adminAudioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + delay);
+        gain.gain.setValueAtTime(0.0001, now + delay);
+        gain.gain.exponentialRampToValueAtTime(0.2, now + delay + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + dur);
+        osc.connect(gain);
+        gain.connect(adminAudioCtx.destination);
+        osc.start(now + delay);
+        osc.stop(now + delay + dur + 0.05);
+      });
+    };
+
+    playPhrase();
+    adminRingInterval = setInterval(playPhrase, 2400);
+  } catch (e) {}
+}
+
+function stopAdminTeamsRingtone() {
+  if (adminRingInterval) {
+    clearInterval(adminRingInterval);
+    adminRingInterval = null;
+  }
+  if (adminAudioCtx) {
+    try { adminAudioCtx.close(); } catch(e) {}
+    adminAudioCtx = null;
+  }
+}
+
+function acceptAdminTelehealthCall() {
+  stopAdminTeamsRingtone();
+  const toast = document.getElementById('adminTeamsToast');
+  if (toast) toast.style.display = 'none';
+
+  const modal = document.getElementById('adminTelehealthModal');
+  const patientTitle = document.getElementById('adminRoomCallerTitle');
+  const patientNameEl = document.getElementById('adminRoomPatientName');
+
+  const pName = currentAdminCallData?.patientName || 'Patient (Active)';
+  if (patientTitle) patientTitle.textContent = `${pName} · Live Telehealth Session`;
+  if (patientNameEl) patientNameEl.textContent = `${pName} (Webcam & Audio Live)`;
+
+  if (modal) modal.style.display = 'flex';
+  showToast('✅ Call Connected! Live consultation session active.');
+}
+
+function declineAdminTelehealthCall() {
+  stopAdminTeamsRingtone();
+  const toast = document.getElementById('adminTeamsToast');
+  if (toast) toast.style.display = 'none';
+  currentAdminCallData = null;
+}
+
+function closeAdminTelehealthRoom() {
+  const modal = document.getElementById('adminTelehealthModal');
+  if (modal) modal.style.display = 'none';
+  currentAdminCallData = null;
+  showToast('Session ended. Clinical records updated.');
+}
+
+function toggleAdminMic(btn) {
+  if (btn.textContent.includes('Mute')) {
+    btn.textContent = '🔇 Unmute';
+    btn.classList.add('btn-danger');
+  } else {
+    btn.textContent = '🎙️ Mute';
+    btn.classList.remove('btn-danger');
+  }
+}
+
+function toggleAdminCam(btn) {
+  if (btn.textContent.includes('Video')) {
+    btn.textContent = '🚫 Cam Off';
+    btn.classList.add('btn-danger');
+  } else {
+    btn.textContent = '📹 Video';
+    btn.classList.remove('btn-danger');
+  }
+}
+
+function sendAdminTelehealthReply() {
+  const input = document.getElementById('adminReplyInput');
+  const log = document.getElementById('adminChatLog');
+  if (!input || !input.value.trim() || !log) return;
+
+  const msgDiv = document.createElement('div');
+  msgDiv.style.cssText = 'background: #0284c7; padding: 6px 10px; border-radius: 6px; align-self: flex-end; color: #fff;';
+  msgDiv.innerHTML = `<strong>Doctor (You):</strong> ${escapeHtml(input.value.trim())}`;
+  log.appendChild(msgDiv);
+  log.scrollTop = log.scrollHeight;
+  input.value = '';
+}
+
+// Cross-tab synchronization: ring Admin Portal when patient calls on the main site!
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', function(e) {
+    if (e.key === 'mb_telehealth_call' && e.newValue) {
+      try {
+        const call = JSON.parse(e.newValue);
+        if (call.status === 'RINGING') {
+          showAdminIncomingTeamsCall(call);
+        }
+      } catch (err) {}
+    } else if (e.key === 'mb_telehealth_event' && e.newValue && e.newValue.startsWith('ENDED')) {
+      closeAdminTelehealthRoom();
+      declineAdminTelehealthCall();
+    }
+  });
+}
+
+
