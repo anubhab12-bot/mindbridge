@@ -11,7 +11,7 @@ import {
   AppointmentStatus,
   type AppointmentSummary,
   ConsentType,
-  type ConsultationMode,
+  ConsultationMode,
   ModerationStatus,
   Role,
   SLOT_HOLDING_STATUSES,
@@ -155,7 +155,7 @@ export class AppointmentsService implements OnModuleInit {
             name: patientUser.displayName,
             patientName: patientUser.displayName,
             doctorName: doctor.displayName,
-            when: formatForUser(appt.startAt, patientUser.timezone),
+            when: formatForUser(appt.startAt, patientUser.timezone || 'UTC'),
             videoUrl,
           });
         }
@@ -165,11 +165,11 @@ export class AppointmentsService implements OnModuleInit {
             name: doctor.displayName,
             patientName: patientUser?.displayName || 'Patient',
             doctorName: doctor.displayName,
-            when: formatForUser(appt.startAt, doctorUser.timezone || doctor.timezone),
+            when: formatForUser(appt.startAt, doctorUser.timezone || doctor.timezone || 'UTC'),
             videoUrl,
           });
         }
-      } catch (err) {
+      } catch {
         // Video notice failure should not roll back booking
       }
     }
@@ -443,7 +443,7 @@ export class AppointmentsService implements OnModuleInit {
         name: patientUser.displayName,
         patientName: patName,
         doctorName: docName,
-        when: formatForUser(appt.startAt, patientUser.timezone),
+        when: formatForUser(appt.startAt, patientUser.timezone || 'UTC'),
         videoUrl,
       });
     }
@@ -453,7 +453,7 @@ export class AppointmentsService implements OnModuleInit {
         name: docName,
         patientName: patName,
         doctorName: docName,
-        when: formatForUser(appt.startAt, doctorUser.timezone || doctor.timezone),
+        when: formatForUser(appt.startAt, doctorUser.timezone || doctor.timezone || 'UTC'),
         videoUrl,
       });
     }
@@ -485,7 +485,7 @@ export class AppointmentsService implements OnModuleInit {
         name: patientUser.displayName,
         patientName: patName,
         doctorName: docName,
-        when: formatForUser(appt.startAt, patientUser.timezone),
+        when: formatForUser(appt.startAt, patientUser.timezone || 'UTC'),
         videoUrl,
       });
     }
@@ -495,7 +495,7 @@ export class AppointmentsService implements OnModuleInit {
         name: docName,
         patientName: patName,
         doctorName: docName,
-        when: formatForUser(appt.startAt, doctorUser.timezone || doctorProfile?.timezone),
+        when: formatForUser(appt.startAt, doctorUser.timezone || doctorProfile?.timezone || 'UTC'),
         videoUrl,
       });
     }
