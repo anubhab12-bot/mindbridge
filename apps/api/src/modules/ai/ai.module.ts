@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { DoctorProfile, DoctorProfileSchema } from '../doctors/schemas/doctor-profile.schema.js';
 import { User, UserSchema } from '../users/schemas/user.schema.js';
 import { AiChatController } from './ai-chat.controller.js';
+import { VoiceController } from './voice.controller.js';
 import { AiChatService } from './ai-chat.service.js';
 import { AiClientService } from './ai-client.service.js';
 import { AiInteraction, AiInteractionSchema } from './schemas/ai-interaction.schema.js';
@@ -22,7 +23,7 @@ import { SafetyEvent, SafetyEventSchema } from './schemas/safety-event.schema.js
       { name: DoctorProfile.name, schema: DoctorProfileSchema },
     ]),
   ],
-  controllers: [AiChatController],
+  controllers: [AiChatController, VoiceController],
   providers: [AiClientService, AiChatService],
   exports: [AiClientService, AiChatService],
 })

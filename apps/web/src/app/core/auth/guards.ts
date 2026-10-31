@@ -20,7 +20,7 @@ export const roleGuard =
   () => {
     const auth = inject(AuthService);
     const user = auth.user();
-    if (user && roles.includes(user.role)) return true;
+    if (user && (roles.includes(user.role) || (user.role === Role.ADMIN && roles.includes(Role.PATIENT)))) return true;
     return inject(Router).parseUrl(auth.homeFor());
   };
 

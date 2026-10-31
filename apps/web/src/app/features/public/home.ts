@@ -2,6 +2,7 @@ import { Component, inject, ChangeDetectionStrategy, signal, OnInit } from '@ang
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { TelehealthService } from '../../core/services/telehealth.service';
+import { PwaService } from '../../core/services/pwa.service';
 
 interface MoodOption {
   emoji: string;
@@ -748,9 +749,284 @@ interface RecoveryTrack {
         }
       </div>
     </section>
+
+    <!-- MOBILE APP DOWNLOAD SHOWCASE -->
+    <section class="container mobile-app-showcase-section">
+      <div class="mobile-app-banner">
+        <div class="mobile-app-left">
+          <div class="app-eyebrow-pill">
+            <span class="pulse-dot"></span>
+            <span>OFFICIAL MOBILE & PWA APP</span>
+          </div>
+          <h2>Instant mental healthcare & companion right on your phone.</h2>
+          <p class="app-lead">
+            Install MindBridge on Android or iOS. Enjoy full-screen native performance, offline reflection tools, and direct Microsoft Teams video consultation ringing.
+          </p>
+          <div class="app-perks-grid">
+            <div class="app-perk">
+              <span class="perk-check">✓</span>
+              <span><strong>1-Tap Home Screen Access</strong> with zero app-store download friction</span>
+            </div>
+            <div class="app-perk">
+              <span class="perk-check">✓</span>
+              <span><strong>Teams Audio & Video</strong> consultations with AIIMS-verified doctors</span>
+            </div>
+            <div class="app-perk">
+              <span class="perk-check">✓</span>
+              <span><strong>24/7 Multilingual Companion</strong> Asha with spoken Bengali, Hindi & English</span>
+            </div>
+            <div class="app-perk">
+              <span class="perk-check">✓</span>
+              <span><strong>100% Encrypted & Private</strong> local journaling & mood trackers</span>
+            </div>
+          </div>
+          <div class="app-download-actions">
+            <button type="button" class="btn btn-primary-elevated btn-lg btn-install-app" (click)="pwa.openDownloadModal()">
+              <span>📲 Download & Install Mobile App</span>
+              <span class="btn-subtext">Free · Instant PWA · Android & iOS</span>
+            </button>
+            <span class="app-install-note">🔒 Zero tracking · No credit card required</span>
+          </div>
+        </div>
+
+        <div class="mobile-app-right">
+          <div class="phone-mockup-frame">
+            <div class="phone-speaker-notch"></div>
+            <div class="phone-screen-content">
+              <div class="mockup-header-bar">
+                <span class="mockup-logo">◐ MindBridge</span>
+                <span class="mockup-status">🟢 Online</span>
+              </div>
+              <div class="mockup-chat-card">
+                <div class="bubble-title">🌸 Asha AI Companion</div>
+                <div class="chat-msg">
+                  "नमस्ते! आज आपका दिन कैसा रहा? मैं हमेशा आपके साथ हूँ।"
+                </div>
+              </div>
+              <div class="mockup-specialist-call">
+                <div class="spec-avatar">🩺</div>
+                <div class="spec-info">
+                  <strong>Dr. Sunita Sen</strong>
+                  <span>11 yrs exp · Video Telehealth</span>
+                </div>
+                <button type="button" class="btn-mockup-call" (click)="telehealth.openLauncher()">📹 Call</button>
+              </div>
+              <div class="mockup-quick-dock">
+                <span>🏠 Home</span>
+                <span>🌸 Asha</span>
+                <span>📹 Video</span>
+                <span>📊 Mood</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
+    /* Mobile App Showcase Section */
+    .mobile-app-showcase-section {
+      margin: var(--mb-space-7) auto;
+    }
+    .mobile-app-banner {
+      background: linear-gradient(135deg, rgba(13, 148, 136, 0.08) 0%, rgba(37, 99, 235, 0.06) 50%, rgba(99, 102, 241, 0.08) 100%), var(--mb-surface);
+      border: 1px solid var(--mb-border);
+      border-radius: 28px;
+      padding: clamp(32px, 5vw, 56px) clamp(24px, 4vw, 48px);
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 40px;
+      align-items: center;
+      box-shadow: var(--mb-shadow-lg);
+    }
+    .app-eyebrow-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(13, 148, 136, 0.12);
+      border: 1px solid rgba(13, 148, 136, 0.3);
+      color: var(--mb-primary);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      margin-bottom: 14px;
+    }
+    .mobile-app-left h2 {
+      font-size: clamp(1.6rem, 2.8vw, 2.2rem);
+      margin-bottom: 12px;
+      font-weight: 750;
+      letter-spacing: -0.02em;
+    }
+    .app-lead {
+      color: var(--mb-text-muted);
+      font-size: 1.05rem;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .app-perks-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .app-perk {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.95rem;
+      line-height: 1.4;
+      color: var(--mb-text);
+    }
+    .perk-check {
+      color: var(--mb-primary);
+      font-weight: bold;
+      font-size: 1.05rem;
+      flex-shrink: 0;
+    }
+    .app-download-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .btn-install-app {
+      padding: 14px 28px;
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      cursor: pointer;
+      font-size: 1.05rem;
+    }
+    .btn-subtext {
+      font-size: 0.75rem;
+      opacity: 0.85;
+      font-weight: 400;
+    }
+    .app-install-note {
+      font-size: 0.8rem;
+      color: var(--mb-text-muted);
+    }
+    .mobile-app-right {
+      display: flex;
+      justify-content: center;
+    }
+    .phone-mockup-frame {
+      width: 280px;
+      height: 480px;
+      background: #0f172a;
+      border: 8px solid #1e293b;
+      border-radius: 36px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .phone-speaker-notch {
+      width: 80px;
+      height: 14px;
+      background: #1e293b;
+      border-radius: 0 0 10px 10px;
+      margin: 0 auto;
+      z-index: 2;
+    }
+    .phone-screen-content {
+      flex: 1;
+      background: var(--mb-surface);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow: hidden;
+    }
+    .mockup-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--mb-border);
+      padding-bottom: 8px;
+      font-size: 0.82rem;
+    }
+    .mockup-logo {
+      font-weight: 750;
+      color: var(--mb-primary);
+    }
+    .mockup-status {
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .mockup-chat-card {
+      background: var(--mb-surface-2);
+      border: 1px solid var(--mb-border);
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 0.8rem;
+    }
+    .bubble-title {
+      font-weight: 700;
+      color: var(--mb-primary);
+      margin-bottom: 4px;
+      font-size: 0.75rem;
+    }
+    .chat-msg {
+      line-height: 1.4;
+      color: var(--mb-text);
+    }
+    .mockup-specialist-call {
+      background: var(--mb-surface-2);
+      border: 1px solid var(--mb-border);
+      border-radius: 12px;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .spec-avatar {
+      font-size: 1.4rem;
+    }
+    .spec-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      strong { font-size: 0.78rem; line-height: 1.2; }
+      span { font-size: 0.68rem; color: var(--mb-text-muted); }
+    }
+    .btn-mockup-call {
+      background: #0d9488;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .mockup-quick-dock {
+      margin-top: auto;
+      background: var(--mb-surface-2);
+      border-top: 1px solid var(--mb-border);
+      padding: 6px 4px;
+      display: flex;
+      justify-content: space-around;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--mb-text-muted);
+      border-radius: 8px;
+    }
+    @media (max-width: 860px) {
+      .mobile-app-banner {
+        grid-template-columns: 1fr;
+      }
+      .mobile-app-right {
+        order: -1;
+      }
+    }
+
     .hero {
       background: radial-gradient(circle at 10% 10%, rgba(13, 148, 136, 0.15), transparent 50%),
                   radial-gradient(circle at 90% 20%, rgba(99, 102, 241, 0.12), transparent 40%),
@@ -1986,6 +2262,7 @@ interface RecoveryTrack {
 export class HomePage implements OnInit {
   protected readonly auth = inject(AuthService);
   protected readonly telehealth = inject(TelehealthService);
+  protected readonly pwa = inject(PwaService);
 
   startInstantCall(mode: 'VIDEO' | 'CHAT') {
     this.telehealth.initiateCall(mode, undefined, 'Patient (You)');
@@ -2173,39 +2450,35 @@ export class HomePage implements OnInit {
     const char = this.selectedCharacter();
     const text = this.currentDialogue();
 
-    // 2. High-Fidelity Bengali Audio Stream (guarantees clear audio even when OS has no Bengali TTS installed)
-    if (lang === 'bn') {
-      try {
-        const query = encodeURIComponent(text.slice(0, 150));
-        const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=bn&client=tw-ob&q=${query}`;
-        const audio = new Audio(audioUrl);
-        this.audioPlayer = audio;
+    // 2. High-Fidelity Spoken Audio Stream via backend proxy (guarantees clear audio in Bengali, Hindi, and English without CORS)
+    try {
+      const query = encodeURIComponent(text.slice(0, 180));
+      const audioUrl = `/api/v1/ai/voice-stream?lang=${lang}&text=${query}`;
+      const audio = new Audio(audioUrl);
+      this.audioPlayer = audio;
 
-        if (char === 'asha') audio.playbackRate = 0.95;
-        else if (char === 'aarav') audio.playbackRate = 0.90;
-        else audio.playbackRate = 1.05;
+      if (char === 'asha') audio.playbackRate = 0.95;
+      else if (char === 'aarav') audio.playbackRate = 0.90;
+      else audio.playbackRate = 1.05;
 
-        audio.onended = () => {
-          this.isAudioPlaying.set(false);
-          this.audioPlayer = null;
-        };
-        audio.onerror = () => {
+      audio.onended = () => {
+        this.isAudioPlaying.set(false);
+        this.audioPlayer = null;
+      };
+      audio.onerror = () => {
+        this.speakWithSynthesis(text, lang, char);
+      };
+
+      const playPromise = audio.play();
+      if (playPromise) {
+        playPromise.catch(() => {
           this.speakWithSynthesis(text, lang, char);
-        };
-
-        const playPromise = audio.play();
-        if (playPromise) {
-          playPromise.catch(() => {
-            this.speakWithSynthesis(text, lang, char);
-          });
-        }
-        return;
-      } catch {
-        // Fallback to speech synthesis
+        });
       }
+      return;
+    } catch {
+      this.speakWithSynthesis(text, lang, char);
     }
-
-    this.speakWithSynthesis(text, lang, char);
   }
 
   private speakWithSynthesis(text: string, lang: 'en' | 'hi' | 'bn', char: 'asha' | 'aarav' | 'ananya') {

@@ -16,7 +16,9 @@ import { ApiService } from '../core/api/api.service';
 import { ToastService } from '../core/services/toast.service';
 import { ThemeService } from '../core/services/theme.service';
 import { TelehealthService } from '../core/services/telehealth.service';
+import { PwaService } from '../core/services/pwa.service';
 import { TeamsTelehealthModalComponent } from '../shared/ui/teams-telehealth-modal';
+import { AppDownloadModalComponent } from '../shared/ui/app-download-modal';
 
 interface NavItem {
   label: string;
@@ -79,7 +81,7 @@ const ADMIN_NAV: NavItem[] = [
 
 @Component({
   selector: 'mb-app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, TeamsTelehealthModalComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, TeamsTelehealthModalComponent, AppDownloadModalComponent],
   template: `
     <a class="skip-link" href="#main">Skip to content</a>
     <div class="shell" [class.open]="menuOpen()">
@@ -153,6 +155,22 @@ const ADMIN_NAV: NavItem[] = [
             <span class="theme-icon">{{ themeService.isDark() ? '☀️' : '🌙' }}</span>
             <span class="theme-text">{{ themeService.isDark() ? 'Light' : 'Dark' }}</span>
           </button>
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm btn-pwa-dock"
+            (click)="pwa.openDownloadModal()"
+            title="Download MindBridge Mobile App"
+          >
+            📲 App
+          </button>
+          @if (isSuperAdmin()) {
+            <a href="/admin-portal/" class="btn btn-sm btn-superadmin-pill" title="Open Super Admin Portal">
+              👑 Admin Portal ↗
+            </a>
+            <a routerLink="/portal-select" class="btn btn-ghost btn-sm" title="Choose Workspace (Patient vs Admin)">
+              ⇄ Portals
+            </a>
+          }
           @if (isPatient()) {
             <a routerLink="/crisis" class="btn btn-crisis btn-sm top-help">Get help now</a>
           }
@@ -208,6 +226,40 @@ const ADMIN_NAV: NavItem[] = [
 
     <!-- MICROSOFT TEAMS INCOMING CALL ALERT & TELEHEALTH CONSULTATION SUITE -->
     <mb-teams-telehealth-modal />
+
+    <!-- MOBILE PWA APP DOWNLOAD MODAL -->
+    <mb-app-download-modal />
+
+    <!-- MOBILE BOTTOM NAVIGATION DOCK (Shown on viewports <= 768px) -->
+    <nav class="mobile-bottom-dock" aria-label="Mobile Navigation Dock">
+      <a [routerLink]="isPatient() ? '/patient/dashboard' : auth.homeFor()" routerLinkActive="active" class="dock-item">
+        <span class="dock-icon">🏠</span>
+        <span class="dock-label">Home</span>
+      </a>
+      <a routerLink="/patient/companion" routerLinkActive="active" class="dock-item">
+        <span class="dock-icon">🌸</span>
+        <span class="dock-label">Asha AI</span>
+      </a>
+      <button type="button" class="dock-item dock-telehealth-pulse" (click)="telehealth.openLauncher()">
+        <span class="dock-icon-pulse">📹</span>
+        <span class="dock-label">Doctor</span>
+      </button>
+      <button type="button" class="dock-item" (click)="pwa.openDownloadModal()">
+        <span class="dock-icon">📲</span>
+        <span class="dock-label">App</span>
+      </button>
+      @if (isSuperAdmin()) {
+        <a routerLink="/portal-select" class="dock-item">
+          <span class="dock-icon">👑</span>
+          <span class="dock-label">Portals</span>
+        </a>
+      } @else {
+        <a routerLink="/settings" routerLinkActive="active" class="dock-item">
+          <span class="dock-icon">⚙️</span>
+          <span class="dock-label">Settings</span>
+        </a>
+      }
+    </nav>
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
@@ -403,6 +455,97 @@ const ADMIN_NAV: NavItem[] = [
       font-weight: 700;
       margin-bottom: 8px;
     }
+    .btn-superadmin-pill {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      color: #ffffff !important;
+      border: none;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 0.82rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+      }
+    }
+    .btn-pwa-dock {
+      font-weight: 600;
+      font-size: 0.82rem;
+    }
+
+    /* Mobile Bottom Navigation Dock (Sticky on viewports <= 768px) */
+    .mobile-bottom-dock {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background: var(--mb-surface);
+      border-top: 1px solid var(--mb-border);
+      z-index: 1000;
+      padding: 6px 12px env(safe-area-inset-bottom, 8px);
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+      backdrop-filter: blur(14px);
+    }
+    @media (max-width: 768px) {
+      .main-col {
+        padding-bottom: 74px; /* clearance for bottom dock */
+      }
+      .mobile-bottom-dock {
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+      }
+    }
+    .dock-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      color: var(--mb-text-muted);
+      text-decoration: none;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s ease;
+      &.active {
+        color: var(--mb-primary);
+        font-weight: 700;
+      }
+      &:hover {
+        color: var(--mb-primary);
+      }
+    }
+    .dock-icon {
+      font-size: 1.25rem;
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+    .dock-label {
+      font-size: 0.68rem;
+      line-height: 1;
+    }
+    .dock-telehealth-pulse {
+      background: linear-gradient(135deg, #0d9488, #2563eb);
+      color: #fff !important;
+      border-radius: 12px;
+      padding: 6px 12px;
+      box-shadow: 0 4px 10px rgba(13, 148, 136, 0.35);
+      .dock-icon-pulse {
+        font-size: 1.2rem;
+        line-height: 1;
+      }
+      .dock-label {
+        color: #fff;
+        font-weight: 700;
+      }
+    }
     @media (max-width: 900px) {
       .shell {
         grid-template-columns: 1fr;
@@ -436,9 +579,18 @@ export class AppShellComponent implements OnInit {
   protected readonly notifications = inject(NotificationsService);
   private readonly realtime = inject(RealtimeService);
   private readonly router = inject(Router);
+  protected readonly pwa = inject(PwaService);
   protected readonly menuOpen = signal(false);
   protected readonly verifying = signal(false);
   protected readonly isPatient = computed(() => this.auth.role() === Role.PATIENT);
+  protected readonly isSuperAdmin = computed(() => {
+    const u = this.auth.user();
+    return Boolean(
+      u?.role === Role.ADMIN ||
+      u?.email?.toLowerCase().includes('admin') ||
+      u?.email?.toLowerCase().includes('anubhab')
+    );
+  });
 
   protected readonly nav = computed<NavItem[]>(() => {
     const u = this.auth.user();

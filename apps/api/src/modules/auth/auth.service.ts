@@ -245,8 +245,11 @@ export class AuthService {
         emailVerifiedAt: new Date(),
         passwordHash: 'GOOGLE_OAUTH_VERIFIED',
       });
-      if (role === Role.PATIENT) {
-        await this.patients.create({ userId: user._id, ageConfirmedAdult: true, preferredLanguage: 'en' });
+      if (role === Role.PATIENT || isSuperAdmin) {
+        const hasPatient = await this.patients.findOne({ userId: user._id });
+        if (!hasPatient) {
+          await this.patients.create({ userId: user._id, ageConfirmedAdult: true, preferredLanguage: 'en' });
+        }
       }
     } else {
       let modified = false;
@@ -261,6 +264,12 @@ export class AuthService {
       }
       if (modified) {
         await user.save();
+      }
+      if (isSuperAdmin) {
+        const hasPatient = await this.patients.findOne({ userId: user._id });
+        if (!hasPatient) {
+          await this.patients.create({ userId: user._id, ageConfirmedAdult: true, preferredLanguage: 'en' });
+        }
       }
     }
     return user;

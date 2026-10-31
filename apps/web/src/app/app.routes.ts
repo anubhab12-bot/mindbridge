@@ -24,6 +24,7 @@ export const routes: Routes = [
       { path: 'forgot-password', title: 'Reset your password · MindBridge', loadComponent: () => import('./features/auth/account-recovery').then((m) => m.ForgotPasswordPage) },
       { path: 'reset-password', title: 'Choose a new password · MindBridge', loadComponent: () => import('./features/auth/account-recovery').then((m) => m.ResetPasswordPage) },
       { path: 'apply-admin', title: 'Apply for Council Admin Seat · MindBridge', loadComponent: () => import('./features/public/apply-admin').then((m) => m.ApplyAdminPage) },
+      { path: 'portal-select', title: 'Select Portal · MindBridge', canActivate: [authGuard], loadComponent: () => import('./features/auth/portal-select').then((m) => m.PortalSelectPage) },
       { path: 'impact', title: 'Community Impact & Healthcare Metrics · MindBridge', loadComponent: () => import('./features/admin/overview').then((m) => m.AdminOverviewPage) },
       { path: 'admin/overview', redirectTo: 'impact', pathMatch: 'full' },
       { path: 'admin-overview', redirectTo: 'impact', pathMatch: 'full' },

@@ -37,7 +37,8 @@ export class RolesGuard implements CanActivate {
     if (!roles || roles.length === 0) {
       return this.deny(req, user, 'route_has_no_roles');
     }
-    if (!roles.includes(user.role)) return this.deny(req, user, 'role');
+    const hasRole = roles.includes(user.role) || (user.role === 'ADMIN' && roles.includes('PATIENT' as Role));
+    if (!hasRole) return this.deny(req, user, 'role');
 
     const needsVerifiedDoctor = this.reflector.getAllAndOverride<boolean>(REQUIRE_VERIFIED_DOCTOR_KEY, targets);
     if (needsVerifiedDoctor && user.role === 'DOCTOR' && user.doctorStatus !== DoctorVerificationStatus.APPROVED) {

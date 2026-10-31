@@ -1,6 +1,7 @@
 import { Component, inject, input, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { Role } from '@mindbridge/shared-types';
 import { errorMessage } from '../../core/api/api-error';
 import { AuthService } from '../../core/auth/auth.service';
 import { FieldErrorComponent } from '../../shared/ui/field-error';
@@ -256,6 +257,15 @@ export class LoginPage implements OnInit {
 
   private done() {
     const target = this.returnUrl();
+    const user = this.auth.user();
+    const isSuperAdmin = Boolean(
+      user?.role === Role.ADMIN ||
+      user?.email?.toLowerCase().includes('admin') ||
+      user?.email?.toLowerCase().includes('anubhab')
+    );
+    if (isSuperAdmin) {
+      return this.router.navigateByUrl('/portal-select');
+    }
     const safe =
       target && target.startsWith('/') && !target.startsWith('//') ? target : this.auth.homeFor();
     return this.router.navigateByUrl(safe);
