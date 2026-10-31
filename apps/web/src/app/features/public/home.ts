@@ -1829,6 +1829,7 @@ export class HomePage implements OnInit {
   protected readonly isAudioPlaying = signal<boolean>(false);
 
   private audioCtx: any = null;
+  private audioPlayer: HTMLAudioElement | null = null;
 
   selectLanguage(lang: 'en' | 'hi' | 'bn') {
     this.selectedLang.set(lang);
@@ -1849,6 +1850,11 @@ export class HomePage implements OnInit {
   }
 
   stopVoice() {
+    if (this.audioPlayer) {
+      this.audioPlayer.pause();
+      this.audioPlayer.currentTime = 0;
+      this.audioPlayer = null;
+    }
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
@@ -1857,56 +1863,102 @@ export class HomePage implements OnInit {
 
   playVoice() {
     if (typeof window === 'undefined') return;
+    this.stopVoice();
     this.isAudioPlaying.set(true);
 
     // 1. Play soothing crystal wellness chime via Web Audio API
     this.playHarmonicChime();
 
-    // 2. Play spoken audio via browser SpeechSynthesis
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const text = this.currentDialogue();
-      const utterance = new SpeechSynthesisUtterance(text);
-      const lang = this.selectedLang();
-      const char = this.selectedCharacter();
+    const lang = this.selectedLang();
+    const char = this.selectedCharacter();
+    const text = this.currentDialogue();
 
-      if (lang === 'hi') {
-        utterance.lang = 'hi-IN';
-      } else if (lang === 'bn') {
-        utterance.lang = 'bn-IN';
-      } else {
-        utterance.lang = 'en-US';
+    // 2. High-Fidelity Bengali Audio Stream (guarantees clear audio even when OS has no Bengali TTS installed)
+    if (lang === 'bn') {
+      try {
+        const query = encodeURIComponent(text.slice(0, 150));
+        const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=bn&client=tw-ob&q=${query}`;
+        const audio = new Audio(audioUrl);
+        this.audioPlayer = audio;
+
+        if (char === 'asha') audio.playbackRate = 0.95;
+        else if (char === 'aarav') audio.playbackRate = 0.90;
+        else audio.playbackRate = 1.05;
+
+        audio.onended = () => {
+          this.isAudioPlaying.set(false);
+          this.audioPlayer = null;
+        };
+        audio.onerror = () => {
+          this.speakWithSynthesis(text, lang, char);
+        };
+
+        const playPromise = audio.play();
+        if (playPromise) {
+          playPromise.catch(() => {
+            this.speakWithSynthesis(text, lang, char);
+          });
+        }
+        return;
+      } catch {
+        // Fallback to speech synthesis
       }
-
-      // Voice pitch and cadence per persona
-      if (char === 'asha') {
-        utterance.pitch = 1.15;
-        utterance.rate = 0.92;
-      } else if (char === 'aarav') {
-        utterance.pitch = 0.85;
-        utterance.rate = 0.95;
-      } else {
-        utterance.pitch = 1.25;
-        utterance.rate = 1.05;
-      }
-
-      // Pick localized voice if browser provides one
-      const voices = window.speechSynthesis.getVoices();
-      const prefix = lang === 'hi' ? 'hi' : (lang === 'bn' ? 'bn' : 'en');
-      const matched = voices.find(v => v.lang && v.lang.toLowerCase().startsWith(prefix));
-      if (matched) {
-        utterance.voice = matched;
-      }
-
-      utterance.onend = () => {
-        this.isAudioPlaying.set(false);
-      };
-      utterance.onerror = () => {
-        this.isAudioPlaying.set(false);
-      };
-
-      window.speechSynthesis.speak(utterance);
     }
+
+    this.speakWithSynthesis(text, lang, char);
+  }
+
+  private speakWithSynthesis(text: string, lang: 'en' | 'hi' | 'bn', char: 'asha' | 'aarav' | 'ananya') {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      this.isAudioPlaying.set(false);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    if (lang === 'hi') {
+      utterance.lang = 'hi-IN';
+    } else if (lang === 'bn') {
+      utterance.lang = 'bn-IN';
+    } else {
+      utterance.lang = 'en-US';
+    }
+
+    // Voice pitch and cadence per persona
+    if (char === 'asha') {
+      utterance.pitch = 1.15;
+      utterance.rate = 0.92;
+    } else if (char === 'aarav') {
+      utterance.pitch = 0.85;
+      utterance.rate = 0.95;
+    } else {
+      utterance.pitch = 1.25;
+      utterance.rate = 1.05;
+    }
+
+    // Pick localized voice if browser provides one
+    const voices = window.speechSynthesis.getVoices();
+    const prefix = lang === 'hi' ? 'hi' : (lang === 'bn' ? 'bn' : 'en');
+    let matched = voices.find(v => v.lang && v.lang.toLowerCase().startsWith(prefix));
+
+    if (!matched && lang === 'bn') {
+      matched = voices.find(v => v.lang && (v.lang.toLowerCase().startsWith('hi') || v.lang.toLowerCase().includes('in')));
+      if (matched) utterance.lang = matched.lang;
+    }
+
+    if (matched) {
+      utterance.voice = matched;
+    }
+
+    utterance.onend = () => {
+      this.isAudioPlaying.set(false);
+    };
+    utterance.onerror = () => {
+      this.isAudioPlaying.set(false);
+    };
+
+    window.speechSynthesis.speak(utterance);
   }
 
   private playHarmonicChime() {
@@ -1933,7 +1985,7 @@ export class HomePage implements OnInit {
       osc2.frequency.setValueAtTime(baseFreq * 1.5, now);
 
       gain.gain.setValueAtTime(0, now);
-      gain.gain.linearRampToValueAtTime(0.12, now + 0.05);
+      gain.gain.linearRampToValueAtTime(0.25, now + 0.05);
       gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
 
       osc1.connect(gain);

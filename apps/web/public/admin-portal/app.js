@@ -2230,3 +2230,34 @@ function reloadCurrentPolicy() {
   showToast('🔄 Reloaded policy from server.');
 }
 
+// ------------------------------------------------------------- Theme Management (Light / Dark)
+function initTheme() {
+  const saved = localStorage.getItem('mb_admin_theme') || 'dark';
+  applyTheme(saved);
+}
+
+function toggleTheme() {
+  const isCurrentlyLight = document.body.classList.contains('light-theme');
+  const nextTheme = isCurrentlyLight ? 'dark' : 'light';
+  applyTheme(nextTheme);
+  localStorage.setItem('mb_admin_theme', nextTheme);
+  showToast(`Theme switched to ${nextTheme === 'light' ? '☀️ Light' : '🌙 Dark'} Mode`);
+}
+
+function applyTheme(theme) {
+  const isLight = theme === 'light';
+  document.body.classList.toggle('light-theme', isLight);
+
+  const btnHeader = document.getElementById('btnThemeToggle');
+  const btnDrawer = document.getElementById('btnDrawerThemeToggle');
+
+  const textHeader = isLight ? '🌙 Dark Mode' : '☀️ Light Mode';
+  const textDrawer = isLight ? '<span>🌙</span> Dark Mode' : '<span>☀️</span> Light Mode';
+
+  if (btnHeader) btnHeader.innerHTML = textHeader;
+  if (btnDrawer) btnDrawer.innerHTML = textDrawer;
+}
+
+// Apply theme immediately on script execution to prevent white flash
+initTheme();
+
