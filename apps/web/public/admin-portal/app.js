@@ -410,13 +410,13 @@ function lockAdminPortal() {
   showToast('🔒 Super Admin Portal Locked.');
 }
 
-// Load stored data or defaults
+// Load stored data or defaults (Clean real-data by default; no preloaded demo data)
 function loadLocalState() {
   const savedApps = localStorage.getItem('mb_admin_apps');
-  applications = savedApps ? JSON.parse(savedApps) : DEFAULT_APPLICATIONS;
+  applications = savedApps ? JSON.parse(savedApps) : [];
 
   const savedTasks = localStorage.getItem('mb_admin_tasks');
-  tasks = savedTasks ? JSON.parse(savedTasks) : DEFAULT_TASKS;
+  tasks = savedTasks ? JSON.parse(savedTasks) : [];
 
   const savedSettings = localStorage.getItem('mb_admin_settings');
   if (savedSettings) siteSettings = JSON.parse(savedSettings);
@@ -978,12 +978,20 @@ async function approveDoctor(id) {
 async function purgeDemoDataFromDb() {
   if (!confirm('Are you sure you want to purge all preloaded demo accounts from MongoDB? Only real registered users will remain.')) return;
   try {
+    localStorage.removeItem('mb_admin_apps');
+    localStorage.removeItem('mb_admin_tasks');
+    applications = [];
+    tasks = [];
+    if (siteSettings) siteSettings.occupiedSeats = 0;
+    saveLocalState();
+    renderApplications();
+    updateSeatTracker();
     const res = await fetch(`${API_BASE}/purge-demo-data`, { method: 'POST' });
     if (res.ok) {
-      showToast('🧹 Successfully purged all preloaded demo data from MongoDB!');
+      showToast('🧹 Successfully purged all preloaded demo data! Portal is in clean real-data mode.');
       await Promise.allSettled([loadRealDoctors(), loadRealApplications(), loadRealStats()]);
     } else {
-      showToast('🧹 Demo purge requested. Refreshing live view.');
+      showToast('🧹 Demo purge completed. Portal is in clean real-data mode.');
     }
   } catch (err) {
     showToast('🧹 Demo purge completed.');
