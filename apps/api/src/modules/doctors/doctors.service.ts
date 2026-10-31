@@ -62,7 +62,7 @@ export class DoctorsService {
       consultationModes: d.consultationModes,
       slotDurationMinutes: d.slotDurationMinutes,
       timezone: d.timezone,
-      verified: true,
+      verified: d.verificationStatus === DoctorVerificationStatus.APPROVED,
       // Ratings are shown only once there are enough to avoid identifying individual reviewers.
       ratingAverage: d.ratingCount >= 3 ? Math.round((d.ratingSum / d.ratingCount) * 10) / 10 : null,
       ratingCount: d.ratingCount >= 3 ? d.ratingCount : 0,
@@ -74,10 +74,11 @@ export class DoctorsService {
     return rows.map((r) => r._id);
   }
 
-  /** Public directory: only real registered professionals whose account is ACTIVE are returned (demo excluded). */
+  /** Public directory: only real approved professionals whose account is ACTIVE are returned (demo excluded). */
   async search(s: DoctorSearch) {
     const activeDoctorIds = await this.activeDoctorUserIds();
     const filter: QueryFilter<DoctorProfile> = {
+      verificationStatus: DoctorVerificationStatus.APPROVED,
       displayName: { $not: /\(demo\)/i },
       userId: { $in: activeDoctorIds },
     };
@@ -107,7 +108,7 @@ export class DoctorsService {
   /** Returns the profile only if the professional may currently receive bookings. */
   async findBookable(id: string) {
     if (!Types.ObjectId.isValid(id)) return null;
-    const d = await this.doctors.findOne({ _id: new Types.ObjectId(id), displayName: { $not: /\(demo\)/i } }).lean();
+    const d = await this.doctors.findOne({ _id: new Types.ObjectId(id), verificationStatus: DoctorVerificationStatus.APPROVED, displayName: { $not: /\(demo\)/i } }).lean();
     if (!d) return null;
     const active = await this.users.exists({ _id: d.userId, status: AccountStatus.ACTIVE });
     return active ? d : null;
@@ -115,7 +116,7 @@ export class DoctorsService {
 
   async facets() {
     const activeDoctorIds = await this.activeDoctorUserIds();
-    const match = { displayName: { $not: /\(demo\)/i }, userId: { $in: activeDoctorIds } };
+    const match = { verificationStatus: DoctorVerificationStatus.APPROVED, displayName: { $not: /\(demo\)/i }, userId: { $in: activeDoctorIds } };
     const [specialties, languages] = await Promise.all([
       this.doctors.distinct('specialties', match),
       this.doctors.distinct('languages', match),

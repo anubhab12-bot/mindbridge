@@ -131,7 +131,7 @@ export class AuthService {
           yearsExperience: d.yearsExperience,
           languages: d.languages,
           timezone: dto.timezone ?? 'Asia/Kolkata',
-          verificationStatus: DoctorVerificationStatus.APPROVED,
+          verificationStatus: DoctorVerificationStatus.PENDING_VERIFICATION,
         });
         await this.verification.openApplication(profile._id.toString(), userId);
       }
