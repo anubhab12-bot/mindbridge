@@ -140,6 +140,40 @@ export class AppointmentsService implements OnModuleInit {
 
     await this.audit.record({ actorId: patient.id, actorRole: Role.PATIENT, action: 'appointment.requested', resourceType: 'Appointment', resourceId: appt._id.toString() });
     await this.notifyParty(appt.toObject(), 'doctor', 'New appointment request', '/doctor/appointments');
+
+    if (appt.mode === ConsultationMode.ONLINE) {
+      try {
+        const webAppUrl = this.config.get('WEB_APP_URL') || 'https://mindbridge-web.onrender.com';
+        const [patientUser, doctorUser] = await Promise.all([
+          this.users.findById(patient.id).select('email displayName timezone').lean(),
+          this.users.findById(doctor.userId).select('email displayName timezone').lean(),
+        ]);
+        const videoUrl = `${webAppUrl}/telehealth/room?session=${appt._id.toString()}&doc=${encodeURIComponent(doctor.displayName)}&pat=${encodeURIComponent(patientUser?.displayName || 'Patient')}`;
+
+        if (patientUser?.email) {
+          await this.mail.send(patientUser.email, 'appointment-video-call', {
+            name: patientUser.displayName,
+            patientName: patientUser.displayName,
+            doctorName: doctor.displayName,
+            when: formatForUser(appt.startAt, patientUser.timezone),
+            videoUrl,
+          });
+        }
+
+        if (doctorUser?.email) {
+          await this.mail.send(doctorUser.email, 'appointment-video-call', {
+            name: doctor.displayName,
+            patientName: patientUser?.displayName || 'Patient',
+            doctorName: doctor.displayName,
+            when: formatForUser(appt.startAt, doctorUser.timezone || doctor.timezone),
+            videoUrl,
+          });
+        }
+      } catch (err) {
+        // Video notice failure should not roll back booking
+      }
+    }
+
     return this.toSummary(appt.toObject(), patient);
   }
 
@@ -339,12 +373,134 @@ export class AppointmentsService implements OnModuleInit {
     if (appt.status !== AppointmentStatus.CONFIRMED || appt.mode !== 'ONLINE') {
       throw new ConflictException({ code: 'NOT_JOINABLE', message: 'This appointment is not an online consultation that is confirmed.' });
     }
-    const now = Date.now();
-    if (now < +appt.startAt - 15 * 60_000 || now > +appt.endAt) {
-      throw new ConflictException({ code: 'NOT_JOINABLE_YET', message: 'You can join from 15 minutes before the start time.' });
-    }
     await this.audit.record({ actorId: user.id, actorRole: user.role, action: 'appointment.video_access', resourceType: 'Appointment', resourceId: id });
-    return this.video.createAccess(id, user.id, appt.endAt);
+    if (this.video.enabled) {
+      try {
+        return this.video.createAccess(id, user.id, appt.endAt);
+      } catch {
+        // Fall back to MindBridge direct telehealth room
+      }
+    }
+    const webAppUrl = this.config.get('WEB_APP_URL') || 'https://mindbridge-web.onrender.com';
+    const doctorProfile = await this.doctorProfiles.findById(appt.doctorProfileId).select('displayName').lean();
+    return {
+      provider: 'mindbridge-live',
+      joinUrl: `${webAppUrl}/telehealth/room?session=${id}&doc=${encodeURIComponent(doctorProfile?.displayName || 'Doctor')}`,
+      expiresAt: appt.endAt.toISOString(),
+    };
+  }
+
+  async bookTelehealth(patient: AuthenticatedUser, doctorId: string, startAtStr?: string, reason?: string) {
+    const doctor = await this.doctors.findBookable(doctorId);
+    if (!doctor) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Doctor not found.' });
+
+    let startAt: Date;
+    if (startAtStr) {
+      startAt = new Date(startAtStr);
+      if (Number.isNaN(+startAt)) startAt = new Date();
+    } else {
+      startAt = new Date();
+    }
+    const endAt = new Date(startAt.getTime() + (doctor.slotDurationMinutes || 45) * 60 * 1000);
+    const patientId = new Types.ObjectId(patient.id);
+
+    const appt = await this.model.create({
+      patientId,
+      doctorProfileId: doctor._id,
+      doctorUserId: doctor.userId,
+      startAt,
+      endAt,
+      mode: ConsultationMode.ONLINE,
+      status: AppointmentStatus.CONFIRMED,
+      holdsSlot: true,
+      patientTimezone: 'UTC',
+      reasonEnc: this.crypto.encryptOptional(reason?.trim() || 'Telehealth Video Consultation'),
+      fee: doctor.consultationFee,
+      history: [{ action: 'telehealth_booked', actorRole: Role.PATIENT, actorId: patientId, at: new Date() }],
+    });
+
+    await this.care.establish(doctor._id, patientId);
+    await this.audit.record({
+      actorId: patient.id,
+      actorRole: Role.PATIENT,
+      action: 'appointment.telehealth_booked',
+      resourceType: 'Appointment',
+      resourceId: appt._id.toString(),
+    });
+
+    const [patientUser, doctorUser] = await Promise.all([
+      this.users.findById(patient.id).select('email displayName timezone').lean(),
+      this.users.findById(doctor.userId).select('email displayName timezone').lean(),
+    ]);
+
+    const webAppUrl = this.config.get('WEB_APP_URL') || 'https://mindbridge-web.onrender.com';
+    const docName = doctor.displayName;
+    const patName = patientUser?.displayName || 'Patient';
+    const videoUrl = `${webAppUrl}/telehealth/room?session=${appt._id.toString()}&doc=${encodeURIComponent(docName)}&pat=${encodeURIComponent(patName)}`;
+
+    if (patientUser?.email) {
+      await this.mail.send(patientUser.email, 'appointment-video-call', {
+        name: patientUser.displayName,
+        patientName: patName,
+        doctorName: docName,
+        when: formatForUser(appt.startAt, patientUser.timezone),
+        videoUrl,
+      });
+    }
+
+    if (doctorUser?.email) {
+      await this.mail.send(doctorUser.email, 'appointment-video-call', {
+        name: docName,
+        patientName: patName,
+        doctorName: docName,
+        when: formatForUser(appt.startAt, doctorUser.timezone || doctor.timezone),
+        videoUrl,
+      });
+    }
+
+    return {
+      appointment: await this.toSummary(appt.toObject(), patient),
+      videoUrl,
+      emailSent: true,
+      patientEmail: patientUser?.email,
+      doctorEmail: doctorUser?.email,
+    };
+  }
+
+  async resendVideoLink(user: AuthenticatedUser, appointmentId: string) {
+    const appt = await this.loadForParticipant(user, appointmentId);
+    const [doctorProfile, patientUser, doctorUser] = await Promise.all([
+      this.doctorProfiles.findById(appt.doctorProfileId).lean(),
+      this.users.findById(appt.patientId).select('email displayName timezone').lean(),
+      this.users.findById(appt.doctorUserId).select('email displayName timezone').lean(),
+    ]);
+
+    const webAppUrl = this.config.get('WEB_APP_URL') || 'https://mindbridge-web.onrender.com';
+    const docName = doctorProfile?.displayName || 'Doctor';
+    const patName = patientUser?.displayName || 'Patient';
+    const videoUrl = `${webAppUrl}/telehealth/room?session=${appt._id.toString()}&doc=${encodeURIComponent(docName)}&pat=${encodeURIComponent(patName)}`;
+
+    if (patientUser?.email) {
+      await this.mail.send(patientUser.email, 'appointment-video-call', {
+        name: patientUser.displayName,
+        patientName: patName,
+        doctorName: docName,
+        when: formatForUser(appt.startAt, patientUser.timezone),
+        videoUrl,
+      });
+    }
+
+    if (doctorUser?.email) {
+      await this.mail.send(doctorUser.email, 'appointment-video-call', {
+        name: docName,
+        patientName: patName,
+        doctorName: docName,
+        when: formatForUser(appt.startAt, doctorUser.timezone || doctorProfile?.timezone),
+        videoUrl,
+      });
+    }
+
+    return { sent: true, videoUrl, patientEmail: patientUser?.email, doctorEmail: doctorUser?.email };
   }
 
   async submitFeedback(patient: AuthenticatedUser, id: string, rating: number, comment?: string) {

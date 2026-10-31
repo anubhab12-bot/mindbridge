@@ -27,6 +27,8 @@ export const routes: Routes = [
       { path: 'impact', title: 'Community Impact & Healthcare Metrics · MindBridge', loadComponent: () => import('./features/admin/overview').then((m) => m.AdminOverviewPage) },
       { path: 'admin/overview', redirectTo: 'impact', pathMatch: 'full' },
       { path: 'admin-overview', redirectTo: 'impact', pathMatch: 'full' },
+      { path: 'telehealth/room', title: '1-on-1 Video Consultation · MindBridge', loadComponent: () => import('./features/shared/video-room').then((m) => m.VideoRoomPage) },
+      { path: 'consultation/video', redirectTo: 'telehealth/room', pathMatch: 'full' },
     ],
   },
   {

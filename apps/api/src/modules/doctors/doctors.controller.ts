@@ -107,6 +107,12 @@ export class DoctorsPublicController {
     return SCOPE_OF_PRACTICE;
   }
 
+  @Get('top-experienced')
+  @ApiOperation({ summary: 'Top verified professionals ranked by years of experience (public).' })
+  topExperienced() {
+    return this.doctors.getTopExperienced(3);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Verified professional profile (public).' })
   get(@Param('id', ParseObjectIdPipe) id: string) {

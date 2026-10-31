@@ -6,6 +6,7 @@ export type MailTemplate =
   | 'doctor-verification-update'
   | 'appointment-update'
   | 'appointment-reminder'
+  | 'appointment-video-call'
   | 'new-secure-message'
   | 'account-deletion-scheduled';
 
@@ -76,6 +77,18 @@ export function renderTemplate(template: MailTemplate, d: TemplateData) {
         'Appointment reminder',
         [`Hi ${name}, this is a reminder of your appointment on ${String(d['when'])}.`],
         { label: 'View appointment', url: `${app}${String(d['path'] ?? '/')}` },
+      );
+    case 'appointment-video-call':
+      return layout(
+        'Your 1-on-1 Video Consultation Link',
+        [
+          `Hi ${name},`,
+          `Your live video consultation is scheduled for ${String(d['when'])}.`,
+          `Participants: ${String(d['patientName'] ?? 'Patient')} and ${String(d['doctorName'] ?? 'Doctor')}.`,
+          'You can join directly using the button below or opening the meeting room link. Ensure your webcam and microphone are connected.',
+          `Meeting Room Link: ${String(d['videoUrl'] ?? `${app}/telehealth/room`)}`,
+        ],
+        { label: '📹 Join 1-on-1 Video Call Now', url: String(d['videoUrl'] ?? `${app}/telehealth/room`) },
       );
     case 'new-secure-message':
       return layout(

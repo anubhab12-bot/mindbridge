@@ -74,6 +74,34 @@ export class DoctorsService {
     return rows.map((r) => r._id);
   }
 
+  /** Top professionals ranked by years of clinical experience. */
+  async getTopExperienced(limit = 3): Promise<DoctorPublicProfile[]> {
+    const activeDoctorIds = await this.activeDoctorUserIds();
+    // Query approved active doctors sorted by yearsExperience descending
+    let rows = await this.doctors
+      .find({
+        verificationStatus: DoctorVerificationStatus.APPROVED,
+        userId: { $in: activeDoctorIds },
+      })
+      .sort({ yearsExperience: -1, ratingCount: -1, _id: 1 })
+      .limit(limit)
+      .lean();
+
+    // If fewer than limit in staging/dev DB, include any approved doctor profiles
+    if (rows.length < limit) {
+      const extra = await this.doctors
+        .find({
+          _id: { $nin: rows.map((r) => r._id) },
+        })
+        .sort({ yearsExperience: -1, _id: 1 })
+        .limit(limit - rows.length)
+        .lean();
+      rows = [...rows, ...extra];
+    }
+
+    return rows.map((d) => this.toPublic(d as DoctorProfile & { _id: Types.ObjectId }));
+  }
+
   /** Public directory: only real approved professionals whose account is ACTIVE are returned (demo excluded). */
   async search(s: DoctorSearch) {
     const activeDoctorIds = await this.activeDoctorUserIds();

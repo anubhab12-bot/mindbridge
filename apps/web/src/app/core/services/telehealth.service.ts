@@ -85,6 +85,8 @@ export class TelehealthService {
   private ringInterval: any = null;
 
   constructor() {
+    this.loadTopExperiencedDoctors();
+
     if (typeof window !== 'undefined') {
       window.addEventListener('storage', (e) => {
         if (e.key === 'mb_telehealth_call' && e.newValue) {
@@ -100,6 +102,68 @@ export class TelehealthService {
         }
       });
     }
+  }
+
+  /**
+   * Load the top 3 registered doctors ranked by years of experience from the API
+   */
+  async loadTopExperiencedDoctors() {
+    if (typeof fetch === 'undefined') return;
+    try {
+      const res = await fetch('/api/v1/doctors/top-experienced');
+      if (res.ok) {
+        const data = await res.json();
+        const items = Array.isArray(data) ? data : data?.data || [];
+        if (items.length > 0) {
+          const mapped: DoctorDutyInfo[] = items.slice(0, 3).map((d: any, idx: number) => {
+            const avatars = ['👨‍⚕️', '👩‍⚕️', '🩺'];
+            return {
+              id: d.id,
+              name: d.displayName,
+              role: d.professionalCategory ? d.professionalCategory.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase()) : 'Specialist',
+              experience: `${d.yearsExperience || 10} yrs exp`,
+              qualification: d.qualifications?.join(', ') || 'AIIMS Certified',
+              avatar: avatars[idx % avatars.length],
+              status: 'ONLINE',
+              rating: d.ratingAverage || 4.9,
+              languages: d.languages || ['English', 'Hindi', 'Bengali'],
+            };
+          });
+          this.onDutyDoctors.set(mapped);
+        }
+      }
+    } catch {
+      // Retain fallback doctors if offline or during build
+    }
+  }
+
+  /**
+   * Book an appointment with a doctor and send meeting link emails to patient & doctor
+   */
+  async bookAndSendEmail(doctorId: string, startAt?: string, reason?: string) {
+    const res = await fetch('/api/v1/appointments/telehealth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ doctorId, startAt, reason }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Could not schedule video consultation.');
+    }
+    return await res.json();
+  }
+
+  /**
+   * Resend video meeting link email to patient & doctor
+   */
+  async resendEmail(appointmentId: string) {
+    const res = await fetch(`/api/v1/appointments/${appointmentId}/resend-video`, {
+      method: 'POST',
+    });
+    if (!res.ok) {
+      throw new Error('Failed to resend video meeting link.');
+    }
+    return await res.json();
   }
 
   openLauncher() {

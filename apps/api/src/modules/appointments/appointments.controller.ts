@@ -77,6 +77,20 @@ class ReasonDto {
   reason?: string;
 }
 
+class BookTelehealthDto {
+  @IsMongoId()
+  doctorId!: string;
+
+  @IsOptional()
+  @IsString()
+  startAt?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  reason?: string;
+}
+
 class UpdateAppointmentDto {
   @IsOptional()
   @IsString()
@@ -144,6 +158,14 @@ export class AppointmentsController {
   @ApiOperation({ summary: 'Request an appointment with a verified professional (PATIENT, verified email).' })
   book(@CurrentUser() user: AuthenticatedUser, @Body() dto: BookAppointmentDto) {
     return this.appointments.book(user, dto);
+  }
+
+  @Roles(Role.PATIENT)
+  @RequireEmailVerified()
+  @Post('appointments/telehealth')
+  @ApiOperation({ summary: 'Schedule a 1-on-1 video call and email meeting links to patient and doctor (PATIENT).' })
+  bookTelehealth(@CurrentUser() user: AuthenticatedUser, @Body() dto: BookTelehealthDto) {
+    return this.appointments.bookTelehealth(user, dto.doctorId, dto.startAt, dto.reason);
   }
 
   @Roles(Role.PATIENT)
@@ -248,6 +270,13 @@ export class AppointmentsController {
   @ApiOperation({ summary: 'Short-lived video join link (participant only; disabled unless a provider is configured).' })
   video(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseObjectIdPipe) id: string) {
     return this.appointments.videoAccess(user, id);
+  }
+
+  @Roles(Role.PATIENT, Role.DOCTOR)
+  @Post('appointments/:id/resend-video')
+  @ApiOperation({ summary: 'Resend video meeting link email to patient and doctor.' })
+  resendVideo(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseObjectIdPipe) id: string) {
+    return this.appointments.resendVideoLink(user, id);
   }
 
   @Roles(Role.PATIENT)
