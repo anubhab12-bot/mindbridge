@@ -104,48 +104,47 @@ interface RecoveryTrack {
       </div>
     </section>
 
-    <!-- INSTANT TELEHEALTH & LIVE DOCTOR CALL SHOWCASE -->
+    <!-- CLINICAL TELEHEALTH & 1-ON-1 DOCTOR VIDEO CONSULTATION SHOWCASE -->
     <section class="telehealth-showcase-section">
       <div class="container">
         <div class="telehealth-card-banner card">
           <div class="telehealth-banner-left">
             <div class="telehealth-badge-row">
-              <span class="pulse-live-badge">🟢 3 SPECIALISTS ON DUTY RIGHT NOW</span>
-              <span class="teams-link-tag">📞 Microsoft Teams Audio/Video Integration</span>
+              <span class="pulse-live-badge">🏥 3 SPECIALISTS SUGGESTED BY YEARS OF EXPERIENCE</span>
+              <span class="teams-link-tag">📹 Secure 1-on-1 HD Video Meeting</span>
             </div>
-            <h2>Talk to a Verified Professional Right Now</h2>
+            <h2>Schedule a 1-on-1 Video Consultation with Top Specialists</h2>
             <p>
-              Feeling overwhelmed, anxious, or need immediate clinical guidance? Connect with an AIIMS-verified psychiatrist or licensed clinical psychologist in under 30 seconds via secure Video Call or Live Chat.
+              Consult with India's leading AIIMS & NIMHANS verified psychiatrists and clinical psychologists (ranked by clinical experience).
+              When an appointment is scheduled, an email with the video call link is sent to both the patient and the doctor. In the Patient Portal, your scheduled appointment doctor will appear for instant joining with Camera & Mic On/Off controls.
             </p>
             <div class="telehealth-cta-group">
-              <button
-                type="button"
+              <a
+                routerLink="/patient/dashboard"
                 class="btn btn-primary-elevated btn-telehealth-cta"
-                (click)="startInstantCall('VIDEO')"
               >
-                📹 Start Instant Video Call
-              </button>
-              <button
-                type="button"
+                📅 Schedule Video Consultation in Portal
+              </a>
+              <a
+                routerLink="/patient/professionals"
                 class="btn btn-secondary btn-telehealth-cta"
-                (click)="startInstantCall('CHAT')"
               >
-                💬 Start Instant Live Chat
-              </button>
-              <span class="confidential-text">🔒 100% Confidential · Direct Teams Ringing Notification</span>
+                👨‍⚕️ View Specialists Directory
+              </a>
+              <span class="confidential-text">✉️ Meeting link emailed to patient & doctor · Live 1-on-1 video call with video on/off option</span>
             </div>
           </div>
 
           <div class="telehealth-doctors-grid">
             @for (doc of telehealth.onDutyDoctors(); track doc.id) {
-              <div class="on-duty-doc-card" (click)="selectAndCall(doc.id, 'VIDEO')">
+              <div class="on-duty-doc-card" [routerLink]="['/patient/dashboard']">
                 <div class="doc-card-top">
                   <span class="doc-avatar-large">{{ doc.avatar }}</span>
                   <div class="doc-card-headings">
                     <strong>{{ doc.name }}</strong>
                     <span class="doc-role-small">{{ doc.role }}</span>
                   </div>
-                  <span class="dot-online" title="Online and Ready to Talk"></span>
+                  <span class="exp-badge-pill">{{ doc.experience }}</span>
                 </div>
                 <div class="doc-card-stats">
                   <span>⭐ {{ doc.rating }}</span> ·
@@ -153,12 +152,9 @@ interface RecoveryTrack {
                   <span>{{ doc.languages.join(', ') }}</span>
                 </div>
                 <div class="doc-card-actions">
-                  <button type="button" class="btn-micro video" (click)="$event.stopPropagation(); selectAndCall(doc.id, 'VIDEO')">
-                    📹 Video Call
-                  </button>
-                  <button type="button" class="btn-micro chat" (click)="$event.stopPropagation(); selectAndCall(doc.id, 'CHAT')">
-                    💬 Chat
-                  </button>
+                  <a routerLink="/patient/dashboard" class="btn-micro video">
+                    📹 Schedule Video Call
+                  </a>
                 </div>
               </div>
             }
@@ -1524,9 +1520,12 @@ interface RecoveryTrack {
     }
     .dynamic-features-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
       gap: 20px;
       margin-top: 24px;
+      @media (max-width: 640px) {
+        grid-template-columns: 1fr;
+      }
     }
     .dynamic-feature-card {
       background: var(--mb-surface);
@@ -1638,6 +1637,21 @@ interface RecoveryTrack {
         background: var(--mb-primary);
         color: #fff;
         box-shadow: 0 2px 10px rgba(13, 148, 136, 0.3);
+      }
+    }
+    @media (max-width: 640px) {
+      .lang-selector-bar {
+        max-width: 100%;
+        flex-wrap: wrap;
+        justify-content: center;
+        border-radius: var(--mb-radius);
+      }
+      .lang-pill {
+        padding: 6px 12px;
+        font-size: 0.82rem;
+      }
+      .character-switcher-grid {
+        grid-template-columns: 1fr;
       }
     }
     .ai-stage-card {
@@ -2137,6 +2151,15 @@ interface RecoveryTrack {
     .doc-role-small {
       font-size: 0.78rem;
       color: var(--mb-text-muted);
+    }
+    .exp-badge-pill {
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #0d9488;
+      background: rgba(13, 148, 136, 0.12);
+      padding: 3px 8px;
+      border-radius: 999px;
+      white-space: nowrap;
     }
     .dot-online {
       width: 9px;

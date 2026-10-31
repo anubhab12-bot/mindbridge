@@ -752,6 +752,39 @@ import { AppDownloadModalComponent } from '../shared/ui/app-download-modal';
       }
     }
 
+    @media (max-width: 768px) {
+      #main {
+        padding-bottom: 76px;
+      }
+      .btn-app-install-header,
+      .btn-telehealth-instant,
+      .btn-portal-pill {
+        display: none !important;
+      }
+      .theme-toggle-btn {
+        padding: 6px 10px;
+      }
+      .theme-toggle-btn .theme-text {
+        display: none;
+      }
+      .header-cta-group {
+        gap: 6px;
+      }
+      .btn-crisis {
+        padding: 0 10px;
+        font-size: 0.8rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .brand-name {
+        font-size: 1.05rem;
+      }
+      .header-cta-group {
+        gap: 4px;
+      }
+    }
+
     /* Dynamic Floating Pill */
     .dynamic-floating-pill {
       position: fixed;
@@ -769,9 +802,9 @@ import { AppDownloadModalComponent } from '../shared/ui/app-download-modal';
       transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
       animation: pillFloat 4s ease-in-out infinite alternate;
     }
-    @media (max-width: 640px) {
+    @media (max-width: 768px) {
       .dynamic-floating-pill {
-        bottom: 12px;
+        bottom: 76px !important;
         right: 12px;
         left: 12px;
         max-width: calc(100vw - 24px);

@@ -24,9 +24,9 @@ import { TelehealthService, DoctorDutyInfo } from '../../core/services/telehealt
         <div class="launcher-card" (click)="$event.stopPropagation()">
           <div class="launcher-header">
             <div class="launcher-title-wrap">
-              <span class="pulse-live-badge">🟢 3 SPECIALISTS ON DUTY</span>
-              <h2>Talk to a Verified Professional Right Now</h2>
-              <p>Instant, confidential clinical consultation via Video or Chat. No appointment required.</p>
+              <span class="pulse-live-badge">🏥 3 SPECIALISTS SUGGESTED BY YEARS OF EXPERIENCE</span>
+              <h2>1-on-1 Video Consultation & Live Support</h2>
+              <p>Connect directly with top AIIMS-verified specialists. Video sessions feature mic & camera toggle controls.</p>
             </div>
             <button class="btn-close" (click)="telehealth.closeLauncher()" aria-label="Close modal">×</button>
           </div>
@@ -77,8 +77,8 @@ import { TelehealthService, DoctorDutyInfo } from '../../core/services/telehealt
               >
                 <span class="btn-icon">📹</span>
                 <span class="btn-text-wrap">
-                  <strong>Start Instant Video Call</strong>
-                  <small>Face-to-face HD consultation with mic & camera</small>
+                  <strong>Start 1-on-1 Video Consultation</strong>
+                  <small>Face-to-face HD consultation with mic & camera controls</small>
                 </span>
               </button>
 
@@ -89,7 +89,7 @@ import { TelehealthService, DoctorDutyInfo } from '../../core/services/telehealt
               >
                 <span class="btn-icon">💬</span>
                 <span class="btn-text-wrap">
-                  <strong>Start Instant Live Chat</strong>
+                  <strong>Start 1-on-1 Live Chat</strong>
                   <small>Direct encrypted real-time messaging</small>
                 </span>
               </button>

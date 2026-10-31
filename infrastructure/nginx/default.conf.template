@@ -51,16 +51,12 @@ server {
     try_files $uri =404;
   }
 
-  # Clean URL routing for the Admin Portal (always redirect to trailing slash so relative assets resolve properly)
+  # Clean URL routing for the Admin Portal
   location = /admin {
-    return 301 /admin-portal/;
+    return 302 /admin-portal/;
   }
 
-  location = /admin-portal {
-    return 301 /admin-portal/;
-  }
-
-  location /admin-portal/ {
+  location /admin-portal {
     add_header Cache-Control "no-store";
     try_files $uri $uri/ /admin-portal/index.html;
   }

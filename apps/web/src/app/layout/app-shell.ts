@@ -124,6 +124,9 @@ const ADMIN_NAV: NavItem[] = [
           </button>
         </div>
       </aside>
+      @if (menuOpen()) {
+        <div class="sidebar-backdrop" (click)="menuOpen.set(false)" aria-hidden="true"></div>
+      }
       <div class="main-col">
         <header class="topbar">
           <button
@@ -557,6 +560,13 @@ const ADMIN_NAV: NavItem[] = [
         z-index: 60;
         box-shadow: var(--mb-shadow);
       }
+      .sidebar-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        backdrop-filter: blur(2px);
+        z-index: 55;
+      }
       .open .sidebar {
         display: flex;
       }
@@ -566,6 +576,11 @@ const ADMIN_NAV: NavItem[] = [
       }
       .who {
         display: none;
+      }
+      @media (max-width: 640px) {
+        .topbar .btn-telehealth-instant {
+          display: none;
+        }
       }
     }
   `,

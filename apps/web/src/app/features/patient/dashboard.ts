@@ -521,6 +521,25 @@ export interface TopDoctor {
       }
     }
 
+    @media (max-width: 640px) {
+      .btn-call-action {
+        width: 100%;
+        text-align: center;
+      }
+      .portal-doctor-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+      }
+      .portal-doc-actions {
+        width: 100%;
+      }
+      .btn-schedule-mini {
+        width: 100%;
+        text-align: center;
+      }
+    }
+
     /* TOAST BANNER */
     .email-sent-banner {
       background: #064e3b;
