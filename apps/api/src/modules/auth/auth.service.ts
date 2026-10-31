@@ -156,8 +156,8 @@ export class AuthService {
       (process.env['RENDER'] === 'true' || process.env['AUTO_VERIFY'] === 'true') &&
       process.env['NODE_ENV'] !== 'test';
     if (isRenderOrDemo) {
+      await this.users.updateOne({ _id: user._id }, { $set: { emailVerifiedAt: new Date() } });
       user.emailVerifiedAt = new Date();
-      await user.save();
     }
 
     await this.sendVerificationEmail(user);
@@ -413,8 +413,7 @@ export class AuthService {
     const isMemoryOrRender =
       this.config.get('MAIL_TRANSPORT') === 'memory' || process.env['RENDER'] === 'true';
     if (isMemoryOrRender && process.env['NODE_ENV'] !== 'test') {
-      user.emailVerifiedAt = new Date();
-      await user.save();
+      await this.users.updateOne({ _id: user._id }, { $set: { emailVerifiedAt: new Date() } });
       return { sent: true, verified: true };
     }
     await this.sendVerificationEmail(user);
@@ -431,8 +430,7 @@ export class AuthService {
     if (!user) {
       throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'User account not found.' });
     }
-    user.emailVerifiedAt = new Date();
-    await user.save();
+    await this.users.updateOne({ _id: user._id }, { $set: { emailVerifiedAt: new Date() } });
     await this.audit.record({
       actorId: user._id.toString(),
       actorRole: user.role,

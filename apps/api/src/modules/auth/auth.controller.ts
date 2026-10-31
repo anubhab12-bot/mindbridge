@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -246,7 +247,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Re-send my verification email or auto-activate on staging.' })
   async resend(@CurrentUser() user: AuthenticatedUser) {
     const result = await this.auth.resendVerification(user.id);
-    return { sent: true, ...result };
+    return { ...result, sent: true };
   }
 
   @Roles(...ALL_ROLES)
