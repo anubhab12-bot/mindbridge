@@ -1949,6 +1949,12 @@ export class HomePage implements OnInit {
     }
   }
 
+  // Demo Video Walkthrough State
+  protected readonly activeVideoChapter = signal<number>(1);
+  protected readonly isVideoPlaying = signal<boolean>(true);
+  protected readonly videoProgress = signal<number>(38);
+  protected readonly videoTime = signal<string>('01:14');
+
   toggleVideoPlay() {
     this.isVideoPlaying.set(!this.isVideoPlaying());
   }
