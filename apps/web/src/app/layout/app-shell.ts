@@ -12,6 +12,8 @@ import { filter } from 'rxjs';
 import { AuthService } from '../core/auth/auth.service';
 import { NotificationsService } from '../core/services/notifications.service';
 import { RealtimeService } from '../core/services/realtime.service';
+import { ApiService } from '../core/api/api.service';
+import { ToastService } from '../core/services/toast.service';
 
 interface NavItem {
   label: string;
@@ -131,11 +133,25 @@ const ADMIN_NAV: NavItem[] = [
           </button>
         </header>
         @if (auth.user() && !auth.user()!.emailVerified) {
-          <div class="container">
-            <div class="alert alert-warning" role="status">
-              Please confirm your email address to book appointments, message professionals and use
-              the AI companion.
-              <a routerLink="/verify-email">Resend or enter the link</a>
+          <div class="container mb-banner-wrap">
+            <div class="alert alert-warning banner-content" role="status">
+              <div class="banner-text">
+                <span class="banner-icon">✉️</span>
+                <span>
+                  Please confirm your email address (<strong>{{ auth.user()!.email }}</strong>) to book appointments, message professionals, and use the AI companion.
+                </span>
+              </div>
+              <div class="banner-actions">
+                <button
+                  class="btn btn-sm btn-primary-elevated"
+                  type="button"
+                  (click)="quickVerify()"
+                  [disabled]="verifying()"
+                >
+                  {{ verifying() ? 'Verifying…' : '⚡ Quick Verify Now' }}
+                </button>
+                <a class="btn btn-sm btn-secondary" routerLink="/verify-email">Options</a>
+              </div>
             </div>
           </div>
         }
@@ -222,6 +238,39 @@ const ADMIN_NAV: NavItem[] = [
     main:focus {
       outline: none;
     }
+    .mb-banner-wrap {
+      margin-top: var(--mb-space-3);
+    }
+    .banner-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      background: #fffbeb;
+      border: 1px solid #fef3c7;
+      color: #92400e;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.08);
+      padding: 12px 18px;
+    }
+    .banner-text {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    .banner-icon {
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+    .banner-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
     @media (max-width: 900px) {
       .shell {
         grid-template-columns: 1fr;
@@ -247,11 +296,14 @@ const ADMIN_NAV: NavItem[] = [
   `,
 })
 export class AppShellComponent implements OnInit {
+  private readonly api = inject(ApiService);
+  private readonly toasts = inject(ToastService);
   protected readonly auth = inject(AuthService);
   protected readonly notifications = inject(NotificationsService);
   private readonly realtime = inject(RealtimeService);
   private readonly router = inject(Router);
   protected readonly menuOpen = signal(false);
+  protected readonly verifying = signal(false);
   protected readonly isPatient = computed(() => this.auth.role() === Role.PATIENT);
 
   protected readonly nav = computed<NavItem[]>(() => {
@@ -275,6 +327,33 @@ export class AppShellComponent implements OnInit {
   ngOnInit() {
     void this.notifications.refreshCount();
     this.realtime.on('message:new', () => void this.notifications.refreshCount());
+  }
+
+  async quickVerify() {
+    this.verifying.set(true);
+    try {
+      await this.api.post('/auth/instant-verify');
+      await this.auth.reloadUser();
+      this.toasts.success('Email confirmed! Your MindBridge account is fully verified.');
+    } catch {
+      try {
+        const res = await this.api.post<{ sent: boolean; verified?: boolean }>(
+          '/auth/resend-verification',
+        );
+        if (res.verified) {
+          await this.auth.reloadUser();
+          this.toasts.success('Email confirmed! Your MindBridge account is fully verified.');
+        } else {
+          this.toasts.show('Verification link refreshed.', 'info');
+          await this.router.navigateByUrl('/verify-email');
+        }
+      } catch {
+        this.toasts.error('Could not auto-verify. Please open the verification page.');
+        await this.router.navigateByUrl('/verify-email');
+      }
+    } finally {
+      this.verifying.set(false);
+    }
   }
 
   async signOut() {

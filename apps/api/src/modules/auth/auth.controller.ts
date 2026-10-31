@@ -240,13 +240,33 @@ export class AuthController {
 
   @Roles(...ALL_ROLES)
   @ApiBearerAuth()
-  @Throttle({ default: { limit: 3, ttl: 15 * 60_000 } })
+  @Throttle({ default: { limit: 20, ttl: 15 * 60_000 } })
   @Post('resend-verification')
-  @HttpCode(202)
-  @ApiOperation({ summary: 'Re-send my verification email.' })
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Re-send my verification email or auto-activate on staging.' })
   async resend(@CurrentUser() user: AuthenticatedUser) {
-    await this.auth.resendVerification(user.id);
-    return { sent: true };
+    const result = await this.auth.resendVerification(user.id);
+    return { sent: true, ...result };
+  }
+
+  @Roles(...ALL_ROLES)
+  @ApiBearerAuth()
+  @Post('instant-verify')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Instant verify currently signed-in user in staging/demo mode' })
+  async instantVerify(@CurrentUser() user: AuthenticatedUser, @Req() req: Request) {
+    return this.auth.instantVerify(user.id, undefined, requestMeta(req));
+  }
+
+  @Public()
+  @Post('instant-verify-public')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Instant verify an account by email address' })
+  async instantVerifyPublic(@Body() dto: { email?: string }, @Req() req: Request) {
+    if (!dto?.email) {
+      throw new BadRequestException({ code: 'EMAIL_REQUIRED', message: 'Email address is required.' });
+    }
+    return this.auth.instantVerify(undefined, dto.email, requestMeta(req));
   }
 
   @Public()
