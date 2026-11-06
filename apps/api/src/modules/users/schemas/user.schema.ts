@@ -5,6 +5,7 @@ import {
   ALL_ADMIN_PERMISSIONS,
   AdminRolePreset,
   Role,
+  GovernanceRole,
 } from '@mindbridge/shared-types';
 import type { HydratedDocument } from 'mongoose';
 
@@ -47,6 +48,9 @@ export class User {
 
   @Prop({ type: String, enum: Object.values(AdminRolePreset), default: null })
   adminRolePreset?: AdminRolePreset | null;
+
+  @Prop({ type: String, enum: Object.values(GovernanceRole), default: null })
+  governanceRole?: GovernanceRole | null;
 
   @Prop({ default: false })
   mfaEnabled!: boolean;

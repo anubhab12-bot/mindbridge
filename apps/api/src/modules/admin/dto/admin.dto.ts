@@ -22,6 +22,29 @@ import {
 export class AdminRolePresetDto {
   @IsIn(Object.values(AdminRolePreset))
   preset!: AdminRolePreset;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  rationale?: string;
+}
+
+export class ProposePromotionDto {
+  @IsMongoId()
+  targetUserId!: string;
+
+  @IsIn(Object.values(AdminRolePreset))
+  preset!: AdminRolePreset;
+
+  @IsString()
+  @MaxLength(500)
+  rationale!: string;
+}
+
+export class RejectPromotionDto {
+  @IsString()
+  @MaxLength(500)
+  reason!: string;
 }
 
 export class SafetyQueryDto {

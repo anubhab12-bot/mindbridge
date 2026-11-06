@@ -216,12 +216,24 @@ export const AdminPermission = {
   SETTINGS_MANAGE: 'settings:manage',
   REPORTS_EXPORT: 'reports:export',
   SAFETY_TRIAGE: 'safety:triage',
+  MODERATION_REVIEW: 'moderation:review',
+  INSIGHTS_READ: 'insights:read',
+  ROLES_MANAGE: 'roles:manage',
+  PUBLISH_MANAGE: 'publish:manage',
 } as const;
 export type AdminPermission = (typeof AdminPermission)[keyof typeof AdminPermission];
 export const ALL_ADMIN_PERMISSIONS = Object.values(AdminPermission);
 
-/** Admin role presets stored per user and editable only with settings:manage */
+/** Admin role presets stored per user and editable only with roles:manage */
 export const AdminRolePreset = {
+  SPECIALIST: 'SPECIALIST',
+  COMPLIANCE: 'COMPLIANCE',
+  COORDINATOR: 'COORDINATOR',
+  INVESTOR: 'INVESTOR',
+  OPERATOR: 'OPERATOR',
+  ADMIN: 'ADMIN',
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  // Backward compatibility aliases
   CLINICIAN_ON_CALL: 'CLINICIAN_ON_CALL',
   VERIFICATION_REVIEWER: 'VERIFICATION_REVIEWER',
   CONTENT_EDITOR: 'CONTENT_EDITOR',
@@ -231,6 +243,34 @@ export const AdminRolePreset = {
 export type AdminRolePreset = (typeof AdminRolePreset)[keyof typeof AdminRolePreset];
 
 export const ADMIN_ROLE_PRESET_PERMISSIONS: Record<AdminRolePreset, readonly AdminPermission[]> = {
+  SPECIALIST: [
+    AdminPermission.DOCTORS_VERIFY,
+    AdminPermission.USERS_MANAGE,
+    AdminPermission.AUDIT_READ,
+  ],
+  COMPLIANCE: [
+    AdminPermission.MODERATION_REVIEW,
+    AdminPermission.USERS_MANAGE,
+    AdminPermission.AUDIT_READ,
+  ],
+  COORDINATOR: [
+    AdminPermission.MODERATION_REVIEW,
+    AdminPermission.SUPPORT_MANAGE,
+  ],
+  INVESTOR: [
+    AdminPermission.INSIGHTS_READ,
+  ],
+  OPERATOR: [
+    AdminPermission.SUPPORT_MANAGE,
+    AdminPermission.SETTINGS_MANAGE,
+    AdminPermission.CRISIS_MANAGE,
+    AdminPermission.REPORTS_EXPORT,
+  ],
+  ADMIN: ALL_ADMIN_PERMISSIONS.filter(
+    (p) => p !== AdminPermission.ROLES_MANAGE && p !== AdminPermission.PUBLISH_MANAGE,
+  ),
+  SUPER_ADMIN: ALL_ADMIN_PERMISSIONS,
+  // Aliases
   CLINICIAN_ON_CALL: [
     AdminPermission.SAFETY_TRIAGE,
     AdminPermission.CRISIS_MANAGE,
@@ -248,6 +288,7 @@ export const ADMIN_ROLE_PRESET_PERMISSIONS: Record<AdminRolePreset, readonly Adm
   OPERATIONS: [
     AdminPermission.SUPPORT_MANAGE,
     AdminPermission.SETTINGS_MANAGE,
+    AdminPermission.CRISIS_MANAGE,
     AdminPermission.REPORTS_EXPORT,
   ],
   SUPER: ALL_ADMIN_PERMISSIONS,

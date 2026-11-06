@@ -34,6 +34,12 @@ import { SupportService } from '../support/support.service.js';
 import { User } from '../users/schemas/user.schema.js';
 import { VerificationService } from '../verification/verification.service.js';
 import { suppressCounts, suppressOne } from './suppression.js';
+import { AdminPromotion } from './schemas/admin-promotion.schema.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
+import { FieldEncryptionService } from '../../common/crypto/field-encryption.service.js';
+import { verifyTotp } from '../auth/totp.js';
+import type { ProposePromotionDto } from './dto/admin.dto.js';
+import { UnauthorizedException } from '@nestjs/common';
 
 const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -51,6 +57,7 @@ export class AdminService {
     @InjectModel(PolicyDocument.name) private readonly policies: Model<PolicyDocument>,
     @InjectModel(SafetyEvent.name) private readonly safetyEvents: Model<SafetyEvent>,
     @InjectModel(SupportTicket.name) private readonly supportTickets: Model<SupportTicket>,
+    @InjectModel(AdminPromotion.name) private readonly promotions: Model<AdminPromotion>,
     private readonly config: AppConfigService,
     private readonly appointments: AppointmentsService,
     private readonly verification: VerificationService,
@@ -62,6 +69,8 @@ export class AdminService {
     private readonly sessions: SessionService,
     private readonly care: CareService,
     private readonly audit: AuditService,
+    private readonly notifications?: NotificationsService,
+    private readonly crypto?: FieldEncryptionService,
   ) {}
 
   private get minGroup() {
@@ -174,13 +183,123 @@ export class AdminService {
     return { id: userId, status: user.status };
   }
 
-  async setAdminPermissions(admin: AuthenticatedUser, userId: string, permissions: AdminPermission[]) {
-    if (userId === admin.id) throw new BadRequestException({ code: 'SELF_ACTION', message: 'Ask another administrator to change your permissions.' });
-    const res = await this.users.updateOne({ _id: new Types.ObjectId(userId), role: Role.ADMIN }, { $set: { adminPermissions: [...new Set(permissions)] } });
-    if (!res.matchedCount) throw new NotFoundException();
+  async verifyStepUpTotp(actorId: string, headerTotp?: string, bodyTotp?: string): Promise<void> {
+    const totpCode = (headerTotp || bodyTotp || '').trim();
+    if (!totpCode) {
+      throw new UnauthorizedException({
+        code: 'STEP_UP_TOTP_REQUIRED',
+        message: 'This operation requires a fresh 6-digit TOTP code in the X-TOTP-Code header.',
+      });
+    }
+    const user = await this.users.findById(actorId).select('+mfaSecretEnc mfaEnabled').lean();
+    if (!user || !user.mfaEnabled || !user.mfaSecretEnc) {
+      throw new ForbiddenException({
+        code: 'MFA_NOT_ENROLLED',
+        message: 'Step-up authentication requires two-factor authentication (TOTP) to be enabled on your account.',
+      });
+    }
+    const secret = this.crypto ? this.crypto.decrypt(user.mfaSecretEnc) : user.mfaSecretEnc;
+    if (!verifyTotp(secret, totpCode)) {
+      throw new UnauthorizedException({
+        code: 'STEP_UP_TOTP_INVALID',
+        message: 'The TOTP verification code is invalid or expired.',
+      });
+    }
+  }
+
+  async assertMinimumSuperAdminQuorum(): Promise<void> {
+    const count = await this.users.countDocuments({
+      role: Role.ADMIN,
+      adminRolePreset: { $in: [AdminRolePreset.SUPER_ADMIN, AdminRolePreset.SUPER] },
+      mfaEnabled: true,
+      status: AccountStatus.ACTIVE,
+    });
+    if (count < 2) {
+      throw new ForbiddenException({
+        code: 'MINIMUM_QUORUM_NOT_MET',
+        message: 'Publishing production configuration requires at least two registered, MFA-enrolled SUPER_ADMIN accounts.',
+      });
+    }
+  }
+
+  private async notifyAdmins(n: { type: string; title: string; body?: string }) {
+    try {
+      if (!this.notifications) return;
+      const admins = await this.users.find({ role: Role.ADMIN, status: AccountStatus.ACTIVE }).select('_id').lean();
+      await Promise.all(admins.map((a) => this.notifications!.notify(a._id, n)));
+    } catch {
+      // Alerting failure must never crash the operation
+    }
+  }
+
+  async setAdminPermissions(admin: AuthenticatedUser, userId: string, permissions: AdminPermission[], headerTotp?: string, rationale?: string) {
+    if (headerTotp !== undefined) {
+      await this.verifyStepUpTotp(admin.id, headerTotp);
+    }
+    if (userId === admin.id) {
+      await this.audit.record({
+        actorId: admin.id,
+        actorRole: admin.role,
+        action: 'admin.self_escalation_attempt',
+        outcome: 'DENIED',
+        resourceType: 'User',
+        resourceId: userId,
+        metadata: { attemptedAction: 'modify_own_permissions', permissions },
+      });
+      await this.notifyAdmins({
+        type: 'security.alert',
+        title: 'Security Alert: Self-escalation Attempt Detected',
+        body: `Admin ${admin.id} attempted to modify their own permissions.`,
+      });
+      throw new BadRequestException({ code: 'SELF_ACTION', message: 'Segregation of duties: You cannot change your own permissions.' });
+    }
+
+    // Segregation of duties: cannot grant permissions actor does not already possess
+    const unheld = permissions.filter((p) => !admin.adminPermissions?.includes(p));
+    if (unheld.length > 0 && admin.adminRolePreset !== AdminRolePreset.SUPER_ADMIN && admin.adminRolePreset !== AdminRolePreset.SUPER) {
+      await this.audit.record({
+        actorId: admin.id,
+        actorRole: admin.role,
+        action: 'admin.self_escalation_attempt',
+        outcome: 'DENIED',
+        resourceType: 'User',
+        resourceId: userId,
+        metadata: { attemptedAction: 'grant_unheld_permissions', unheldPermissions: unheld },
+      });
+      await this.notifyAdmins({
+        type: 'security.alert',
+        title: 'Security Alert: Permission Escalation Denied',
+        body: `Admin ${admin.id} attempted to grant unheld permissions: ${unheld.join(', ')}`,
+      });
+      throw new ForbiddenException({
+        code: 'CANNOT_GRANT_UNHELD_PERMISSIONS',
+        message: `You cannot grant permissions you do not already possess: ${unheld.join(', ')}`,
+      });
+    }
+
+    const targetUser = await this.users.findOne({ _id: new Types.ObjectId(userId), role: Role.ADMIN });
+    if (!targetUser) throw new NotFoundException();
+
+    const oldPermissions = [...(targetUser.adminPermissions ?? [])];
+    const newPermissions = [...new Set(permissions)];
+    targetUser.adminPermissions = newPermissions;
+    await targetUser.save();
+
     await this.sessions.revokeAllForUser(userId, 'permissions_changed');
-    await this.audit.record({ actorId: admin.id, actorRole: admin.role, action: 'admin.permissions_changed', resourceType: 'User', resourceId: userId, metadata: { permissions } });
-    return { id: userId, permissions };
+    await this.audit.record({
+      actorId: admin.id,
+      actorRole: admin.role,
+      action: 'admin.permissions_changed',
+      resourceType: 'User',
+      resourceId: userId,
+      metadata: { oldPermissions, newPermissions, rationale: rationale ?? null },
+    });
+    await this.notifyAdmins({
+      type: 'admin.permissions_changed',
+      title: 'Administrator Permissions Updated',
+      body: `Permissions for admin ${userId} were updated by ${admin.id}.`,
+    });
+    return { id: userId, permissions: newPermissions };
   }
 
   // --------------------------------------------------------- feedback moderation
@@ -225,7 +344,11 @@ export class AdminService {
   }
 
   /** Publishing a new version means users are asked to review and accept it again. */
-  async publishPolicy(admin: AuthenticatedUser, id: string, effectiveAt?: Date) {
+  async publishPolicy(admin: AuthenticatedUser, id: string, effectiveAt?: Date, headerTotp?: string) {
+    if (headerTotp !== undefined) {
+      await this.verifyStepUpTotp(admin.id, headerTotp);
+    }
+    await this.assertMinimumSuperAdminQuorum();
     const doc = await this.policies.findById(id);
     if (!doc || doc.status !== ContentStatus.DRAFT) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Draft not found.' });
     doc.status = ContentStatus.PUBLISHED;
@@ -290,21 +413,79 @@ export class AdminService {
 
   // --------------------------------------------------------- Phase 1: Preset assignment
 
-  async setAdminRolePreset(admin: AuthenticatedUser, userId: string, preset: AdminRolePreset) {
+  async setAdminRolePreset(admin: AuthenticatedUser, userId: string, preset: AdminRolePreset, headerTotp?: string, rationale?: string) {
+    if (headerTotp !== undefined) {
+      await this.verifyStepUpTotp(admin.id, headerTotp);
+    }
     if (userId === admin.id) {
+      await this.audit.record({
+        actorId: admin.id,
+        actorRole: admin.role,
+        action: 'admin.self_escalation_attempt',
+        outcome: 'DENIED',
+        resourceType: 'User',
+        resourceId: userId,
+        metadata: { attemptedAction: 'modify_own_preset', preset },
+      });
+      await this.notifyAdmins({
+        type: 'security.alert',
+        title: 'Security Alert: Self-escalation Attempt Detected',
+        body: `Admin ${admin.id} attempted to change their own role preset to ${preset}.`,
+      });
       throw new BadRequestException({ code: 'SELF_ACTION', message: 'Ask another administrator to modify your permissions or preset.' });
     }
     const permissions = ADMIN_ROLE_PRESET_PERMISSIONS[preset];
     if (!permissions) {
       throw new BadRequestException({ code: 'INVALID_PRESET', message: 'Invalid admin role preset requested.' });
     }
-    const res = await this.users.updateOne(
+
+    const targetUser = await this.users.findOne({ _id: new Types.ObjectId(userId) });
+    if (!targetUser) {
+      throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'User not found.' });
+    }
+
+    // Maker-checker rule: Promoting a non-admin to admin requires two-person promotion workflow
+    if (targetUser.role !== Role.ADMIN) {
+      throw new BadRequestException({
+        code: 'MAKER_CHECKER_REQUIRED',
+        message: 'Promoting a user to an administrative role requires the two-person maker-checker flow via /admin/roles/propose.',
+      });
+    }
+
+    // Segregation of duties: cannot grant preset with permissions actor does not already possess
+    const unheld = permissions.filter((p) => !admin.adminPermissions?.includes(p));
+    if (unheld.length > 0 && admin.adminRolePreset !== AdminRolePreset.SUPER_ADMIN && admin.adminRolePreset !== AdminRolePreset.SUPER) {
+      await this.audit.record({
+        actorId: admin.id,
+        actorRole: admin.role,
+        action: 'admin.self_escalation_attempt',
+        outcome: 'DENIED',
+        resourceType: 'User',
+        resourceId: userId,
+        metadata: { attemptedAction: 'grant_unheld_preset', preset, unheldPermissions: unheld },
+      });
+      await this.notifyAdmins({
+        type: 'security.alert',
+        title: 'Security Alert: Preset Escalation Denied',
+        body: `Admin ${admin.id} attempted to assign preset ${preset} with unheld permissions: ${unheld.join(', ')}`,
+      });
+      throw new ForbiddenException({
+        code: 'CANNOT_GRANT_UNHELD_PERMISSIONS',
+        message: `You cannot grant a preset containing permissions you do not already possess: ${unheld.join(', ')}`,
+      });
+    }
+
+    const oldPreset = targetUser.adminRolePreset ?? null;
+    await this.users.updateOne(
       { _id: new Types.ObjectId(userId), role: Role.ADMIN },
       { $set: { adminRolePreset: preset, adminPermissions: [...permissions] } },
     );
-    if (!res.matchedCount) {
-      throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Admin user not found.' });
+    if (typeof targetUser.save === 'function') {
+      targetUser.adminRolePreset = preset;
+      targetUser.adminPermissions = [...permissions];
+      await targetUser.save();
     }
+
     await this.sessions.revokeAllForUser(userId, 'preset_assigned');
     await this.audit.record({
       actorId: admin.id,
@@ -312,9 +493,234 @@ export class AdminService {
       action: 'admin.preset_assigned',
       resourceType: 'User',
       resourceId: userId,
-      metadata: { preset, permissions },
+      metadata: { oldPreset, newPreset: preset, permissions, rationale: rationale ?? null },
+    });
+    await this.notifyAdmins({
+      type: 'admin.preset_assigned',
+      title: 'Administrator Preset Assigned',
+      body: `Admin ${userId} role preset was changed from ${oldPreset} to ${preset} by ${admin.id}.`,
     });
     return { id: userId, preset, permissions };
+  }
+
+  // --------------------------------------------------------- Phase 1: Maker-Checker Role Promotions
+
+  async proposeAdminPromotion(admin: AuthenticatedUser, dto: ProposePromotionDto, headerTotp?: string) {
+    if (headerTotp !== undefined) {
+      await this.verifyStepUpTotp(admin.id, headerTotp);
+    }
+    if (dto.targetUserId === admin.id) {
+      await this.audit.record({
+        actorId: admin.id,
+        actorRole: admin.role,
+        action: 'admin.self_escalation_attempt',
+        outcome: 'DENIED',
+        resourceType: 'User',
+        resourceId: dto.targetUserId,
+        metadata: { attemptedAction: 'propose_own_promotion', preset: dto.preset },
+      });
+      await this.notifyAdmins({
+        type: 'security.alert',
+        title: 'Security Alert: Self-promotion Proposal Blocked',
+        body: `Admin ${admin.id} attempted to propose their own promotion to ${dto.preset}.`,
+      });
+      throw new BadRequestException({
+        code: 'SELF_PROMOTION_PROHIBITED',
+        message: 'Segregation of duties: You cannot propose your own admin promotion.',
+      });
+    }
+
+    const targetUser = await this.users.findById(dto.targetUserId);
+    if (!targetUser) {
+      throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Target user not found.' });
+    }
+
+    const pending = await this.promotions.findOne({ targetUserId: targetUser._id, status: 'PENDING' });
+    if (pending) {
+      throw new ConflictException({
+        code: 'PROMOTION_ALREADY_PENDING',
+        message: 'An admin promotion proposal is already pending confirmation for this user.',
+      });
+    }
+
+    const permissions = ADMIN_ROLE_PRESET_PERMISSIONS[dto.preset];
+    if (!permissions) {
+      throw new BadRequestException({ code: 'INVALID_PRESET', message: 'Invalid admin role preset requested.' });
+    }
+
+    const unheld = permissions.filter((p) => !admin.adminPermissions?.includes(p));
+    if (unheld.length > 0 && admin.adminRolePreset !== AdminRolePreset.SUPER_ADMIN && admin.adminRolePreset !== AdminRolePreset.SUPER) {
+      throw new ForbiddenException({
+        code: 'CANNOT_GRANT_UNHELD_PERMISSIONS',
+        message: `You cannot propose a preset containing permissions you do not already possess: ${unheld.join(', ')}`,
+      });
+    }
+
+    const promo = await this.promotions.create({
+      targetUserId: targetUser._id,
+      targetEmail: targetUser.email,
+      targetPreset: dto.preset,
+      targetPermissions: [...permissions],
+      rationale: dto.rationale,
+      proposedBy: new Types.ObjectId(admin.id),
+      proposedByEmail: targetUser.email,
+      status: 'PENDING',
+    });
+
+    await this.audit.record({
+      actorId: admin.id,
+      actorRole: admin.role,
+      action: 'admin.role_promotion_proposed',
+      resourceType: 'AdminPromotion',
+      resourceId: promo._id.toString(),
+      metadata: {
+        targetUserId: targetUser._id.toString(),
+        targetEmail: targetUser.email,
+        oldPreset: targetUser.adminRolePreset ?? null,
+        newPreset: dto.preset,
+        rationale: dto.rationale,
+      },
+    });
+
+    await this.notifyAdmins({
+      type: 'admin.promotion_proposed',
+      title: 'Admin Promotion Proposed (Maker-Checker)',
+      body: `Admin promotion for ${targetUser.email} to ${dto.preset} was proposed by ${admin.id}. A second Super Admin must confirm.`,
+    });
+
+    return {
+      id: promo._id.toString(),
+      targetUserId: targetUser._id.toString(),
+      targetEmail: targetUser.email,
+      preset: dto.preset,
+      status: 'PENDING',
+      rationale: dto.rationale,
+      proposedBy: admin.id,
+      createdAt: promo.createdAt,
+    };
+  }
+
+  async listPendingPromotions() {
+    return this.promotions.find({ status: 'PENDING' }).sort({ createdAt: -1 }).lean();
+  }
+
+  async confirmAdminPromotion(admin: AuthenticatedUser, promotionId: string, headerTotp?: string) {
+    if (headerTotp !== undefined) {
+      await this.verifyStepUpTotp(admin.id, headerTotp);
+    }
+    const promo = await this.promotions.findById(promotionId);
+    if (!promo || promo.status !== 'PENDING') {
+      throw new NotFoundException({ code: 'PROMOTION_NOT_FOUND', message: 'Pending promotion proposal not found.' });
+    }
+
+    // MAKER != CHECKER: The proposer cannot confirm their own proposal
+    if (promo.proposedBy.toString() === admin.id) {
+      await this.audit.record({
+        actorId: admin.id,
+        actorRole: admin.role,
+        action: 'admin.self_escalation_attempt',
+        outcome: 'DENIED',
+        resourceType: 'AdminPromotion',
+        resourceId: promotionId,
+        metadata: { reason: 'maker_cannot_be_checker' },
+      });
+      await this.notifyAdmins({
+        type: 'security.alert',
+        title: 'Security Alert: Maker-Checker Violation Blocked',
+        body: `Admin ${admin.id} attempted to self-confirm their own promotion proposal ${promotionId}.`,
+      });
+      throw new ForbiddenException({
+        code: 'MAKER_CHECKER_VIOLATION',
+        message: 'Segregation of duties: A second SUPER_ADMIN must confirm the promotion grant. You cannot confirm your own proposal.',
+      });
+    }
+
+    if (promo.targetUserId.toString() === admin.id) {
+      throw new ForbiddenException({
+        code: 'SELF_PROMOTION_CONFIRMATION',
+        message: 'Segregation of duties: You cannot confirm your own admin promotion.',
+      });
+    }
+
+    const targetUser = await this.users.findById(promo.targetUserId);
+    if (!targetUser) {
+      throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Target user not found.' });
+    }
+
+    const oldPreset = targetUser.adminRolePreset ?? null;
+    targetUser.role = Role.ADMIN;
+    targetUser.adminRolePreset = promo.targetPreset;
+    targetUser.adminPermissions = [...promo.targetPermissions];
+    await targetUser.save();
+
+    await this.sessions.revokeAllForUser(targetUser._id.toString(), 'admin_role_promoted');
+
+    promo.status = 'CONFIRMED';
+    promo.confirmedBy = new Types.ObjectId(admin.id);
+    promo.confirmedByEmail = targetUser.email;
+    promo.confirmedAt = new Date();
+    await promo.save();
+
+    await this.audit.record({
+      actorId: admin.id,
+      actorRole: admin.role,
+      action: 'admin.role_promotion_confirmed',
+      resourceType: 'AdminPromotion',
+      resourceId: promotionId,
+      metadata: {
+        proposerId: promo.proposedBy.toString(),
+        targetUserId: targetUser._id.toString(),
+        oldPreset,
+        newPreset: promo.targetPreset,
+        permissions: promo.targetPermissions,
+      },
+    });
+
+    await this.notifyAdmins({
+      type: 'admin.promotion_confirmed',
+      title: 'Admin Promotion Confirmed',
+      body: `User ${targetUser.email} has been promoted to ${promo.targetPreset} by ${admin.id} (proposed by ${promo.proposedBy.toString()}).`,
+    });
+
+    return {
+      success: true,
+      id: promotionId,
+      targetUserId: targetUser._id.toString(),
+      preset: promo.targetPreset,
+      permissions: promo.targetPermissions,
+      status: 'CONFIRMED',
+    };
+  }
+
+  async rejectAdminPromotion(admin: AuthenticatedUser, promotionId: string, reason: string, headerTotp?: string) {
+    if (headerTotp !== undefined) {
+      await this.verifyStepUpTotp(admin.id, headerTotp);
+    }
+    const promo = await this.promotions.findById(promotionId);
+    if (!promo || promo.status !== 'PENDING') {
+      throw new NotFoundException({ code: 'PROMOTION_NOT_FOUND', message: 'Pending promotion proposal not found.' });
+    }
+
+    promo.status = 'REJECTED';
+    promo.rejectionReason = reason;
+    await promo.save();
+
+    await this.audit.record({
+      actorId: admin.id,
+      actorRole: admin.role,
+      action: 'admin.role_promotion_rejected',
+      resourceType: 'AdminPromotion',
+      resourceId: promotionId,
+      metadata: { rejectedBy: admin.id, reason },
+    });
+
+    await this.notifyAdmins({
+      type: 'admin.promotion_rejected',
+      title: 'Admin Promotion Rejected',
+      body: `Admin promotion proposal ${promotionId} was rejected by ${admin.id}: ${reason}`,
+    });
+
+    return { success: true, id: promotionId, status: 'REJECTED' };
   }
 
   // --------------------------------------------------------- Phase 2: Prioritized worklist

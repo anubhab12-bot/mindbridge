@@ -1,6 +1,8 @@
 import type {
   AccountStatus,
   AdminPermission,
+  AdminRolePreset,
+  GovernanceRole,
   AppointmentStatus,
   ConsultationMode,
   CrisisServiceType,
@@ -43,6 +45,8 @@ export interface AuthUser {
   mfaEnabled: boolean;
   doctorVerificationStatus?: DoctorVerificationStatus;
   adminPermissions?: AdminPermission[];
+  adminRolePreset?: AdminRolePreset | null;
+  governanceRole?: GovernanceRole | null;
   timezone: string;
 }
 

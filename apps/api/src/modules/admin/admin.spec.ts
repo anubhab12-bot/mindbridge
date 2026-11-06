@@ -4,6 +4,7 @@ import {
   AdminPermission,
   AdminRolePreset,
   ADMIN_ROLE_PRESET_PERMISSIONS,
+  ALL_ADMIN_PERMISSIONS,
   RiskLevel,
   Role,
   SafetyEventStatus,
@@ -30,11 +31,18 @@ describe('small-group suppression', () => {
 
 describe('AdminService safeguards', () => {
   const admin = { id: new Types.ObjectId().toString(), role: Role.ADMIN, adminPermissions: [AdminPermission.USERS_MANAGE] } as AuthenticatedUser;
+  const superAdmin = { id: new Types.ObjectId().toString(), role: Role.ADMIN, adminRolePreset: AdminRolePreset.SUPER_ADMIN, adminPermissions: [...ALL_ADMIN_PERMISSIONS] } as AuthenticatedUser;
 
   function make(target: Record<string, unknown> | null, overrides: { safetyEvents?: any; supportTickets?: any } = {}) {
     const sessions = { revokeAllForUser: vi.fn() };
     const audit = { record: vi.fn() };
-    const usersModel = { findById: vi.fn().mockResolvedValue(target), updateOne: vi.fn().mockResolvedValue({ matchedCount: 1 }) };
+    const mockTargetUser = target ?? { _id: new Types.ObjectId(), role: Role.ADMIN, status: AccountStatus.ACTIVE, save: vi.fn().mockResolvedValue(true) };
+    const usersModel = {
+      findById: vi.fn().mockResolvedValue(mockTargetUser),
+      findOne: vi.fn().mockResolvedValue(mockTargetUser),
+      updateOne: vi.fn().mockResolvedValue({ matchedCount: 1 }),
+      countDocuments: vi.fn().mockResolvedValue(2),
+    };
     const svc = new AdminService(
       usersModel as never,
       { findOne: vi.fn(), find: vi.fn().mockReturnValue({ sort: vi.fn().mockReturnValue({ lean: vi.fn().mockResolvedValue([]) }) }) } as never,
@@ -42,6 +50,7 @@ describe('AdminService safeguards', () => {
       {} as never,
       overrides.safetyEvents ?? { find: vi.fn().mockReturnValue({ sort: vi.fn().mockReturnValue({ lean: vi.fn().mockResolvedValue([]) }) }) } as never,
       overrides.supportTickets ?? { find: vi.fn().mockReturnValue({ sort: vi.fn().mockReturnValue({ lean: vi.fn().mockResolvedValue([]) }) }) } as never,
+      { findOne: vi.fn(), find: vi.fn().mockReturnValue({ sort: vi.fn().mockReturnValue({ lean: vi.fn().mockResolvedValue([]) }) }), create: vi.fn(), findById: vi.fn() } as never,
       fakeConfig({ ANALYTICS_MIN_GROUP_SIZE: 5 }),
       { cancelAllFutureForDoctor: vi.fn() } as never,
       {} as never,
@@ -84,7 +93,7 @@ describe('AdminService safeguards', () => {
     it('assigns named preset and grants matching bundle of permissions', async () => {
       const targetUserId = new Types.ObjectId().toString();
       const { svc, sessions, audit, usersModel } = make(null);
-      const res = await svc.setAdminRolePreset(admin, targetUserId, AdminRolePreset.CLINICIAN_ON_CALL);
+      const res = await svc.setAdminRolePreset(superAdmin, targetUserId, AdminRolePreset.CLINICIAN_ON_CALL);
       expect(res.preset).toBe(AdminRolePreset.CLINICIAN_ON_CALL);
       expect(res.permissions).toEqual(ADMIN_ROLE_PRESET_PERMISSIONS.CLINICIAN_ON_CALL);
       expect(usersModel.updateOne).toHaveBeenCalledWith(

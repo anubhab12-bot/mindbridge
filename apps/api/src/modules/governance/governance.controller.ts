@@ -51,7 +51,7 @@ export class GovernanceController {
   }
 
   @Roles(Role.ADMIN)
-  @RequireAdminPermissions(AdminPermission.SETTINGS_MANAGE)
+  @RequireAdminPermissions(AdminPermission.PUBLISH_MANAGE)
   @Put('settings')
   @ApiOperation({ summary: 'Update dynamic site settings (ADMIN + settings:manage)' })
   async updateSettings(
@@ -70,7 +70,7 @@ export class GovernanceController {
   }
 
   @Roles(Role.ADMIN)
-  @RequireAdminPermissions(AdminPermission.SETTINGS_MANAGE)
+  @RequireAdminPermissions(AdminPermission.PUBLISH_MANAGE)
   @Put('policies')
   @ApiOperation({ summary: 'Update legal policies with mandatory audit trail of changes (ADMIN + settings:manage)' })
   async updatePolicies(
@@ -98,7 +98,7 @@ export class GovernanceController {
   }
 
   @Roles(Role.ADMIN)
-  @RequireAdminPermissions(AdminPermission.SETTINGS_MANAGE)
+  @RequireAdminPermissions(AdminPermission.MODERATION_REVIEW)
   @Get('applications')
   @ApiOperation({ summary: 'List Council applications with AI safety screening results (ADMIN + settings:manage)' })
   async listApplications(
@@ -109,7 +109,7 @@ export class GovernanceController {
   }
 
   @Roles(Role.ADMIN)
-  @RequireAdminPermissions(AdminPermission.SETTINGS_MANAGE)
+  @RequireAdminPermissions(AdminPermission.MODERATION_REVIEW)
   @Post('applications/:id/decision')
   @ApiOperation({ summary: 'Decision on Council application with recorded reviewer (ADMIN + settings:manage)' })
   async reviewApplication(
@@ -152,14 +152,15 @@ export class GovernanceController {
   }
 
   @Roles(Role.ADMIN)
-  @RequireAdminPermissions(AdminPermission.SECURITY_MANAGE)
+  @RequireAdminPermissions(AdminPermission.MODERATION_REVIEW)
   @Post('tasks/:id/verify-proof')
-  @ApiOperation({ summary: 'Verify or request revision on submitted task proof (ADMIN + security:manage)' })
+  @ApiOperation({ summary: 'Verify or request revision on submitted task proof (ADMIN + moderation:review)' })
   async verifyProof(
+    @CurrentUser() admin: AuthenticatedUser,
     @Param('id') id: string,
     @Body() dto: VerifyProofDto,
   ) {
-    return this.governance.verifyProof(id, dto.decision);
+    return this.governance.verifyProof(id, dto.decision, admin);
   }
 
   // ------------------------------------------------------------- Telemetry & Statistics (Public, Suppressed)
@@ -180,7 +181,7 @@ export class GovernanceController {
   }
 
   @Roles(Role.ADMIN)
-  @RequireAdminPermissions(AdminPermission.SECURITY_MANAGE)
+  @RequireAdminPermissions(AdminPermission.PUBLISH_MANAGE)
   @Post('features/publish')
   @ApiOperation({ summary: 'Publish or update dynamic feature on live site (ADMIN + security:manage)' })
   async publishDynamicFeature(@Body() dto: DynamicFeatureItem) {

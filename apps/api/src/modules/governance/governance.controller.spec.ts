@@ -130,22 +130,22 @@ describe('PHASE 0: GovernanceController Authorization & Route Lockdown', () => {
     {
       name: 'PUT /governance/settings',
       handler: controller.updateSettings,
-      requiredPermission: AdminPermission.SETTINGS_MANAGE,
+      requiredPermission: AdminPermission.PUBLISH_MANAGE,
     },
     {
       name: 'PUT /governance/policies',
       handler: controller.updatePolicies,
-      requiredPermission: AdminPermission.SETTINGS_MANAGE,
+      requiredPermission: AdminPermission.PUBLISH_MANAGE,
     },
     {
       name: 'GET /governance/applications',
       handler: controller.listApplications,
-      requiredPermission: AdminPermission.SETTINGS_MANAGE,
+      requiredPermission: AdminPermission.MODERATION_REVIEW,
     },
     {
       name: 'POST /governance/applications/:id/decision',
       handler: controller.reviewApplication,
-      requiredPermission: AdminPermission.SETTINGS_MANAGE,
+      requiredPermission: AdminPermission.MODERATION_REVIEW,
     },
     {
       name: 'GET /governance/doctors',
@@ -175,7 +175,7 @@ describe('PHASE 0: GovernanceController Authorization & Route Lockdown', () => {
     {
       name: 'POST /governance/tasks/:id/verify-proof',
       handler: controller.verifyProof,
-      requiredPermission: AdminPermission.SECURITY_MANAGE,
+      requiredPermission: AdminPermission.MODERATION_REVIEW,
     },
     {
       name: 'POST /governance/features/ai-plan',
@@ -185,7 +185,7 @@ describe('PHASE 0: GovernanceController Authorization & Route Lockdown', () => {
     {
       name: 'POST /governance/features/publish',
       handler: controller.publishDynamicFeature,
-      requiredPermission: AdminPermission.SECURITY_MANAGE,
+      requiredPermission: AdminPermission.PUBLISH_MANAGE,
     },
     {
       name: 'PATCH /governance/features/:id/toggle',

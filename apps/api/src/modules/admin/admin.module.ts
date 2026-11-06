@@ -12,6 +12,7 @@ import { User, UserSchema } from '../users/schemas/user.schema.js';
 import { VerificationModule } from '../verification/verification.module.js';
 import { AdminController } from './admin.controller.js';
 import { AdminService } from './admin.service.js';
+import { AdminPromotion, AdminPromotionSchema } from './schemas/admin-promotion.schema.js';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AdminService } from './admin.service.js';
       { name: PolicyDocument.name, schema: PolicyDocumentSchema },
       { name: SafetyEvent.name, schema: SafetyEventSchema },
       { name: SupportTicket.name, schema: SupportTicketSchema },
+      { name: AdminPromotion.name, schema: AdminPromotionSchema },
     ]),
   ],
   controllers: [AdminController],

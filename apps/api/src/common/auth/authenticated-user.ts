@@ -1,4 +1,4 @@
-import type { AccountStatus, AdminPermission, DoctorVerificationStatus, Role } from '@mindbridge/shared-types';
+import type { AccountStatus, AdminPermission, AdminRolePreset, DoctorVerificationStatus, GovernanceRole, Role } from '@mindbridge/shared-types';
 
 /**
  * The identity attached to a request after the access token is verified AND the user,
@@ -14,6 +14,8 @@ export interface AuthenticatedUser {
   doctorStatus?: DoctorVerificationStatus;
   doctorProfileId?: string;
   adminPermissions: AdminPermission[];
+  adminRolePreset?: AdminRolePreset | null;
+  governanceRole?: GovernanceRole | null;
 }
 
 export interface AccessTokenPayload {

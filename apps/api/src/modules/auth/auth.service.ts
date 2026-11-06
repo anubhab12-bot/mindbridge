@@ -201,7 +201,8 @@ export class AuthService {
     this.assertCanSignIn(user);
     await this.users.updateOne({ _id: user._id }, { $set: { failedLoginCount: 0, lockedUntil: null } });
 
-    if (user.mfaEnabled) {
+    const isSuperAdmin = user.role === Role.ADMIN && (user.adminRolePreset === AdminRolePreset.SUPER_ADMIN || user.adminRolePreset === AdminRolePreset.SUPER);
+    if (user.mfaEnabled || isSuperAdmin) {
       const mfaToken = await this.jwt.signAsync(
         { sub: user._id.toString(), purpose: 'mfa' },
         { secret: this.config.get('MFA_TOKEN_SECRET'), expiresIn: 300 },

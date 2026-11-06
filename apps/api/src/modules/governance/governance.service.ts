@@ -38,6 +38,8 @@ import {
   type DynamicSiteSettings,
   DoctorVerificationStatus,
   Role,
+  AccountStatus,
+  AdminRolePreset,
 } from '@mindbridge/shared-types';
 
 @Injectable()

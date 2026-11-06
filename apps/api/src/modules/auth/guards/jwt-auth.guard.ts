@@ -66,7 +66,7 @@ export class JwtAuthGuard implements CanActivate {
     }
     const [session, user] = await Promise.all([
       this.sessions.findActiveById(payload.sid),
-      this.users.findById(payload.sub).select('role status emailVerifiedAt adminPermissions').lean(),
+      this.users.findById(payload.sub).select('role status emailVerifiedAt adminPermissions adminRolePreset governanceRole').lean(),
     ]);
     if (!session || !user || session.userId.toString() !== payload.sub) return null;
     if (user.status === AccountStatus.SUSPENDED || user.status === AccountStatus.DELETED) return null;
@@ -80,6 +80,8 @@ export class JwtAuthGuard implements CanActivate {
       status: user.status,
       emailVerified: !!user.emailVerifiedAt,
       adminPermissions: user.role === Role.ADMIN ? (user.adminPermissions ?? []) : [],
+      adminRolePreset: user.role === Role.ADMIN ? user.adminRolePreset : null,
+      governanceRole: user.governanceRole ?? null,
     };
     if (user.role === Role.DOCTOR) {
       const profile = await this.doctors.findOne({ userId: user._id }).select('_id verificationStatus').lean();

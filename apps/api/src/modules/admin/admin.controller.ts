@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Header, HttpCode, Param, Patch, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, Header, Headers, HttpCode, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AccountStatus, AdminPermission, ALL_ADMIN_PERMISSIONS, Role } from '@mindbridge/shared-types';
 import { Type } from 'class-transformer';
@@ -11,7 +11,7 @@ import { ParseObjectIdPipe } from '../../common/pipes/parse-object-id.pipe.js';
 import { AuditService, type AuditOutcome } from '../audit/audit.service.js';
 import { PolicyDocumentType } from '../consent/schemas/policy-document.schema.js';
 import { AdminService } from './admin.service.js';
-import { AdminRolePresetDto, PatchSafetyEventDto, SafetyQueryDto } from './dto/admin.dto.js';
+import { AdminRolePresetDto, PatchSafetyEventDto, ProposePromotionDto, RejectPromotionDto, SafetyQueryDto } from './dto/admin.dto.js';
 
 class UserSearchDto extends PaginationQueryDto {
   @IsOptional() @IsString() @MaxLength(100) q?: string;
@@ -25,6 +25,7 @@ class ReasonDto {
 
 class PermissionsDto {
   @IsArray() @ArrayMaxSize(20) @IsIn(ALL_ADMIN_PERMISSIONS, { each: true }) permissions!: AdminPermission[];
+  @IsOptional() @IsString() @MaxLength(500) rationale?: string;
 }
 
 class ModerateDto {
@@ -109,21 +110,72 @@ export class AdminController {
   }
 
   @Put('users/:id/permissions')
-  @RequireAdminPermissions(AdminPermission.SECURITY_MANAGE)
-  @ApiOperation({ summary: "Change another administrator's permissions (ADMIN security:manage)." })
-  permissions(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseObjectIdPipe) id: string, @Body() dto: PermissionsDto) {
-    return this.admin.setAdminPermissions(user, id, dto.permissions);
+  @RequireAdminPermissions(AdminPermission.ROLES_MANAGE)
+  @ApiOperation({ summary: "Change another administrator's permissions (ADMIN roles:manage + TOTP)." })
+  permissions(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseObjectIdPipe) id: string,
+    @Body() dto: PermissionsDto,
+    @Headers('x-totp-code') headerTotp?: string,
+  ) {
+    return this.admin.setAdminPermissions(user, id, dto.permissions, headerTotp, dto.rationale);
   }
 
   @Put('users/:id/preset')
-  @RequireAdminPermissions(AdminPermission.SETTINGS_MANAGE)
-  @ApiOperation({ summary: "Assign an admin role preset to another administrator (ADMIN settings:manage)." })
+  @RequireAdminPermissions(AdminPermission.ROLES_MANAGE)
+  @ApiOperation({ summary: "Assign an admin role preset to another administrator (ADMIN roles:manage + TOTP)." })
   preset(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseObjectIdPipe) id: string,
     @Body() dto: AdminRolePresetDto,
+    @Headers('x-totp-code') headerTotp?: string,
   ) {
-    return this.admin.setAdminRolePreset(user, id, dto.preset);
+    return this.admin.setAdminRolePreset(user, id, dto.preset, headerTotp, dto.rationale);
+  }
+
+  // --------------------------------------------------------- Maker-Checker Admin Promotion
+
+  @Post('roles/propose')
+  @RequireAdminPermissions(AdminPermission.ROLES_MANAGE)
+  @ApiOperation({ summary: 'Propose promotion of a user to an administrative role/preset (ADMIN roles:manage + TOTP).' })
+  proposePromotion(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: ProposePromotionDto,
+    @Headers('x-totp-code') headerTotp?: string,
+  ) {
+    return this.admin.proposeAdminPromotion(user, dto, headerTotp);
+  }
+
+  @Get('roles/promotions')
+  @RequireAdminPermissions(AdminPermission.ROLES_MANAGE)
+  @ApiOperation({ summary: 'List pending admin promotion requests (ADMIN roles:manage).' })
+  listPendingPromotions() {
+    return this.admin.listPendingPromotions();
+  }
+
+  @Post('roles/confirm/:id')
+  @HttpCode(200)
+  @RequireAdminPermissions(AdminPermission.ROLES_MANAGE)
+  @ApiOperation({ summary: 'Confirm an admin promotion by a second Super Admin (ADMIN roles:manage + TOTP).' })
+  confirmPromotion(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseObjectIdPipe) id: string,
+    @Headers('x-totp-code') headerTotp?: string,
+  ) {
+    return this.admin.confirmAdminPromotion(user, id, headerTotp);
+  }
+
+  @Post('roles/reject/:id')
+  @HttpCode(200)
+  @RequireAdminPermissions(AdminPermission.ROLES_MANAGE)
+  @ApiOperation({ summary: 'Reject an admin promotion proposal (ADMIN roles:manage + TOTP).' })
+  rejectPromotion(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseObjectIdPipe) id: string,
+    @Body() dto: RejectPromotionDto,
+    @Headers('x-totp-code') headerTotp?: string,
+  ) {
+    return this.admin.rejectAdminPromotion(user, id, dto.reason, headerTotp);
   }
 
   // --------------------------------------------------------- Phase 3: Safety triage endpoints
@@ -189,10 +241,15 @@ export class AdminController {
 
   @Post('policies/:id/publish')
   @HttpCode(200)
-  @RequireAdminPermissions(AdminPermission.SETTINGS_MANAGE)
-  @ApiOperation({ summary: 'Publish a policy version (ADMIN settings:manage).' })
-  publishPolicy(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseObjectIdPipe) id: string, @Body() dto: PublishDto) {
-    return this.admin.publishPolicy(user, id, dto.effectiveAt);
+  @RequireAdminPermissions(AdminPermission.PUBLISH_MANAGE)
+  @ApiOperation({ summary: 'Publish a policy version (ADMIN publish:manage + TOTP + Quorum).' })
+  publishPolicy(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseObjectIdPipe) id: string,
+    @Body() dto: PublishDto,
+    @Headers('x-totp-code') headerTotp?: string,
+  ) {
+    return this.admin.publishPolicy(user, id, dto.effectiveAt, headerTotp);
   }
 
   @Get('audit-logs')

@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import {
   AccountStatus,
   AdminPermission,
+  AdminRolePreset,
   ALL_ADMIN_PERMISSIONS,
   type AuthTokenResponse,
   type AuthUser,
@@ -201,6 +202,7 @@ export class AuthService {
       mfaEnabled: true,
       timezone: 'Asia/Kolkata',
       adminPermissions: [...permissions],
+      adminRolePreset: AdminRolePreset.SUPER_ADMIN,
     };
     this.accessToken = 'dev_mock_admin_token';
     this.user.set(adminUser);
