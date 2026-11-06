@@ -2,8 +2,22 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [release]
+    branches:
+      - main
+      - prod
+      - 'release/**'
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target Deployment Environment'
+        required: true
+        default: 'prod'
+        type: choice
+        options:
+          - dev
+          - test
+          - uat
+          - prod
 
 permissions:
   contents: read
@@ -16,7 +30,7 @@ concurrency:
 
 jobs:
   deploy-pages:
-    name: Build & Deploy Web to GitHub Pages
+    name: Build & Deploy to GitHub Pages
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, dev, test, release]
+    branches: [main, dev, test, uat, 'release/**']
   pull_request:
 
 permissions:
@@ -122,4 +122,5 @@ jobs:
       - run: docker build -f apps/web/Dockerfile -t mindbridge-web:ci .
       - name: Web image renders a valid nginx config from its template
         run: docker run --rm -e API_UPSTREAM=https://127.0.0.1:3000 mindbridge-web:ci nginx -t
+
 
