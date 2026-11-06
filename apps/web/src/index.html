@@ -29,9 +29,11 @@
   <script>
     (function () {
       try {
-        var saved = localStorage.getItem('mb_theme');
-        // Default to clinical medical light theme for healthcare trust
-        var theme = (saved === 'dark' || saved === 'light') ? saved : 'light';
+        var userChoice = localStorage.getItem('mb_theme_v2');
+        if (!userChoice) {
+          localStorage.removeItem('mb_theme');
+        }
+        var theme = userChoice === 'dark' ? 'dark' : 'light';
         document.documentElement.setAttribute('data-theme', theme);
       } catch (e) {}
     })();

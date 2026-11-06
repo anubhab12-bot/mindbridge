@@ -6,6 +6,10 @@ on:
       - main
       - prod
       - 'release/**'
+      - 'release/*'
+      - dev
+      - test
+      - uat
   workflow_dispatch:
     inputs:
       environment:
@@ -31,9 +35,6 @@ concurrency:
 jobs:
   deploy-pages:
     name: Build & Deploy to GitHub Pages
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -72,14 +73,3 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./apps/web/dist/web/browser
           force_orphan: true
-
-      - name: Upload GitHub Pages Artifact (Actions Deployment)
-        uses: actions/upload-pages-artifact@v3
-        continue-on-error: true
-        with:
-          path: apps/web/dist/web/browser
-
-      - name: Deploy to GitHub Pages (Actions Deployment)
-        id: deployment
-        continue-on-error: true
-        uses: actions/deploy-pages@v4

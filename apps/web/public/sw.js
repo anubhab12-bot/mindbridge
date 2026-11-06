@@ -1,5 +1,5 @@
 // MindBridge Healthcare PWA Service Worker
-const CACHE_NAME = 'mindbridge-pwa-v1';
+const CACHE_NAME = 'mindbridge-pwa-v2';
 const PRECACHE_ASSETS = [
   '/',
   '/manifest.webmanifest',

@@ -6,7 +6,7 @@ export type AppTheme = 'light' | 'dark';
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
   private readonly document = inject(DOCUMENT);
-  private readonly STORAGE_KEY = 'mb_theme';
+  private readonly STORAGE_KEY = 'mb_theme_v2';
 
   readonly theme = signal<AppTheme>('light');
   readonly isDark = computed(() => this.theme() === 'dark');
@@ -24,6 +24,7 @@ export class ThemeService {
       if (saved === 'dark' || saved === 'light') {
         initialTheme = saved;
       } else {
+        localStorage.removeItem('mb_theme');
         initialTheme = 'light';
       }
     } catch {
