@@ -53,6 +53,7 @@ export class ThemeService {
   setTheme(theme: AppTheme): void {
     try {
       localStorage.setItem(this.STORAGE_KEY, theme);
+      localStorage.setItem('mb_theme', theme);
       // Mirror to admin portal theme key so preferences stay harmonized
       localStorage.setItem('mb_admin_theme', theme);
     } catch {}
@@ -63,5 +64,11 @@ export class ThemeService {
     this.theme.set(theme);
     const root = this.document.documentElement;
     root.setAttribute('data-theme', theme);
+    try {
+      localStorage.setItem(this.STORAGE_KEY, theme);
+      localStorage.setItem('mb_theme', theme);
+      localStorage.setItem('mb_admin_theme', theme);
+    } catch {}
+  }
   }
 }
