@@ -33,15 +33,36 @@ import { ContactModalComponent } from '../shared/ui/contact-modal';
       </aside>
     }
 
+    <!-- CLINICAL EMERGENCY HELPLINE TOP RIBBON -->
+    <div class="clinical-top-ribbon">
+      <div class="container clinical-top-inner">
+        <div class="top-ribbon-left">
+          <span class="ribbon-tag">🏥 24/7 National Emergency</span>
+          <span class="ribbon-text">
+            Tele-MANAS: <a href="tel:14416" class="top-tel-link"><strong>14416</strong></a> ·
+            Kiran: <a href="tel:18005990019" class="top-tel-link"><strong>1800-599-0019</strong></a> ·
+            Free & Confidential Support
+          </span>
+        </div>
+        <div class="top-ribbon-right">
+          <a routerLink="/crisis" class="top-crisis-link">Emergency Support Directory →</a>
+        </div>
+      </div>
+    </div>
+
     <header class="site-header">
       <div class="container row-between">
-        <a routerLink="/" class="brand" aria-label="MindBridge home">
-          <span class="logo" aria-hidden="true">◐</span> MindBridge
+        <a routerLink="/" class="brand" aria-label="MindBridge Healthcare">
+          <span class="brand-medical-icon">✚</span>
+          <div class="brand-headings">
+            <span class="brand-name">MindBridge<span class="brand-dot">.health</span></span>
+            <span class="brand-tagline">Clinical Care & Telehealth</span>
+          </div>
         </a>
         <nav class="nav" aria-label="Main">
-          <a routerLink="/professionals" routerLinkActive="active">Specialists & Care</a>
-          <a routerLink="/how-it-works" routerLinkActive="active">Telehealth</a>
-          <a routerLink="/self-help" routerLinkActive="active">Self-Help Tools</a>
+          <a routerLink="/professionals" routerLinkActive="active">Specialists & Doctors</a>
+          <a routerLink="/how-it-works" routerLinkActive="active">Video Consultations</a>
+          <a routerLink="/self-help" routerLinkActive="active">Clinical Self-Help</a>
           <button type="button" class="nav-contact-btn" (click)="openContactModal()">
             <span class="contact-btn-icon">✉️</span>
             <span>Contact via Email</span>
@@ -51,22 +72,12 @@ import { ContactModalComponent } from '../shared/ui/contact-modal';
           <!-- Install App Button -->
           <button
             type="button"
-            class="btn-app-install-header"
+            class="header-app-btn"
             (click)="pwa.openDownloadModal()"
-            title="Download MindBridge Mobile App (Android & iOS)"
+            title="Download MindBridge Mobile App"
           >
             <span class="app-icon">📲</span>
             <span class="app-text">App</span>
-          </button>
-
-          <button
-            type="button"
-            class="btn-telehealth-instant"
-            (click)="telehealth.openLauncher()"
-            title="Instant Video or Chat Consultation with an On-Duty Doctor"
-          >
-            <span class="live-dot-pulse"></span>
-            <span class="telehealth-label-text">📹 Consult Doctor</span>
           </button>
 
           <button
@@ -77,17 +88,17 @@ import { ContactModalComponent } from '../shared/ui/contact-modal';
             [title]="themeService.isDark() ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
           >
             <span class="theme-icon">{{ themeService.isDark() ? '☀️' : '🌙' }}</span>
-            <span class="theme-text">{{ themeService.isDark() ? 'Light' : 'Dark' }}</span>
           </button>
 
-          <a routerLink="/crisis" class="btn btn-crisis btn-sm">Get help now</a>
-
           @if (auth.isAuthenticated()) {
-            <a [routerLink]="auth.homeFor()" class="btn btn-sm">My dashboard</a>
+            <a [routerLink]="auth.homeFor()" class="btn btn-sm btn-primary">My dashboard</a>
           } @else {
-            <a routerLink="/login" class="btn btn-ghost btn-sm btn-auth-hide">Sign in</a>
-            <a routerLink="/register" class="btn btn-sm btn-primary-elevated">Get started</a>
+            <a routerLink="/login" class="nav-signin-link">Sign in</a>
+            <a routerLink="/patient/dashboard" class="btn btn-sm btn-primary-elevated">
+              <span>📅 Book Video Call</span>
+            </a>
           }
+          <a routerLink="/crisis" class="btn btn-sm btn-crisis header-emergency-btn" title="Emergency Crisis Helpline">🚨 14416</a>
           <button class="mobile-nav-toggle" (click)="toggleMobileNav()" aria-label="Toggle navigation">
             {{ mobileNavOpen() ? '✕' : '☰' }}
           </button>
@@ -334,46 +345,159 @@ import { ContactModalComponent } from '../shared/ui/contact-modal';
       &:hover { color: #fff; }
     }
 
+    /* Top Clinical Helpline Ribbon */
+    .clinical-top-ribbon {
+      background: var(--mb-primary-soft);
+      border-bottom: 1px solid rgba(2, 132, 199, 0.2);
+      padding: 6px 0;
+      font-size: 0.82rem;
+    }
+    .clinical-top-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .top-ribbon-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .ribbon-tag {
+      font-weight: 800;
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--mb-crisis);
+      background: var(--mb-crisis-soft);
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid rgba(220, 38, 38, 0.2);
+    }
+    .ribbon-text {
+      color: var(--mb-text);
+      font-weight: 500;
+    }
+    .top-tel-link {
+      color: var(--mb-primary-strong);
+      text-decoration: none;
+      font-weight: 700;
+      &:hover { text-decoration: underline; }
+    }
+    .top-crisis-link {
+      color: var(--mb-primary-strong);
+      font-weight: 650;
+      font-size: 0.8rem;
+      text-decoration: none;
+      &:hover { text-decoration: underline; }
+    }
+
     /* Site Header */
     .site-header {
       background: var(--mb-surface);
       border-bottom: 1px solid var(--mb-border);
-      padding: 12px 0;
+      padding: 10px 0;
       position: sticky;
       top: 0;
       z-index: 50;
       backdrop-filter: blur(12px);
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
     }
     .brand {
-      font-weight: 750;
-      font-size: 1.25rem;
       text-decoration: none;
       color: var(--mb-text);
       display: inline-flex;
-      gap: 8px;
+      gap: 10px;
       align-items: center;
-      letter-spacing: -0.02em;
     }
-    .logo {
+    .brand-medical-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(135deg, var(--mb-primary), var(--mb-primary-strong));
+      color: #fff;
+      font-size: 1.15rem;
+      font-weight: 800;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);
+    }
+    .brand-headings {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.15;
+    }
+    .brand-name {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--mb-text);
+    }
+    .brand-dot {
       color: var(--mb-primary);
-      font-size: 1.4rem;
+    }
+    .brand-tagline {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--mb-text-muted);
     }
     .nav {
       display: flex;
-      gap: 18px;
+      gap: 22px;
       align-items: center;
       flex-wrap: wrap;
     }
     .nav a {
       color: var(--mb-text-muted);
       text-decoration: none;
-      font-weight: 500;
+      font-weight: 600;
       font-size: 0.92rem;
-      transition: color 0.15s ease;
+      transition: all 0.15s ease;
     }
     .nav a.active,
     .nav a:hover {
       color: var(--mb-primary);
+    }
+    .header-cta-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-app-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: var(--mb-radius-sm);
+      border: 1px solid var(--mb-border);
+      background: var(--mb-surface-2);
+      color: var(--mb-text);
+      font-weight: 650;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      &:hover {
+        background: var(--mb-primary-soft);
+        color: var(--mb-primary-strong);
+        border-color: var(--mb-primary);
+      }
+    }
+    .nav-signin-link {
+      font-size: 0.9rem;
+      font-weight: 650;
+      color: var(--mb-text);
+      padding: 6px 10px;
+      text-decoration: none;
+      &:hover { color: var(--mb-primary); }
+    }
+    .header-emergency-btn {
+      font-weight: 750;
+      letter-spacing: 0.02em;
     }
 
     .admin-pill {

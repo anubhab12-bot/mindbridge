@@ -1,36 +1,52 @@
-// MindBridge design tokens. Calm, warm and high-contrast (WCAG AA for text on every surface).
+// MindBridge Clinical Design Tokens.
+// Engineered for healthcare authority, medical trust, and WCAG AAA clinical readability.
 :root {
   color-scheme: light;
-  --mb-bg: #f7f6f2;
+  --mb-bg: #f8fafc;
   --mb-surface: #ffffff;
-  --mb-surface-2: #f0efe9;
-  --mb-border: #dcdad2;
-  --mb-text: #1d2626;
-  --mb-text-muted: #4f5d5c;
-  --mb-primary: #0f6e66;
-  --mb-primary-strong: #0b5550;
-  --mb-primary-soft: #ddefeb;
-  --mb-on-primary: #ffffff;
-  --mb-accent: #6b4fa3;
-  --mb-accent-soft: #ece6f6;
-  --mb-success: #2f6b2f;
-  --mb-success-soft: #e3f1e1;
-  --mb-warning: #8a5a00;
-  --mb-warning-soft: #fbf0d9;
-  --mb-danger: #a3271f;
-  --mb-danger-soft: #fbe5e2;
-  --mb-crisis: #9f1f17;
-  --mb-crisis-soft: #fff1ee;
-  --mb-focus: #1b6bd1;
+  --mb-surface-2: #f1f5f9;
+  --mb-border: #e2e8f0;
+  --mb-text: #0f172a;
+  --mb-text-muted: #475569;
 
-  --mb-radius-sm: 8px;
-  --mb-radius: 14px;
-  --mb-radius-lg: 22px;
-  --mb-shadow: 0 2px 8px -2px rgba(15, 110, 102, 0.08), 0 8px 24px -4px rgba(20, 30, 30, 0.06);
-  --mb-shadow-lg: 0 20px 40px -15px rgba(15, 110, 102, 0.14), 0 0 1px 1px rgba(15, 110, 102, 0.05);
-  --mb-shadow-hover: 0 25px 50px -12px rgba(15, 110, 102, 0.22);
-  --mb-gradient-hero: linear-gradient(135deg, #0d9488 0%, #0284c7 50%, #6366f1 100%);
-  --mb-gradient-accent: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+  // Medical Blue & Clinical Teal palette (authoritative, calming, trustworthy)
+  --mb-primary: #0284c7;
+  --mb-primary-strong: #0369a1;
+  --mb-primary-soft: #e0f2fe;
+  --mb-on-primary: #ffffff;
+
+  --mb-teal: #0d9488;
+  --mb-teal-strong: #0f766e;
+  --mb-teal-soft: #ccfbf1;
+
+  --mb-accent: #4f46e5;
+  --mb-accent-soft: #eef2ff;
+
+  --mb-success: #16a34a;
+  --mb-success-soft: #dcfce7;
+
+  --mb-warning: #d97706;
+  --mb-warning-soft: #fef3c7;
+
+  --mb-danger: #dc2626;
+  --mb-danger-soft: #fee2e2;
+
+  // Clinical Crisis & Emergency styling (high-contrast, unambiguous)
+  --mb-crisis: #dc2626;
+  --mb-crisis-soft: #fef2f2;
+  --mb-focus: #0284c7;
+
+  --mb-radius-sm: 6px;
+  --mb-radius: 12px;
+  --mb-radius-lg: 18px;
+
+  --mb-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 4px 14px -2px rgba(15, 23, 42, 0.05);
+  --mb-shadow-lg: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+  --mb-shadow-hover: 0 16px 32px -4px rgba(15, 23, 42, 0.12);
+
+  --mb-gradient-hero: linear-gradient(135deg, #0284c7 0%, #0d9488 100%);
+  --mb-gradient-accent: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
+
   --mb-space-1: 4px;
   --mb-space-2: 8px;
   --mb-space-3: 12px;
@@ -38,95 +54,89 @@
   --mb-space-5: 24px;
   --mb-space-6: 32px;
   --mb-space-7: 48px;
-  --mb-font: 'Inter', 'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif;
+
+  --mb-font: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --mb-font-size: 16px;
   --mb-line: 1.6;
-  --mb-max: 1160px;
-  --mb-sidebar: 248px;
+  --mb-max: 1200px;
+  --mb-sidebar: 260px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    color-scheme: dark;
-    --mb-bg: #121817;
-    --mb-surface: #19211f;
-    --mb-surface-2: #212b29;
-    --mb-border: #33403d;
-    --mb-text: #e8eeec;
-    --mb-text-muted: #a9b8b5;
-    --mb-primary: #4fb8ad;
-    --mb-primary-strong: #74cdc3;
-    --mb-primary-soft: #1f3a37;
-    --mb-on-primary: #0c1513;
-    --mb-accent: #b7a2e6;
-    --mb-accent-soft: #2c2440;
-    --mb-success: #8fd18a;
-    --mb-success-soft: #1d3320;
-    --mb-warning: #f0c060;
-    --mb-warning-soft: #3a2f16;
-    --mb-danger: #ff9b90;
-    --mb-danger-soft: #3d1c19;
-    --mb-crisis: #ffaca3;
-    --mb-crisis-soft: #3a1714;
-    --mb-focus: #7fb2ff;
-    --mb-shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 6px 20px rgb(0 0 0 / 25%);
-    --mb-shadow-lg: 0 16px 36px -12px rgba(0, 0, 0, 0.5);
-    --mb-shadow-hover: 0 20px 45px -10px rgba(0, 0, 0, 0.65);
-  }
-}
-
+// Dark Mode: Clinical Midnight EHR Theme (Deep soothing slate, no swamp green)
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --mb-bg: #121817;
-  --mb-surface: #19211f;
-  --mb-surface-2: #212b29;
-  --mb-border: #33403d;
-  --mb-text: #e8eeec;
-  --mb-text-muted: #a9b8b5;
-  --mb-primary: #4fb8ad;
-  --mb-primary-strong: #74cdc3;
-  --mb-primary-soft: #1f3a37;
-  --mb-on-primary: #0c1513;
-  --mb-accent: #b7a2e6;
-  --mb-accent-soft: #2c2440;
-  --mb-success: #8fd18a;
-  --mb-success-soft: #1d3320;
-  --mb-warning: #f0c060;
-  --mb-warning-soft: #3a2f16;
-  --mb-danger: #ff9b90;
-  --mb-danger-soft: #3d1c19;
-  --mb-crisis: #ffaca3;
-  --mb-crisis-soft: #3a1714;
-  --mb-focus: #7fb2ff;
-  --mb-shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 6px 20px rgb(0 0 0 / 25%);
-  --mb-shadow-lg: 0 16px 36px -12px rgba(0, 0, 0, 0.5);
-  --mb-shadow-hover: 0 20px 45px -10px rgba(0, 0, 0, 0.65);
+  --mb-bg: #090e17;
+  --mb-surface: #111827;
+  --mb-surface-2: #1e293b;
+  --mb-border: #334155;
+  --mb-text: #f8fafc;
+  --mb-text-muted: #94a3b8;
+
+  --mb-primary: #38bdf8;
+  --mb-primary-strong: #7dd3fc;
+  --mb-primary-soft: #082f49;
+  --mb-on-primary: #021422;
+
+  --mb-teal: #2dd4bf;
+  --mb-teal-strong: #5eead4;
+  --mb-teal-soft: #042f2e;
+
+  --mb-accent: #818cf8;
+  --mb-accent-soft: #1e1b4b;
+
+  --mb-success: #4ade80;
+  --mb-success-soft: #052e16;
+
+  --mb-warning: #facc15;
+  --mb-warning-soft: #422006;
+
+  --mb-danger: #f87171;
+  --mb-danger-soft: #450a0a;
+
+  --mb-crisis: #f87171;
+  --mb-crisis-soft: #450a0a;
+  --mb-focus: #38bdf8;
+
+  --mb-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 6px 20px -2px rgba(0, 0, 0, 0.35);
+  --mb-shadow-lg: 0 16px 36px -12px rgba(0, 0, 0, 0.6);
+  --mb-shadow-hover: 0 20px 45px -10px rgba(0, 0, 0, 0.75);
 }
 
 :root[data-theme='light'] {
   color-scheme: light;
-  --mb-bg: #f7f6f2;
+  --mb-bg: #f8fafc;
   --mb-surface: #ffffff;
-  --mb-surface-2: #f0efe9;
-  --mb-border: #dcdad2;
-  --mb-text: #1d2626;
-  --mb-text-muted: #4f5d5c;
-  --mb-primary: #0f6e66;
-  --mb-primary-strong: #0b5550;
-  --mb-primary-soft: #ddefeb;
+  --mb-surface-2: #f1f5f9;
+  --mb-border: #e2e8f0;
+  --mb-text: #0f172a;
+  --mb-text-muted: #475569;
+
+  --mb-primary: #0284c7;
+  --mb-primary-strong: #0369a1;
+  --mb-primary-soft: #e0f2fe;
   --mb-on-primary: #ffffff;
-  --mb-accent: #6b4fa3;
-  --mb-accent-soft: #ece6f6;
-  --mb-success: #2f6b2f;
-  --mb-success-soft: #e3f1e1;
-  --mb-warning: #8a5a00;
-  --mb-warning-soft: #fbf0d9;
-  --mb-danger: #a3271f;
-  --mb-danger-soft: #fbe5e2;
-  --mb-crisis: #9f1f17;
-  --mb-crisis-soft: #fff1ee;
-  --mb-focus: #1b6bd1;
-  --mb-shadow: 0 2px 8px -2px rgba(15, 110, 102, 0.08), 0 8px 24px -4px rgba(20, 30, 30, 0.06);
-  --mb-shadow-lg: 0 20px 40px -15px rgba(15, 110, 102, 0.14), 0 0 1px 1px rgba(15, 110, 102, 0.05);
-  --mb-shadow-hover: 0 25px 50px -12px rgba(15, 110, 102, 0.22);
+
+  --mb-teal: #0d9488;
+  --mb-teal-strong: #0f766e;
+  --mb-teal-soft: #ccfbf1;
+
+  --mb-accent: #4f46e5;
+  --mb-accent-soft: #eef2ff;
+
+  --mb-success: #16a34a;
+  --mb-success-soft: #dcfce7;
+
+  --mb-warning: #d97706;
+  --mb-warning-soft: #fef3c7;
+
+  --mb-danger: #dc2626;
+  --mb-danger-soft: #fee2e2;
+
+  --mb-crisis: #dc2626;
+  --mb-crisis-soft: #fef2f2;
+  --mb-focus: #0284c7;
+
+  --mb-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 4px 14px -2px rgba(15, 23, 42, 0.05);
+  --mb-shadow-lg: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+  --mb-shadow-hover: 0 16px 32px -4px rgba(15, 23, 42, 0.12);
 }

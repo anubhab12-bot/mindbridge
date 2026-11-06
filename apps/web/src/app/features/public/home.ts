@@ -30,15 +30,15 @@ interface RecoveryTrack {
     <section class="hero">
       <div class="container hero-inner">
         <div class="copy">
-          <div class="pill-badge">
-            <span class="pulse-dot"></span>
-            <span>Verified Healthcare & 124+ Partner NGOs</span>
+          <div class="medical-authority-pill">
+            <span class="medical-cross-dot">✚</span>
+            <span>ACCREDITED CLINICAL MENTAL HEALTHCARE · 124+ VERIFIED MEDICAL PARTNERS</span>
           </div>
-          <h1>
-            A calmer place to heal, reflect and <span class="gradient-text">find real support.</span>
+          <h1 class="medical-hero-title">
+            Compassionate, Clinical Mental Healthcare & <span class="medical-gradient-text">Psychiatrist Telehealth</span>
           </h1>
           <p class="lead">
-            MindBridge bridges verified psychiatrists, accredited mental health NGOs, and an intelligent 24/7 companion with end-to-end encrypted private reflection.
+            MindBridge bridges verified AIIMS & NIMHANS psychiatrists, licensed clinical psychologists, and accredited mental health organizations. Schedule confidential 1-on-1 video consultations with end-to-end clinical encryption and meeting links sent directly to your email.
           </p>
 
           <!-- DYNAMIC HERO PROMO CARD (Live Deployed by Super Admin) -->
@@ -62,45 +62,55 @@ interface RecoveryTrack {
           }
 
           <div class="row hero-actions">
+            <a
+              routerLink="/patient/dashboard"
+              class="btn btn-primary-elevated btn-hero-cta"
+            >
+              📹 Schedule 1-on-1 Video Consultation →
+            </a>
+            @if (auth.isAuthenticated()) {
+              <a class="btn btn-secondary btn-hero-cta" [routerLink]="auth.homeFor()">Go to my dashboard →</a>
+            } @else {
+              <a class="btn btn-secondary btn-hero-cta" routerLink="/professionals">🩺 View Specialists Directory</a>
+            }
             <button
               type="button"
-              class="btn-telehealth-hero"
-              (click)="telehealth.openLauncher()"
+              class="btn btn-ghost btn-hero-cta"
+              (click)="pwa.openDownloadModal()"
             >
-              <span class="live-pulse-dot"></span>
-              <span>📹 Talk to Doctor Now (Video / Chat)</span>
+              📲 Mobile App
             </button>
-            @if (auth.isAuthenticated()) {
-              <a class="btn btn-primary-elevated" [routerLink]="auth.homeFor()">Go to my dashboard →</a>
-            } @else {
-              <a class="btn btn-primary-elevated" routerLink="/register">Get Started Free</a>
-              <a class="btn btn-secondary card-interactive" routerLink="/professionals">Browse Doctors</a>
-            }
           </div>
-          <div class="trust-micro">
-            <span>🔒 AES-256 Encrypted</span>
-            <span>•</span>
-            <span>🛡️ Verified Medical Council Licenses</span>
-            <span>•</span>
-            <span>🤝 124 Partner NGOs</span>
-            <span>•</span>
-            <span>🌱 94.6% Recovery Rate</span>
+          <div class="clinical-trust-row">
+            <span class="trust-badge">🛡️ NMC Verified Doctors</span>
+            <span class="trust-badge">🔒 AES-256 Encrypted Telehealth</span>
+            <span class="trust-badge">🤝 Tele-MANAS & Kiran Partnered</span>
+            <span class="trust-badge">✉️ Meeting Links Emailed to Patient & Doctor</span>
           </div>
         </div>
 
-        <aside class="hero-card card-interactive" aria-labelledby="help-now">
-          <div class="card-glow"></div>
+        <aside class="hero-card clinical-emergency-card" aria-labelledby="help-now">
           <div class="help-header">
             <span class="crisis-icon">🚨</span>
             <div>
-              <h2 id="help-now">In distress or danger?</h2>
-              <p class="small muted">Immediate verified crisis support is free 24/7.</p>
+              <span class="emergency-tag">24/7 NATIONAL CRISIS HELPLINE</span>
+              <h2 id="help-now">In Distress or Danger?</h2>
+              <p class="small muted">Immediate verified crisis support is free 24/7 across India.</p>
             </div>
           </div>
-          <p class="crisis-desc">
-            Directly linked to <strong>Tele-MANAS (14416)</strong>, <strong>Kiran (1800-599-0019)</strong>, and national emergency services. Confidential and always open.
-          </p>
-          <a class="btn btn-crisis btn-block" routerLink="/crisis">Connect with Emergency Support (14416)</a>
+          <div class="emergency-helplines-box">
+            <div class="helpline-item">
+              <span class="helpline-org">Tele-MANAS National Helpline:</span>
+              <a href="tel:14416" class="helpline-dial">14416 <span class="helpline-note">(24/7 · Toll-Free · 20+ Languages)</span></a>
+            </div>
+            <div class="helpline-item">
+              <span class="helpline-org">Kiran Mental Health Helpline:</span>
+              <a href="tel:18005990019" class="helpline-dial">1800-599-0019 <span class="helpline-note">(Govt. of India)</span></a>
+            </div>
+          </div>
+          <a class="btn btn-crisis btn-block btn-emergency-cta" routerLink="/crisis">
+            Connect with Emergency Support (14416) →
+          </a>
         </aside>
       </div>
     </section>
@@ -1025,11 +1035,12 @@ interface RecoveryTrack {
     }
 
     .hero {
-      background: radial-gradient(circle at 10% 10%, rgba(13, 148, 136, 0.15), transparent 50%),
-                  radial-gradient(circle at 90% 20%, rgba(99, 102, 241, 0.12), transparent 40%),
-                  linear-gradient(180deg, var(--mb-surface) 0%, var(--mb-bg) 100%);
-      padding: clamp(40px, 6vw, 80px) 0 40px;
+      background: linear-gradient(180deg, #f0f9ff 0%, #f8fafc 100%);
+      padding: clamp(36px, 5vw, 68px) 0 36px;
       border-bottom: 1px solid var(--mb-border);
+    }
+    :host-context([data-theme='dark']) .hero {
+      background: linear-gradient(180deg, #0f172a 0%, #090e17 100%);
     }
     .hero-inner {
       display: grid;
@@ -1037,59 +1048,77 @@ interface RecoveryTrack {
       grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
       align-items: center;
     }
-    .pill-badge {
+    .medical-authority-pill {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 6px 16px;
+      padding: 5px 14px;
       border-radius: 999px;
       background: var(--mb-primary-soft);
       color: var(--mb-primary-strong);
-      font-size: 0.85rem;
-      font-weight: 600;
+      border: 1px solid rgba(2, 132, 199, 0.25);
+      font-size: 0.75rem;
+      font-weight: 750;
+      letter-spacing: 0.04em;
       margin-bottom: var(--mb-space-3);
     }
-    .pulse-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #10b981;
-      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
-      animation: pulse 2s infinite;
+    .medical-cross-dot {
+      color: var(--mb-primary);
+      font-weight: 800;
+      font-size: 0.85rem;
     }
-    @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
-      70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    .medical-hero-title {
+      font-size: clamp(2rem, 3.6vw, 2.9rem);
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      line-height: 1.2;
+      margin: 0 0 16px;
+      color: var(--mb-text);
+    }
+    .medical-gradient-text {
+      background: linear-gradient(135deg, #0284c7 0%, #0d9488 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
     .lead {
-      font-size: 1.15rem;
+      font-size: 1.12rem;
       line-height: 1.7;
       color: var(--mb-text-muted);
-      max-width: 58ch;
+      max-width: 60ch;
       margin-bottom: var(--mb-space-5);
     }
     .hero-actions {
       margin-bottom: var(--mb-space-4);
       gap: 12px;
-    }
-    .btn-primary-elevated {
-      background: linear-gradient(135deg, var(--mb-primary) 0%, var(--mb-primary-strong) 100%);
-      color: #fff;
-      font-weight: 700;
-      box-shadow: 0 4px 14px rgba(15, 110, 102, 0.35);
-      transition: all 0.2s ease;
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(15, 110, 102, 0.45);
-      }
-    }
-    .trust-micro {
       display: flex;
-      gap: 12px;
-      font-size: 0.85rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .btn-hero-cta {
+      min-height: 44px;
+      padding: 0 20px;
+      font-weight: 700;
+      font-size: 0.92rem;
+      border-radius: var(--mb-radius-sm);
+    }
+    .clinical-trust-row {
+      display: flex;
+      gap: 10px;
+      font-size: 0.82rem;
       color: var(--mb-text-muted);
       flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    .trust-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--mb-surface);
+      border: 1px solid var(--mb-border);
+      padding: 5px 11px;
+      border-radius: 6px;
+      font-weight: 600;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     }
 
     .hero-live-promo-card {
@@ -1147,26 +1176,71 @@ interface RecoveryTrack {
 
     .hero-card {
       background: var(--mb-surface);
-      border: 1px solid rgba(220, 38, 38, 0.25);
-      border-radius: var(--mb-radius-lg);
-      padding: var(--mb-space-5);
-      box-shadow: 0 10px 30px -10px rgba(185, 28, 28, 0.15);
+      border: 1px solid rgba(220, 38, 38, 0.28);
+      border-radius: var(--mb-radius);
+      padding: 24px 22px;
+      box-shadow: 0 4px 20px -2px rgba(220, 38, 38, 0.08);
       position: relative;
-      overflow: hidden;
+    }
+    .clinical-emergency-card {
+      border-left: 4px solid var(--mb-crisis);
+    }
+    .emergency-tag {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--mb-crisis);
+      background: var(--mb-crisis-soft);
+      padding: 2px 7px;
+      border-radius: 4px;
+      margin-bottom: 4px;
     }
     .help-header {
       display: flex;
       gap: 12px;
-      align-items: center;
+      align-items: flex-start;
       margin-bottom: var(--mb-space-3);
-      h2 { margin: 0; font-size: 1.25rem; }
+      h2 { margin: 2px 0 4px; font-size: 1.25rem; font-weight: 800; }
     }
     .crisis-icon { font-size: 1.8rem; }
-    .crisis-desc {
+    .emergency-helplines-box {
+      background: var(--mb-surface-2);
+      border: 1px solid var(--mb-border);
+      border-radius: var(--mb-radius-sm);
+      padding: 12px 14px;
+      margin: 14px 0 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .helpline-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .helpline-org {
+      font-size: 0.78rem;
+      font-weight: 650;
       color: var(--mb-text-muted);
-      font-size: 0.95rem;
-      line-height: 1.5;
-      margin-bottom: var(--mb-space-4);
+    }
+    .helpline-dial {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--mb-crisis);
+      text-decoration: none;
+      &:hover { text-decoration: underline; }
+    }
+    .helpline-note {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--mb-text-muted);
+    }
+    .btn-emergency-cta {
+      font-weight: 750;
+      letter-spacing: 0.01em;
+      padding: 12px;
     }
 
     /* Mood Check-In Section */

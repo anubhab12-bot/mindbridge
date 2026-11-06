@@ -23,8 +23,8 @@ export class ThemeService {
       const saved = localStorage.getItem(this.STORAGE_KEY) as AppTheme | null;
       if (saved === 'dark' || saved === 'light') {
         initialTheme = saved;
-      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        initialTheme = 'dark';
+      } else {
+        initialTheme = 'light';
       }
     } catch {
       // localStorage may be restricted in private browsing
