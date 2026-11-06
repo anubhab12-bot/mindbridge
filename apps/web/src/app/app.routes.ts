@@ -64,8 +64,8 @@ export const routes: Routes = [
       },
       {
         path: 'admin',
-        redirectTo: 'patient/dashboard',
-        pathMatch: 'prefix',
+        canActivate: [roleGuard(Role.ADMIN)],
+        loadChildren: () => import('./features/admin/admin.routes').then((m) => m.ADMIN_ROUTES),
       },
     ],
   },

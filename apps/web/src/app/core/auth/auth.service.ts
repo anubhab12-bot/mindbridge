@@ -183,7 +183,7 @@ export class AuthService {
   /** Where a signed-in user belongs by default. */
   homeFor(user: AuthUser | null = this.user()): string {
     if (!user) return '/login';
-    if (user.role === Role.ADMIN) return '/patient/dashboard';
+    if (user.role === Role.ADMIN) return '/admin';
     if (user.role === Role.DOCTOR) {
       return user.doctorVerificationStatus === DoctorVerificationStatus.APPROVED ? '/doctor/dashboard' : '/doctor/verification-pending';
     }
