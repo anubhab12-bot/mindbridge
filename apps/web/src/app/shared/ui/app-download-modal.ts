@@ -25,7 +25,7 @@ import { PwaService } from '../../core/services/pwa.service';
           <div class="quick-install-box">
             @if (pwa.canInstall()) {
               <button class="btn btn-primary-elevated btn-lg btn-install-now" (click)="pwa.installApp()">
-                <span>📲 Install MindBridge App Now</span>
+                <span>Install MindBridge Mobile App</span>
                 <span class="btn-subtext">(1-Tap Native Install)</span>
               </button>
             } @else {

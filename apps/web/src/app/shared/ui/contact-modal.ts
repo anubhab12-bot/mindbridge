@@ -11,7 +11,7 @@ import { FormsModule } from '@angular/forms';
         <div class="contact-card" (click)="$event.stopPropagation()">
           <div class="contact-header">
             <div class="contact-title-group">
-              <span class="medical-badge">🏥 Clinical Support & Inquiries</span>
+              <span class="medical-badge">Clinical Support & Inquiries</span>
               <h2 id="contactModalTitle">Contact via Email</h2>
               <p class="contact-sub">
                 Connect directly with our care coordinators and clinical team. We respond to all inquiries within 2 hours.
@@ -23,7 +23,6 @@ import { FormsModule } from '@angular/forms';
           <div class="contact-body">
             <!-- Crisis Alert Box -->
             <div class="crisis-banner">
-              <span class="crisis-icon">🚨</span>
               <div class="crisis-text">
                 <strong>Experiencing a crisis or emergency?</strong>
                 <p>Call national toll-free helpline <strong>14416</strong> (Tele-MANAS) or <strong>1800-599-0019</strong> (Kiran). Available 24/7 across India.</p>
@@ -33,23 +32,21 @@ import { FormsModule } from '@angular/forms';
             <!-- Fast Mailto Quick Cards -->
             <div class="channels-grid">
               <div class="channel-card">
-                <div class="channel-icon">🩺</div>
                 <div class="channel-info">
                   <strong>Patient Care & Appointments</strong>
                   <span>Doctor appointments, prescriptions & video support</span>
                   <a href="mailto:support@mindbridge.health?subject=Patient%20Care%20Inquiry%20-%20MindBridge" class="channel-link">
-                    ✉️ support&#64;mindbridge.health →
+                    support&#64;mindbridge.health →
                   </a>
                 </div>
               </div>
 
               <div class="channel-card">
-                <div class="channel-icon">👨‍⚕️</div>
                 <div class="channel-info">
                   <strong>Specialists & Hospital Partners</strong>
                   <span>Doctor registration, NMC verification & NGO tie-ups</span>
                   <a href="mailto:care@mindbridge.health?subject=Specialist%20Partnership%20-%20MindBridge" class="channel-link">
-                    ✉️ care&#64;mindbridge.health →
+                    care&#64;mindbridge.health →
                   </a>
                 </div>
               </div>

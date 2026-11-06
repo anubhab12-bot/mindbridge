@@ -31,8 +31,8 @@ interface RecoveryTrack {
       <div class="container hero-inner">
         <div class="copy">
           <div class="medical-authority-pill">
-            <span class="medical-cross-dot">✚</span>
-            <span>ACCREDITED CLINICAL MENTAL HEALTHCARE · 124+ VERIFIED MEDICAL PARTNERS</span>
+            <span class="authority-bullet"></span>
+            <span>ACCREDITED CLINICAL MENTAL HEALTHCARE · 124+ MEDICAL PARTNERS</span>
           </div>
           <h1 class="medical-hero-title">
             Compassionate, Clinical Mental Healthcare & <span class="medical-gradient-text">Psychiatrist Telehealth</span>
@@ -45,9 +45,8 @@ interface RecoveryTrack {
           @if (heroPromoFeature(); as promo) {
             <div class="hero-live-promo-card animated-fade" [class]="'promo-theme-' + (promo.themeColor || 'indigo')">
               <div class="promo-header">
-                <span class="promo-icon">{{ promo.iconEmoji || '✨' }}</span>
-                <span class="promo-badge">{{ promo.badgeLabel || 'Dynamic Feature' }}</span>
-                <span class="promo-live-tag">● Live Feature</span>
+                <span class="promo-badge">{{ promo.badgeLabel || 'Featured Program' }}</span>
+                <span class="promo-live-tag">Active Service</span>
               </div>
               <h3 class="promo-title">{{ promo.title }}</h3>
               <p class="promo-desc">{{ promo.description }}</p>
@@ -66,34 +65,33 @@ interface RecoveryTrack {
               routerLink="/patient/dashboard"
               class="btn btn-primary-elevated btn-hero-cta"
             >
-              📹 Schedule 1-on-1 Video Consultation →
+              Schedule Video Consultation
             </a>
             @if (auth.isAuthenticated()) {
-              <a class="btn btn-secondary btn-hero-cta" [routerLink]="auth.homeFor()">Go to my dashboard →</a>
+              <a class="btn btn-secondary btn-hero-cta" [routerLink]="auth.homeFor()">My Dashboard →</a>
             } @else {
-              <a class="btn btn-secondary btn-hero-cta" routerLink="/professionals">🩺 View Specialists Directory</a>
+              <a class="btn btn-secondary btn-hero-cta" routerLink="/professionals">Specialists Directory</a>
             }
             <button
               type="button"
               class="btn btn-ghost btn-hero-cta"
               (click)="pwa.openDownloadModal()"
             >
-              📲 Mobile App
+              Download App
             </button>
           </div>
           <div class="clinical-trust-row">
-            <span class="trust-badge">🛡️ NMC Verified Doctors</span>
-            <span class="trust-badge">🔒 AES-256 Encrypted Telehealth</span>
-            <span class="trust-badge">🤝 Tele-MANAS & Kiran Partnered</span>
-            <span class="trust-badge">✉️ Meeting Links Emailed to Patient & Doctor</span>
+            <span class="trust-badge">NMC Verified Doctors</span>
+            <span class="trust-badge">AES-256 Encrypted Telehealth</span>
+            <span class="trust-badge">Tele-MANAS & Kiran Partnered</span>
+            <span class="trust-badge">Direct Meeting Links Emailed</span>
           </div>
         </div>
 
         <aside class="hero-card clinical-emergency-card" aria-labelledby="help-now">
           <div class="help-header">
-            <span class="crisis-icon">🚨</span>
             <div>
-              <span class="emergency-tag">24/7 NATIONAL CRISIS HELPLINE</span>
+              <span class="emergency-tag">24/7 CRISIS HELPLINE</span>
               <h2 id="help-now">In Distress or Danger?</h2>
               <p class="small muted">Immediate verified crisis support is free 24/7 across India.</p>
             </div>
@@ -121,8 +119,8 @@ interface RecoveryTrack {
         <div class="telehealth-card-banner card">
           <div class="telehealth-banner-left">
             <div class="telehealth-badge-row">
-              <span class="pulse-live-badge">🏥 AIIMS & NIMHANS VERIFIED SPECIALISTS</span>
-              <span class="teams-link-tag">📹 Secure 1-on-1 HD Video</span>
+              <span class="pulse-live-badge">AIIMS & NIMHANS SPECIALISTS</span>
+              <span class="teams-link-tag">SECURE 1-ON-1 HD VIDEO</span>
             </div>
             <h2>Consult Top Mental Health Specialists</h2>
             <p>
@@ -134,15 +132,15 @@ interface RecoveryTrack {
                 routerLink="/patient/dashboard"
                 class="btn btn-primary-elevated btn-telehealth-cta"
               >
-                📅 Schedule Video Consultation in Portal
+                Schedule Video Consultation
               </a>
               <a
                 routerLink="/patient/professionals"
                 class="btn btn-secondary btn-telehealth-cta"
               >
-                👨‍⚕️ View Specialists Directory
+                Specialists Directory
               </a>
-              <span class="confidential-text">✉️ Meeting link emailed to patient & doctor · Live 1-on-1 video call with video on/off option</span>
+              <span class="confidential-text">Meeting link emailed directly to patient and doctor · Video & audio controls available</span>
             </div>
           </div>
 
@@ -158,13 +156,13 @@ interface RecoveryTrack {
                   <span class="exp-badge-pill">{{ doc.experience }}</span>
                 </div>
                 <div class="doc-card-stats">
-                  <span>⭐ {{ doc.rating }}</span> ·
+                  <span>Rating: {{ doc.rating }} / 5.0</span> ·
                   <span>{{ doc.experience }}</span> ·
                   <span>{{ doc.languages.join(', ') }}</span>
                 </div>
                 <div class="doc-card-actions">
                   <a routerLink="/patient/dashboard" class="btn-micro video">
-                    📹 Schedule Video Call
+                    Book Consultation
                   </a>
                 </div>
               </div>
@@ -2316,19 +2314,59 @@ interface RecoveryTrack {
       animation: pulse 1.5s infinite;
     }
 
-    @media (max-width: 900px) {
+    @media (max-width: 768px) {
+      .hero-inner {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+      .medical-hero-title {
+        font-size: 1.75rem;
+        line-height: 1.25;
+        word-break: break-word;
+      }
+      .hero-actions {
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+      }
+      .btn-hero-cta {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+      }
       .telehealth-card-banner {
         grid-template-columns: 1fr;
-      }
-    }
-    @media (max-width: 640px) {
-      .telehealth-card-banner {
-        padding: 18px 14px;
+        padding: 20px 16px;
         gap: 20px;
+        overflow: hidden;
+        box-sizing: border-box;
+      }
+      .telehealth-banner-left {
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+      }
+      .telehealth-banner-left h2 {
+        font-size: 1.35rem;
+        line-height: 1.25;
+        word-break: break-word;
+        overflow-wrap: break-word;
+      }
+      .telehealth-cta-group {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+      }
+      .btn-telehealth-cta {
+        width: 100%;
+        min-height: 44px;
+        justify-content: center;
+        text-align: center;
       }
       .pulse-live-badge, .teams-link-tag {
         font-size: 0.68rem;
-        padding: 2px 8px;
+        padding: 3px 8px;
         white-space: normal;
       }
     }
