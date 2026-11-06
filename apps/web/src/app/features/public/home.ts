@@ -1112,6 +1112,14 @@ interface RecoveryTrack {
       letter-spacing: 0.04em;
       margin-bottom: var(--mb-space-3);
     }
+    .authority-bullet {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--mb-primary);
+      flex-shrink: 0;
+      display: inline-block;
+    }
     .medical-cross-dot {
       color: var(--mb-primary);
       font-weight: 800;
@@ -2446,24 +2454,74 @@ interface RecoveryTrack {
     }
 
     @media (max-width: 768px) {
+      .hero {
+        padding: 24px 0 44px;
+      }
       .hero-inner {
         grid-template-columns: 1fr;
-        gap: 24px;
+        gap: 20px;
+      }
+      .medical-authority-pill {
+        font-size: 0.7rem;
+        padding: 4px 10px;
+        border-radius: 6px;
+        white-space: normal;
+        line-height: 1.35;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 12px;
+        max-width: 100%;
+        box-sizing: border-box;
       }
       .medical-hero-title {
-        font-size: 1.75rem;
-        line-height: 1.25;
-        word-break: break-word;
+        font-size: 1.55rem !important;
+        line-height: 1.25 !important;
+        letter-spacing: -0.02em !important;
+        margin: 0 0 14px !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+      }
+      .lead {
+        font-size: 0.95rem !important;
+        line-height: 1.55 !important;
+        margin-bottom: 18px !important;
       }
       .hero-actions {
         flex-direction: column;
         width: 100%;
         gap: 10px;
+        margin-bottom: 18px;
       }
       .btn-hero-cta {
         width: 100%;
+        min-height: 44px;
+        font-size: 0.92rem;
         text-align: center;
         justify-content: center;
+      }
+      .clinical-trust-row {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 14px;
+        margin-bottom: 24px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .trust-badge {
+        font-size: 0.72rem;
+        padding: 7px 8px;
+        justify-content: center;
+        text-align: center;
+        white-space: normal;
+        line-height: 1.25;
+        box-sizing: border-box;
+        border-radius: 8px;
+      }
+      .clinical-emergency-card {
+        margin-top: 10px;
+        padding: 20px 16px;
       }
       .telehealth-card-banner {
         grid-template-columns: 1fr;
@@ -2499,6 +2557,22 @@ interface RecoveryTrack {
         font-size: 0.68rem;
         padding: 3px 8px;
         white-space: normal;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .medical-hero-title {
+        font-size: 1.42rem !important;
+      }
+      .clinical-trust-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+    }
+
+    @media (max-width: 350px) {
+      .clinical-trust-row {
+        grid-template-columns: 1fr;
       }
     }
 

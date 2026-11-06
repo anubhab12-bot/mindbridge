@@ -101,10 +101,10 @@ import { ContactModalComponent } from '../shared/ui/contact-modal';
           </button>
 
           @if (auth.isAuthenticated()) {
-            <a [routerLink]="auth.homeFor()" class="btn btn-sm btn-primary">My Dashboard</a>
+            <a [routerLink]="auth.homeFor()" class="btn btn-sm btn-primary header-dashboard-btn">My Dashboard</a>
           } @else {
             <a routerLink="/login" class="nav-signin-link">Sign In</a>
-            <a routerLink="/patient/dashboard" class="btn btn-sm btn-primary-elevated">
+            <a routerLink="/patient/dashboard" class="btn btn-sm btn-primary-elevated header-consult-btn">
               <span>Book Consultation</span>
             </a>
           }
@@ -419,12 +419,18 @@ import { ContactModalComponent } from '../shared/ui/contact-modal';
     .site-header {
       background: var(--mb-surface);
       border-bottom: 1px solid var(--mb-border);
-      padding: 10px 0;
+      padding: max(8px, env(safe-area-inset-top, 8px)) 0 8px;
       position: sticky;
       top: 0;
       z-index: 50;
       backdrop-filter: blur(12px);
       box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    }
+    .site-header .container.row-between {
+      flex-wrap: nowrap;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     .brand {
       text-decoration: none;
@@ -432,6 +438,8 @@ import { ContactModalComponent } from '../shared/ui/contact-modal';
       display: inline-flex;
       gap: 10px;
       align-items: center;
+      flex-shrink: 0;
+      min-width: 0;
     }
     .brand-medical-mark {
       display: flex;
@@ -905,35 +913,80 @@ import { ContactModalComponent } from '../shared/ui/contact-modal';
     }
 
     @media (max-width: 768px) {
-      #main {
-        padding-bottom: 76px;
+      .clinical-top-ribbon {
+        display: none !important;
       }
+      .brand {
+        gap: 8px;
+      }
+      .brand-medical-mark {
+        width: 30px;
+        height: 30px;
+      }
+      .brand-headings {
+        line-height: 1.1;
+      }
+      .brand-tagline {
+        display: none !important;
+      }
+      .brand-name {
+        font-size: 1.15rem !important;
+        white-space: nowrap;
+      }
+      .header-cta-group {
+        gap: 8px;
+        flex-shrink: 0;
+        flex-wrap: nowrap;
+      }
+      .header-app-btn,
+      .theme-toggle-btn,
+      .nav-signin-link,
+      .header-consult-btn,
+      .header-dashboard-btn,
       .btn-app-install-header,
       .btn-telehealth-instant,
       .btn-portal-pill {
         display: none !important;
       }
-      .theme-toggle-btn {
-        padding: 6px 10px;
+      .header-crisis-btn {
+        display: inline-flex !important;
+        align-items: center;
+        padding: 5px 10px;
+        font-size: 0.76rem;
+        border-radius: 999px;
+        white-space: nowrap;
       }
-      .theme-toggle-btn .theme-text {
-        display: none;
+      .mobile-nav-toggle {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        font-size: 1.15rem;
+        border-radius: 8px;
+        border: 1px solid var(--mb-border);
+        background: var(--mb-surface-2);
+        color: var(--mb-text);
       }
-      .header-cta-group {
-        gap: 6px;
+      #main {
+        padding-bottom: calc(88px + env(safe-area-inset-bottom, 16px)) !important;
       }
-      .btn-crisis {
-        padding: 0 10px;
-        font-size: 0.8rem;
+      .site-footer {
+        padding-bottom: calc(100px + env(safe-area-inset-bottom, 16px)) !important;
       }
     }
 
     @media (max-width: 480px) {
       .brand-name {
-        font-size: 1.05rem;
+        font-size: 1.05rem !important;
       }
       .header-cta-group {
-        gap: 4px;
+        gap: 6px;
+      }
+      .header-crisis-btn {
+        padding: 4px 8px;
+        font-size: 0.72rem;
       }
     }
 
