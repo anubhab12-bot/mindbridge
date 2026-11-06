@@ -785,7 +785,7 @@ import { ContactModalComponent } from '../shared/ui/contact-modal';
       position: fixed;
       bottom: 24px;
       right: 24px;
-      z-index: 999;
+      z-index: 99;
       display: flex;
       align-items: center;
       background: #0f172a;
@@ -797,7 +797,7 @@ import { ContactModalComponent } from '../shared/ui/contact-modal';
       transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
       animation: pillFloat 4s ease-in-out infinite alternate;
     }
-    @media (max-width: 768px) {
+    @media (max-width: 992px) {
       .dynamic-floating-pill {
         display: none !important;
       }

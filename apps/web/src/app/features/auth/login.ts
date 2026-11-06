@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Role } from '@mindbridge/shared-types';
 import { errorMessage } from '../../core/api/api-error';
+import { apiUrl } from '../../core/api/api.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { FieldErrorComponent } from '../../shared/ui/field-error';
 
@@ -188,7 +189,7 @@ export class LoginPage implements OnInit {
   private async initGoogleIdentity() {
     if (typeof window === 'undefined') return;
     try {
-      const res = await fetch('/api/v1/auth/google/config').then(r => r.json());
+      const res = await fetch(apiUrl('/auth/google/config')).then(r => r.json());
       if (res?.clientId && (window as any).google?.accounts?.id) {
         (window as any).google.accounts.id.initialize({
           client_id: res.clientId,
@@ -217,12 +218,7 @@ export class LoginPage implements OnInit {
   signInWithGoogle() {
     this.busy.set(true);
     this.error.set(null);
-    const existing = this.form.controls.email.value?.trim();
-    if (existing && existing.includes('@')) {
-      window.location.href = `/api/v1/auth/google?email=${encodeURIComponent(existing)}`;
-    } else {
-      window.location.href = '/api/v1/auth/google';
-    }
+    window.location.href = apiUrl('/auth/google');
   }
 
   async submit() {

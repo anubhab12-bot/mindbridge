@@ -20,7 +20,7 @@ on:
           - prod
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -61,15 +61,25 @@ jobs:
         working-directory: apps/web
         run: npm run build -- --configuration production --base-href /mindbridge/
 
-      - name: Configure SPA 404 Routing for GitHub Pages
+      - name: Configure SPA 404 Routing & NoJekyll for GitHub Pages
         run: |
           cp apps/web/dist/web/browser/index.html apps/web/dist/web/browser/404.html
+          touch apps/web/dist/web/browser/.nojekyll
 
-      - name: Upload GitHub Pages Artifact
+      - name: Deploy to gh-pages Branch (Branch Deployment)
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./apps/web/dist/web/browser
+          force_orphan: true
+
+      - name: Upload GitHub Pages Artifact (Actions Deployment)
         uses: actions/upload-pages-artifact@v3
+        continue-on-error: true
         with:
           path: apps/web/dist/web/browser
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages (Actions Deployment)
         id: deployment
+        continue-on-error: true
         uses: actions/deploy-pages@v4
