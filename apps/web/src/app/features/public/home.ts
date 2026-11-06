@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { TelehealthService } from '../../core/services/telehealth.service';
 import { PwaService } from '../../core/services/pwa.service';
+import { apiUrl } from '../../core/api/api.service';
 
 interface MoodOption {
   emoji: string;
@@ -110,13 +111,13 @@ interface RecoveryTrack {
         <div class="telehealth-card-banner card">
           <div class="telehealth-banner-left">
             <div class="telehealth-badge-row">
-              <span class="pulse-live-badge">🏥 3 SPECIALISTS SUGGESTED BY YEARS OF EXPERIENCE</span>
-              <span class="teams-link-tag">📹 Secure 1-on-1 HD Video Meeting</span>
+              <span class="pulse-live-badge">🏥 AIIMS & NIMHANS VERIFIED SPECIALISTS</span>
+              <span class="teams-link-tag">📹 Secure 1-on-1 HD Video</span>
             </div>
-            <h2>Schedule a 1-on-1 Video Consultation with Top Specialists</h2>
+            <h2>Consult Top Mental Health Specialists</h2>
             <p>
-              Consult with India's leading AIIMS & NIMHANS verified psychiatrists and clinical psychologists (ranked by clinical experience).
-              When an appointment is scheduled, an email with the video call link is sent to both the patient and the doctor. In the Patient Portal, your scheduled appointment doctor will appear for instant joining with Camera & Mic On/Off controls.
+              Connect with India's leading AIIMS & NIMHANS verified psychiatrists and clinical psychologists (ranked by clinical experience).
+              When an appointment is scheduled, an email with the direct video meeting link is sent to both the patient and the doctor. In the Patient Portal, your scheduled appointment doctor will appear for instant joining with Camera & Mic On/Off controls.
             </p>
             <div class="telehealth-cta-group">
               <a
@@ -661,11 +662,11 @@ interface RecoveryTrack {
             </div>
           </div>
           <div class="row" style="margin-top: 18px; gap: 12px; flex-wrap: wrap;">
-            <a routerLink="/apply-admin" class="btn btn-primary-elevated">
-              📝 Apply for Council Seat (5 Spots Left) →
+            <a routerLink="/professionals" class="btn btn-primary-elevated">
+              🩺 Consult Verified Specialists →
             </a>
-            <a href="/admin-portal/" target="_blank" class="btn btn-secondary">
-              🔒 Super Admin Portal ↗
+            <a routerLink="/how-it-works" class="btn btn-secondary">
+              How MindBridge Works →
             </a>
           </div>
         </div>
@@ -2073,6 +2074,17 @@ interface RecoveryTrack {
       flex-wrap: wrap;
       margin-bottom: 12px;
     }
+    .pulse-live-badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      color: #0d9488;
+      background: rgba(13, 148, 136, 0.12);
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(13, 148, 136, 0.3);
+    }
     .teams-link-tag {
       font-size: 0.72rem;
       font-weight: 800;
@@ -2082,8 +2094,11 @@ interface RecoveryTrack {
       border-radius: 999px;
     }
     .telehealth-banner-left h2 {
-      font-size: clamp(1.4rem, 2.5vw, 1.8rem);
+      font-size: clamp(1.25rem, 3.2vw, 1.75rem);
+      line-height: 1.3;
       margin: 0 0 10px;
+      word-break: break-word;
+      overflow-wrap: break-word;
     }
     .telehealth-banner-left p {
       color: var(--mb-text-muted);
@@ -2230,6 +2245,17 @@ interface RecoveryTrack {
     @media (max-width: 900px) {
       .telehealth-card-banner {
         grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 640px) {
+      .telehealth-card-banner {
+        padding: 18px 14px;
+        gap: 20px;
+      }
+      .pulse-live-badge, .teams-link-tag {
+        font-size: 0.68rem;
+        padding: 2px 8px;
+        white-space: normal;
       }
     }
 
@@ -2640,7 +2666,7 @@ export class HomePage implements OnInit {
 
   async ngOnInit() {
     try {
-      let res = await fetch('/api/v1/governance/settings');
+      let res = await fetch(apiUrl('/governance/settings'));
       if (!res.ok) {
         res = await fetch('https://mindbridge-api-x99i.onrender.com/api/v1/governance/settings');
       }

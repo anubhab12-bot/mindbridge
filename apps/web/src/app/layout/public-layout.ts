@@ -5,12 +5,14 @@ import { AuthService } from '../core/auth/auth.service';
 import { ThemeService } from '../core/services/theme.service';
 import { TelehealthService } from '../core/services/telehealth.service';
 import { PwaService } from '../core/services/pwa.service';
+import { apiUrl } from '../core/api/api.service';
 import { TeamsTelehealthModalComponent } from '../shared/ui/teams-telehealth-modal';
 import { AppDownloadModalComponent } from '../shared/ui/app-download-modal';
+import { ContactModalComponent } from '../shared/ui/contact-modal';
 
 @Component({
   selector: 'mb-public-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, TeamsTelehealthModalComponent, AppDownloadModalComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, TeamsTelehealthModalComponent, AppDownloadModalComponent, ContactModalComponent],
   template: `
     <a class="skip-link" href="#main">Skip to content</a>
 
@@ -37,15 +39,13 @@ import { AppDownloadModalComponent } from '../shared/ui/app-download-modal';
           <span class="logo" aria-hidden="true">◐</span> MindBridge
         </a>
         <nav class="nav" aria-label="Main">
-          <a routerLink="/self-help" routerLinkActive="active">Self-help</a>
-          <a routerLink="/professionals" routerLinkActive="active">Find a professional</a>
-          <a routerLink="/how-it-works" routerLinkActive="active">How it works</a>
-          <a routerLink="/apply-admin" routerLinkActive="active" class="nav-council-link">
-            <span>🏛️ Apply for Admin</span>
-          </a>
-          <a href="/admin-portal/" target="_blank" class="nav-admin-link">
-            <span class="admin-pill">👑 Admin Portal 🔒</span>
-          </a>
+          <a routerLink="/professionals" routerLinkActive="active">Specialists & Care</a>
+          <a routerLink="/how-it-works" routerLinkActive="active">Telehealth</a>
+          <a routerLink="/self-help" routerLinkActive="active">Self-Help Tools</a>
+          <button type="button" class="nav-contact-btn" (click)="openContactModal()">
+            <span class="contact-btn-icon">✉️</span>
+            <span>Contact via Email</span>
+          </button>
         </nav>
         <div class="row header-cta-group">
           <!-- Install App Button -->
@@ -66,7 +66,7 @@ import { AppDownloadModalComponent } from '../shared/ui/app-download-modal';
             title="Instant Video or Chat Consultation with an On-Duty Doctor"
           >
             <span class="live-dot-pulse"></span>
-            <span class="telehealth-label-text">📹 Talk to Doctor</span>
+            <span class="telehealth-label-text">📹 Consult Doctor</span>
           </button>
 
           <button
@@ -79,12 +79,6 @@ import { AppDownloadModalComponent } from '../shared/ui/app-download-modal';
             <span class="theme-icon">{{ themeService.isDark() ? '☀️' : '🌙' }}</span>
             <span class="theme-text">{{ themeService.isDark() ? 'Light' : 'Dark' }}</span>
           </button>
-
-          @if (isSuperAdmin()) {
-            <a routerLink="/portal-select" class="btn-portal-pill" title="Choose Workspace / Portal">
-              <span>👑 Portals</span>
-            </a>
-          }
 
           <a routerLink="/crisis" class="btn btn-crisis btn-sm">Get help now</a>
 
@@ -124,16 +118,12 @@ import { AppDownloadModalComponent } from '../shared/ui/app-download-modal';
               👑 Workspace: Patient vs Super Admin →
             </a>
           }
-          <a routerLink="/self-help" routerLinkActive="active" (click)="closeMobileNav()">Self-help</a>
-          <a routerLink="/professionals" routerLinkActive="active" (click)="closeMobileNav()">Find a professional</a>
-          <a routerLink="/how-it-works" routerLinkActive="active" (click)="closeMobileNav()">How it works</a>
-          <a routerLink="/impact" routerLinkActive="active" (click)="closeMobileNav()">📊 Impact Telemetry</a>
-          <a routerLink="/apply-admin" routerLinkActive="active" (click)="closeMobileNav()" class="nav-council-link">
-            🏛️ Apply for Admin Seat
-          </a>
-          <a href="/admin-portal/" target="_blank" (click)="closeMobileNav()" class="mobile-admin-link">
-            👑 Open Admin Portal 🔒
-          </a>
+          <a routerLink="/professionals" routerLinkActive="active" (click)="closeMobileNav()">🩺 Find a Specialist</a>
+          <a routerLink="/how-it-works" routerLinkActive="active" (click)="closeMobileNav()">📹 How Telehealth Works</a>
+          <a routerLink="/self-help" routerLinkActive="active" (click)="closeMobileNav()">🌿 Self-Help & CBT Modules</a>
+          <button type="button" class="mobile-contact-nav-btn" (click)="openContactModal(); closeMobileNav()">
+            ✉️ Contact via Email (Clinical Support)
+          </button>
           <button
             type="button"
             class="mobile-theme-btn"
@@ -187,25 +177,21 @@ import { AppDownloadModalComponent } from '../shared/ui/app-download-modal';
               <li><a routerLink="/legal/terms">Terms of Service</a></li>
               <li><a routerLink="/legal/ai">How We Use AI</a></li>
               <li><a routerLink="/impact">Public Impact Telemetry</a></li>
-              <li><a routerLink="/apply-admin">Apply for Council Seat</a></li>
+              <li><button type="button" class="link-clean-btn" (click)="openContactModal()">Contact Clinical Support</button></li>
             </ul>
           </div>
 
-          <!-- Col 4: Apps & Portals -->
+          <!-- Col 4: Apps & Contact -->
           <div class="footer-col">
-            <h4>Apps & Workspaces</h4>
+            <h4>Apps & Support</h4>
             <ul class="footer-links-clean">
               <li>
                 <button type="button" class="footer-app-install-btn" (click)="pwa.openDownloadModal()">
                   <span>📲 Download Mobile App</span>
                 </button>
               </li>
-              @if (isSuperAdmin()) {
-                <li>
-                  <a routerLink="/portal-select" class="footer-portal-link">👑 Switch Active Portal ⇄</a>
-                </li>
-              }
-              <li><a href="/admin-portal/" target="_blank" class="footer-admin-pill">👑 Super Admin Portal ↗</a></li>
+              <li><button type="button" class="link-clean-btn" (click)="openContactModal()">✉️ Clinical Helpdesk</button></li>
+              <li><a href="mailto:support@mindbridge.health" class="link-clean-btn">support&#64;mindbridge.health</a></li>
               <li><a routerLink="/how-it-works">How Platform Works</a></li>
               <li>
                 <button type="button" class="footer-theme-toggle" (click)="themeService.toggleTheme()">
@@ -251,6 +237,9 @@ import { AppDownloadModalComponent } from '../shared/ui/app-download-modal';
 
     <!-- MOBILE PWA APP DOWNLOAD MODAL -->
     <mb-app-download-modal />
+
+    <!-- CLINICAL CONTACT VIA EMAIL MODAL -->
+    <mb-contact-modal [open]="contactModalOpen()" (close)="contactModalOpen.set(false)" />
 
     <!-- MOBILE BOTTOM NAVIGATION DOCK (Shown on viewports <= 768px) -->
     <nav class="mobile-bottom-dock" aria-label="Mobile Navigation Dock">
@@ -627,13 +616,15 @@ import { AppDownloadModalComponent } from '../shared/ui/app-download-modal';
       bottom: 0;
       left: 0;
       right: 0;
-      height: 64px;
+      min-height: 56px;
+      height: auto;
       background: var(--mb-surface);
       border-top: 1px solid var(--mb-border);
       z-index: 1000;
-      padding: 6px 12px env(safe-area-inset-bottom, 8px);
-      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+      padding: 5px 8px calc(env(safe-area-inset-bottom, 0px) + 5px);
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
       backdrop-filter: blur(14px);
+      box-sizing: border-box;
     }
     @media (max-width: 768px) {
       .footer-grid {
@@ -658,9 +649,11 @@ import { AppDownloadModalComponent } from '../shared/ui/app-download-modal';
       border: none;
       color: var(--mb-text-muted);
       text-decoration: none;
-      padding: 4px 8px;
+      padding: 2px 6px;
       cursor: pointer;
       font-family: inherit;
+      line-height: 1;
+      gap: 3px;
       transition: all 0.15s ease;
       &.active {
         color: var(--mb-primary);
@@ -671,13 +664,15 @@ import { AppDownloadModalComponent } from '../shared/ui/app-download-modal';
       }
     }
     .dock-icon {
-      font-size: 1.25rem;
+      font-size: 1.15rem;
       line-height: 1;
-      margin-bottom: 2px;
+      display: block;
     }
     .dock-label {
-      font-size: 0.68rem;
+      font-size: 0.65rem;
       line-height: 1;
+      font-weight: 600;
+      white-space: nowrap;
     }
     .dock-telehealth-pulse {
       background: linear-gradient(135deg, #0d9488, #2563eb);
@@ -804,15 +799,7 @@ import { AppDownloadModalComponent } from '../shared/ui/app-download-modal';
     }
     @media (max-width: 768px) {
       .dynamic-floating-pill {
-        bottom: 76px !important;
-        right: 12px;
-        left: 12px;
-        max-width: calc(100vw - 24px);
-        padding: 6px 12px;
-        box-sizing: border-box;
-      }
-      .pill-title {
-        max-width: 170px;
+        display: none !important;
       }
     }
     @keyframes pillFloat {
@@ -1006,6 +993,60 @@ import { AppDownloadModalComponent } from '../shared/ui/app-download-modal';
         background: var(--mb-primary-soft);
       }
     }
+
+    .nav-contact-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(13, 148, 136, 0.08);
+      border: 1px solid rgba(13, 148, 136, 0.3);
+      color: #0d9488;
+      font-size: 0.88rem;
+      font-weight: 650;
+      padding: 6px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      &:hover {
+        background: #0d9488;
+        color: #ffffff;
+        border-color: #0d9488;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
+      }
+    }
+    :host-context([data-theme='dark']) .nav-contact-btn {
+      background: rgba(13, 148, 136, 0.16);
+      border-color: rgba(20, 184, 166, 0.35);
+      color: #2dd4bf;
+      &:hover {
+        background: #14b8a6;
+        color: #042f2e;
+        border-color: #14b8a6;
+      }
+    }
+    .mobile-contact-nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      text-align: left;
+      background: rgba(13, 148, 136, 0.1);
+      border: 1px solid rgba(13, 148, 136, 0.25);
+      color: var(--mb-primary);
+      font-size: 0.92rem;
+      font-weight: 700;
+      padding: 12px 14px;
+      border-radius: var(--mb-radius);
+      cursor: pointer;
+      font-family: inherit;
+      margin-top: 4px;
+      &:hover {
+        background: var(--mb-primary);
+        color: #ffffff;
+      }
+    }
   `,
 })
 export class PublicLayoutComponent implements OnInit {
@@ -1013,6 +1054,12 @@ export class PublicLayoutComponent implements OnInit {
   protected readonly themeService = inject(ThemeService);
   protected readonly telehealth = inject(TelehealthService);
   protected readonly pwa = inject(PwaService);
+
+  protected readonly contactModalOpen = signal(false);
+
+  openContactModal() {
+    this.contactModalOpen.set(true);
+  }
 
   protected readonly isSuperAdmin = computed(() => {
     const u = this.auth.user();
@@ -1039,7 +1086,7 @@ export class PublicLayoutComponent implements OnInit {
 
   async ngOnInit() {
     try {
-      let res = await fetch('/api/v1/governance/settings');
+      let res = await fetch(apiUrl('/governance/settings'));
       if (!res.ok) {
         res = await fetch('https://mindbridge-api-x99i.onrender.com/api/v1/governance/settings');
       }

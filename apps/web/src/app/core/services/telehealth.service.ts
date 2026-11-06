@@ -1,4 +1,5 @@
 import { Injectable, signal, computed } from '@angular/core';
+import { apiUrl } from '../api/api.service';
 
 export interface DoctorDutyInfo {
   id: string;
@@ -110,7 +111,7 @@ export class TelehealthService {
   async loadTopExperiencedDoctors() {
     if (typeof fetch === 'undefined') return;
     try {
-      const res = await fetch('/api/v1/doctors/top-experienced');
+      const res = await fetch(apiUrl('/doctors/top-experienced'));
       if (res.ok) {
         const data = await res.json();
         const items = Array.isArray(data) ? data : data?.data || [];
@@ -141,7 +142,7 @@ export class TelehealthService {
    * Book an appointment with a doctor and send meeting link emails to patient & doctor
    */
   async bookAndSendEmail(doctorId: string, startAt?: string, reason?: string) {
-    const res = await fetch('/api/v1/appointments/telehealth', {
+    const res = await fetch(apiUrl('/appointments/telehealth'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ doctorId, startAt, reason }),

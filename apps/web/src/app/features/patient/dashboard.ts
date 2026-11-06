@@ -3,7 +3,7 @@ import { Component, inject, OnInit, signal, ChangeDetectionStrategy } from '@ang
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import type { AppointmentSummary } from '@mindbridge/shared-types';
-import { ApiService } from '../../core/api/api.service';
+import { ApiService, apiUrl } from '../../core/api/api.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { LoadingComponent } from '../../shared/ui/states';
 import { MOOD_LABELS } from '../../shared/ui/mood-scale';
@@ -685,7 +685,7 @@ export class PatientDashboardPage implements OnInit {
 
   async loadTopExperiencedDoctors() {
     try {
-      const res = await fetch('/api/v1/doctors/top-experienced');
+      const res = await fetch(apiUrl('/doctors/top-experienced'));
       if (res.ok) {
         const data = await res.json();
         const items = Array.isArray(data) ? data : data?.data || [];
@@ -772,7 +772,7 @@ export class PatientDashboardPage implements OnInit {
         startAt = tomorrow.toISOString();
       }
 
-      const res = await fetch('/api/v1/appointments/telehealth', {
+      const res = await fetch(apiUrl('/appointments/telehealth'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -803,7 +803,7 @@ export class PatientDashboardPage implements OnInit {
   async resendVideoEmail(appointmentId: string) {
     this.resendingEmail.set(true);
     try {
-      const res = await fetch(`/api/v1/appointments/${appointmentId}/resend-video`, {
+      const res = await fetch(apiUrl(`/appointments/${appointmentId}/resend-video`), {
         method: 'POST',
       });
       if (!res.ok) throw new Error('Could not resend email.');

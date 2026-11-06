@@ -4,7 +4,25 @@ import type { ApiResponse, PageMeta } from '@mindbridge/shared-types';
 import { firstValueFrom } from 'rxjs';
 import { ApiError } from './api-error';
 
-export const API_BASE = '/api/v1';
+export function resolveApiBase(): string {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host.endsWith('github.io') || host.includes('pages.dev')) {
+      return 'https://mindbridge-api-x99i.onrender.com/api/v1';
+    }
+  }
+  return '/api/v1';
+}
+
+export const API_BASE = resolveApiBase();
+
+export function apiUrl(path: string): string {
+  const clean = path.startsWith('/') ? path : `/${path}`;
+  if (clean.startsWith('/api/v1')) {
+    return API_BASE === '/api/v1' ? clean : `${API_BASE}${clean.slice('/api/v1'.length)}`;
+  }
+  return `${API_BASE}${clean}`;
+}
 
 type Params = Record<string, string | number | boolean | undefined | null>;
 
