@@ -70,5 +70,4 @@ export class ThemeService {
       localStorage.setItem('mb_admin_theme', theme);
     } catch {}
   }
-  }
 }
