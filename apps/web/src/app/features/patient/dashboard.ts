@@ -614,8 +614,6 @@ export interface TopDoctor {
         color: #ffffff;
       }
     }
-      }
-    }
 
     @media (max-width: 640px) {
       .btn-call-action {
