@@ -32,7 +32,7 @@ interface RecoveryTrack {
         <div class="copy">
           <div class="medical-authority-pill">
             <span class="authority-bullet"></span>
-            <span>ACCREDITED CLINICAL MENTAL HEALTHCARE · 124+ MEDICAL PARTNERS</span>
+            <span class="authority-text">Accredited Clinical Mental Healthcare · 124+ Medical Partners</span>
           </div>
           <h1 class="medical-hero-title">
             Compassionate, Clinical Mental Healthcare & <span class="medical-gradient-text">Psychiatrist Telehealth</span>
@@ -1092,25 +1092,37 @@ interface RecoveryTrack {
     :host-context([data-theme='dark']) .hero {
       background: linear-gradient(180deg, #0f172a 0%, #090e17 100%);
     }
+    .copy {
+      min-width: 0;
+      max-width: 100%;
+      box-sizing: border-box;
+      overflow-wrap: break-word;
+    }
     .hero-inner {
       display: grid;
       gap: var(--mb-space-6);
       grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
       align-items: center;
+      min-width: 0;
+      max-width: 100%;
+      box-sizing: border-box;
     }
     .medical-authority-pill {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 5px 14px;
+      padding: 6px 14px;
       border-radius: 999px;
       background: var(--mb-primary-soft);
       color: var(--mb-primary-strong);
       border: 1px solid rgba(2, 132, 199, 0.25);
       font-size: 0.75rem;
       font-weight: 750;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.03em;
       margin-bottom: var(--mb-space-3);
+      max-width: 100%;
+      box-sizing: border-box;
+      line-height: 1.35;
     }
     .authority-bullet {
       width: 6px;
@@ -1119,6 +1131,11 @@ interface RecoveryTrack {
       background: var(--mb-primary);
       flex-shrink: 0;
       display: inline-block;
+    }
+    .authority-text {
+      white-space: normal;
+      word-break: normal;
+      overflow-wrap: break-word;
     }
     .medical-cross-dot {
       color: var(--mb-primary);
@@ -2455,101 +2472,138 @@ interface RecoveryTrack {
 
     @media (max-width: 768px) {
       .hero {
-        padding: 24px 0 44px;
+        padding: 20px 0 36px;
+        overflow-x: hidden;
       }
       .hero-inner {
-        grid-template-columns: 1fr;
-        gap: 20px;
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 16px;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden;
+      }
+      .copy {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        overflow: hidden;
       }
       .medical-authority-pill {
-        font-size: 0.7rem;
-        padding: 4px 10px;
-        border-radius: 6px;
-        white-space: normal;
-        line-height: 1.35;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        margin-bottom: 12px;
-        max-width: 100%;
-        box-sizing: border-box;
+        font-size: 0.68rem !important;
+        padding: 5px 10px !important;
+        border-radius: 6px !important;
+        white-space: normal !important;
+        line-height: 1.35 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        margin-bottom: 10px !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
       }
-      .medical-hero-title {
-        font-size: 1.55rem !important;
-        line-height: 1.25 !important;
-        letter-spacing: -0.02em !important;
-        margin: 0 0 14px !important;
+      .authority-text {
+        white-space: normal !important;
         word-break: normal !important;
         overflow-wrap: break-word !important;
       }
+      .medical-hero-title {
+        font-size: 1.3rem !important;
+        line-height: 1.3 !important;
+        letter-spacing: -0.02em !important;
+        margin: 0 0 12px !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+        max-width: 100% !important;
+      }
       .lead {
-        font-size: 0.95rem !important;
+        font-size: 0.92rem !important;
         line-height: 1.55 !important;
-        margin-bottom: 18px !important;
+        margin-bottom: 16px !important;
+        max-width: 100% !important;
       }
       .hero-actions {
         flex-direction: column;
-        width: 100%;
-        gap: 10px;
-        margin-bottom: 18px;
+        width: 100% !important;
+        gap: 8px;
+        margin-bottom: 16px;
       }
       .btn-hero-cta {
-        width: 100%;
-        min-height: 44px;
-        font-size: 0.92rem;
+        width: 100% !important;
+        min-height: 42px;
+        font-size: 0.9rem;
         text-align: center;
         justify-content: center;
+        padding: 10px 12px;
       }
       .clinical-trust-row {
         display: grid !important;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-        margin-top: 14px;
-        margin-bottom: 24px;
-        width: 100%;
-        box-sizing: border-box;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+        gap: 6px !important;
+        margin-top: 12px !important;
+        margin-bottom: 20px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
       }
       .trust-badge {
-        font-size: 0.72rem;
-        padding: 7px 8px;
-        justify-content: center;
-        text-align: center;
-        white-space: normal;
-        line-height: 1.25;
-        box-sizing: border-box;
-        border-radius: 8px;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 0.68rem !important;
+        padding: 6px 4px !important;
+        text-align: center !important;
+        white-space: normal !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+        line-height: 1.25 !important;
+        box-sizing: border-box !important;
+        border-radius: 6px !important;
+        min-width: 0 !important;
       }
       .clinical-emergency-card {
-        margin-top: 10px;
-        padding: 20px 16px;
+        margin-top: 8px !important;
+        padding: 16px 14px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+      }
+      .btn-emergency-cta {
+        font-size: 0.82rem !important;
+        padding: 10px 8px !important;
+        white-space: normal !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+        line-height: 1.35 !important;
+        text-align: center !important;
       }
       .telehealth-card-banner {
-        grid-template-columns: 1fr;
-        padding: 20px 16px;
-        gap: 20px;
+        grid-template-columns: minmax(0, 1fr) !important;
+        padding: 18px 14px !important;
+        gap: 16px;
         overflow: hidden;
+        width: 100% !important;
+        max-width: 100% !important;
         box-sizing: border-box;
       }
       .telehealth-banner-left {
-        width: 100%;
-        max-width: 100%;
+        width: 100% !important;
+        max-width: 100% !important;
         overflow: hidden;
       }
       .telehealth-banner-left h2 {
-        font-size: 1.35rem;
-        line-height: 1.25;
-        word-break: break-word;
+        font-size: 1.25rem !important;
+        line-height: 1.3;
+        word-break: normal;
         overflow-wrap: break-word;
       }
       .telehealth-cta-group {
         display: flex;
         flex-direction: column;
-        width: 100%;
-        gap: 10px;
+        width: 100% !important;
+        gap: 8px;
       }
       .btn-telehealth-cta {
-        width: 100%;
-        min-height: 44px;
+        width: 100% !important;
+        min-height: 42px;
         justify-content: center;
         text-align: center;
       }
@@ -2558,21 +2612,87 @@ interface RecoveryTrack {
         padding: 3px 8px;
         white-space: normal;
       }
+      .character-switcher-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+        width: 100% !important;
+        gap: 10px !important;
+      }
+      .dialogue-stage-box {
+        grid-template-columns: minmax(0, 1fr) !important;
+        padding: 16px 12px !important;
+        gap: 14px !important;
+      }
+      .speech-bubble {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 14px 12px !important;
+      }
+      .player-controls-bar {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 10px !important;
+        padding: 12px 10px !important;
+      }
+      .controls-left {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 6px !important;
+      }
+      .timeline-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+        width: 100% !important;
+      }
+      .impact-grid {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+        gap: 8px !important;
+      }
+      .impact-card {
+        padding: 14px 10px !important;
+      }
+      .impact-data .impact-number {
+        font-size: 1.35rem !important;
+      }
+      .clinical-ethics-card {
+        grid-template-columns: minmax(0, 1fr) !important;
+        padding: 18px 14px !important;
+        gap: 16px !important;
+      }
+      .clinical-pillars-row {
+        grid-template-columns: minmax(0, 1fr) !important;
+      }
+      .dynamic-features-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+      }
+      .features {
+        grid-template-columns: minmax(0, 1fr) !important;
+      }
+      .mood-buttons-grid {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+        gap: 8px !important;
+      }
+      .mobile-app-banner {
+        grid-template-columns: minmax(0, 1fr) !important;
+        padding: 20px 14px !important;
+        gap: 20px !important;
+      }
+      .card {
+        padding: 16px 14px !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+      }
     }
 
-    @media (max-width: 420px) {
+    @media (max-width: 380px) {
       .medical-hero-title {
-        font-size: 1.42rem !important;
+        font-size: 1.18rem !important;
       }
       .clinical-trust-row {
-        grid-template-columns: 1fr 1fr;
-        gap: 6px;
+        grid-template-columns: minmax(0, 1fr) !important;
       }
-    }
-
-    @media (max-width: 350px) {
-      .clinical-trust-row {
-        grid-template-columns: 1fr;
+      .impact-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+      }
+      .mood-buttons-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
       }
     }
 

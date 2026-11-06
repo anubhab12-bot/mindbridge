@@ -913,28 +913,52 @@ import { ContactModalComponent } from '../shared/ui/contact-modal';
     }
 
     @media (max-width: 768px) {
+      .announcement-bar {
+        font-size: 0.78rem;
+        padding: 6px 0;
+        overflow-x: hidden;
+      }
+      .announcement-inner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+      .announcement-actions {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
       .clinical-top-ribbon {
         display: none !important;
       }
       .brand {
-        gap: 8px;
+        gap: 6px;
+        min-width: 0;
+        flex-shrink: 1;
+        overflow: hidden;
       }
       .brand-medical-mark {
-        width: 30px;
-        height: 30px;
+        width: 28px;
+        height: 28px;
+        flex-shrink: 0;
       }
       .brand-headings {
         line-height: 1.1;
+        min-width: 0;
+        overflow: hidden;
       }
       .brand-tagline {
         display: none !important;
       }
       .brand-name {
-        font-size: 1.15rem !important;
+        font-size: 1.05rem !important;
         white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .header-cta-group {
-        gap: 8px;
+        gap: 6px;
         flex-shrink: 0;
         flex-wrap: nowrap;
       }
@@ -951,8 +975,8 @@ import { ContactModalComponent } from '../shared/ui/contact-modal';
       .header-crisis-btn {
         display: inline-flex !important;
         align-items: center;
-        padding: 5px 10px;
-        font-size: 0.76rem;
+        padding: 4px 8px;
+        font-size: 0.72rem;
         border-radius: 999px;
         white-space: nowrap;
       }
@@ -960,20 +984,25 @@ import { ContactModalComponent } from '../shared/ui/contact-modal';
         display: inline-flex !important;
         align-items: center;
         justify-content: center;
-        width: 36px;
-        height: 36px;
+        width: 34px;
+        height: 34px;
         padding: 0;
-        font-size: 1.15rem;
+        font-size: 1.1rem;
         border-radius: 8px;
         border: 1px solid var(--mb-border);
         background: var(--mb-surface-2);
         color: var(--mb-text);
+        flex-shrink: 0;
       }
       #main {
         padding-bottom: calc(88px + env(safe-area-inset-bottom, 16px)) !important;
+        overflow-x: hidden;
+        width: 100%;
+        max-width: 100%;
       }
       .site-footer {
         padding-bottom: calc(100px + env(safe-area-inset-bottom, 16px)) !important;
+        overflow-x: hidden;
       }
     }
 
