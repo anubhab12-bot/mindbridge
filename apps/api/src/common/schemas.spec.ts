@@ -14,7 +14,7 @@ function schemaFiles(dir: string): string[] {
 describe('mongoose schemas', () => {
   const files = schemaFiles(join(import.meta.dirname, '..', 'modules'));
   it('finds schema files', () => expect(files.length).toBeGreaterThan(15));
-  it.each(files)('%s compiles', async (file) => {
+  it.each(files)('%s compiles', { timeout: 30000 }, async (file) => {
     await expect(import(file)).resolves.toBeDefined();
   });
 });

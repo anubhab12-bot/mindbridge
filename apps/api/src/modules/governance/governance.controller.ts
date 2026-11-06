@@ -1,50 +1,89 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { GovernanceService } from './governance.service.js';
-import { Public } from '../../common/auth/decorators.js';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Headers,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { AdminPermission, Role } from '@mindbridge/shared-types';
 import type {
   CouncilApplicationCredentials,
-  CouncilTaskProof,
   DynamicFeatureItem,
-  DynamicSiteSettings,
 } from '@mindbridge/shared-types';
+import { GovernanceService } from './governance.service.js';
+import type { AuthenticatedUser } from '../../common/auth/authenticated-user.js';
+import {
+  CurrentUser,
+  Public,
+  RequireAdminPermissions,
+  Roles,
+} from '../../common/auth/decorators.js';
+import {
+  ApproveDoctorDto,
+  DestructiveActionDto,
+  PlanFeatureDto,
+  ReviewApplicationDto,
+  SubmitProofDto,
+  ToggleFeatureDto,
+  UpdatePoliciesDto,
+  UpdateSettingsDto,
+  VerifyProofDto,
+} from './dto/governance.dto.js';
 
 @ApiTags('governance')
+@ApiBearerAuth()
 @Controller({ path: 'governance', version: '1' })
 export class GovernanceController {
   constructor(private readonly governance: GovernanceService) {}
 
+  // ------------------------------------------------------------- Settings (Public Read / Admin Write)
   @Public()
   @Get('settings')
-  @ApiOperation({ summary: 'Get dynamic site settings that reflect across the MindBridge platform' })
+  @ApiOperation({ summary: 'Get dynamic site settings that reflect across the MindBridge platform (Public read-only)' })
   async getSettings() {
     return this.governance.getSettings();
   }
 
-  @Public()
+  @Roles(Role.ADMIN)
+  @RequireAdminPermissions(AdminPermission.SETTINGS_MANAGE)
   @Put('settings')
-  @ApiOperation({ summary: 'Update dynamic site settings (Super Admin controlled)' })
-  async updateSettings(@Body() dto: Partial<DynamicSiteSettings>) {
-    return this.governance.updateSettings(dto);
+  @ApiOperation({ summary: 'Update dynamic site settings (ADMIN + settings:manage)' })
+  async updateSettings(
+    @CurrentUser() admin: AuthenticatedUser,
+    @Body() dto: UpdateSettingsDto,
+  ) {
+    return this.governance.updateSettings(dto, admin);
   }
 
+  // ------------------------------------------------------------- Legal Policies (Public Read / Admin Write)
   @Public()
   @Get('policies/:type')
-  @ApiOperation({ summary: 'Get published legal policy with super-admin overrides' })
+  @ApiOperation({ summary: 'Get published legal policy text (Terms, Privacy, AI notice) (Public read-only)' })
   async getPolicy(@Param('type') type: string) {
     return this.governance.getPolicy(type);
   }
 
-  @Public()
+  @Roles(Role.ADMIN)
+  @RequireAdminPermissions(AdminPermission.SETTINGS_MANAGE)
   @Put('policies')
-  @ApiOperation({ summary: 'Super Admin updates Terms and Conditions, Privacy Policy, or AI Disclaimers' })
-  async updatePolicies(@Body() dto: { terms?: string; privacy?: string; ai?: string; updatedBy?: string }) {
-    return this.governance.updatePolicies(dto);
+  @ApiOperation({ summary: 'Update legal policies with mandatory audit trail of changes (ADMIN + settings:manage)' })
+  async updatePolicies(
+    @CurrentUser() admin: AuthenticatedUser,
+    @Body() dto: UpdatePoliciesDto,
+  ) {
+    return this.governance.updatePolicies(dto, admin);
   }
 
+  // ------------------------------------------------------------- Council Applications
   @Public()
   @Post('apply')
-  @ApiOperation({ summary: 'Submit an application for one of the 12 Council Admin seats (Specialist, NGO, Influencer)' })
+  @ApiOperation({ summary: 'Submit an application for Council candidacy (Public candidate form)' })
   async applyForCouncil(
     @Body()
     dto: {
@@ -58,9 +97,10 @@ export class GovernanceController {
     return this.governance.applyForCouncil(dto);
   }
 
-  @Public()
+  @Roles(Role.ADMIN)
+  @RequireAdminPermissions(AdminPermission.SETTINGS_MANAGE)
   @Get('applications')
-  @ApiOperation({ summary: 'List Council applications with AI safety screening results' })
+  @ApiOperation({ summary: 'List Council applications with AI safety screening results (ADMIN + settings:manage)' })
   async listApplications(
     @Query('category') category?: string,
     @Query('status') status?: string,
@@ -68,19 +108,23 @@ export class GovernanceController {
     return this.governance.listApplications(category, status);
   }
 
-  @Public()
+  @Roles(Role.ADMIN)
+  @RequireAdminPermissions(AdminPermission.SETTINGS_MANAGE)
   @Post('applications/:id/decision')
-  @ApiOperation({ summary: 'Super Admin decision on Council application (Approve/Reject)' })
+  @ApiOperation({ summary: 'Decision on Council application with recorded reviewer (ADMIN + settings:manage)' })
   async reviewApplication(
+    @CurrentUser() admin: AuthenticatedUser,
     @Param('id') id: string,
-    @Body() dto: { decision: 'APPROVED' | 'REJECTED'; notes?: string; reviewer?: string },
+    @Body() dto: ReviewApplicationDto,
   ) {
-    return this.governance.reviewApplication(id, dto.decision, dto.notes, dto.reviewer);
+    return this.governance.reviewApplication(id, dto.decision, dto.notes, admin);
   }
 
-  @Public()
+  // ------------------------------------------------------------- Distributed Tasks (security:manage)
+  @Roles(Role.ADMIN)
+  @RequireAdminPermissions(AdminPermission.SECURITY_MANAGE)
   @Get('tasks')
-  @ApiOperation({ summary: 'List distributed tasks for Specialists, NGOs, and Influencers' })
+  @ApiOperation({ summary: 'List governance tasks (ADMIN + security:manage)' })
   async listTasks(
     @Query('category') category?: string,
     @Query('status') status?: string,
@@ -88,91 +132,118 @@ export class GovernanceController {
     return this.governance.listTasks(category, status);
   }
 
-  @Public()
+  @Roles(Role.ADMIN)
+  @RequireAdminPermissions(AdminPermission.SECURITY_MANAGE)
   @Post('tasks/generate-ai')
-  @ApiOperation({ summary: 'Use AI to generate awareness missions and social reel tasks for Influencers' })
+  @ApiOperation({ summary: 'Generate structured awareness tasks (ADMIN + security:manage)' })
   async generateAiTasks() {
     return this.governance.generateAiTasks();
   }
 
-  @Public()
+  @Roles(Role.ADMIN)
+  @RequireAdminPermissions(AdminPermission.SECURITY_MANAGE)
   @Post('tasks/:id/submit-proof')
-  @ApiOperation({ summary: 'Influencer submits awareness reel/post proof link and reach stats' })
+  @ApiOperation({ summary: 'Submit task proof link and reach stats (ADMIN + security:manage)' })
   async submitProof(
     @Param('id') id: string,
-    @Body() dto: { proof: CouncilTaskProof },
+    @Body() dto: SubmitProofDto,
   ) {
     return this.governance.submitProof(id, dto.proof);
   }
 
-  @Public()
+  @Roles(Role.ADMIN)
+  @RequireAdminPermissions(AdminPermission.SECURITY_MANAGE)
   @Post('tasks/:id/verify-proof')
-  @ApiOperation({ summary: 'Super Admin verifies or requests revision on submitted awareness proof' })
+  @ApiOperation({ summary: 'Verify or request revision on submitted task proof (ADMIN + security:manage)' })
   async verifyProof(
     @Param('id') id: string,
-    @Body() dto: { decision: 'VERIFIED' | 'REVISION_REQUESTED' },
+    @Body() dto: VerifyProofDto,
   ) {
     return this.governance.verifyProof(id, dto.decision);
   }
 
+  // ------------------------------------------------------------- Telemetry & Statistics (Public, Suppressed)
   @Public()
   @Get('stats')
-  @ApiOperation({ summary: 'Council governance capacity (12 spots) and live population health metrics' })
+  @ApiOperation({ summary: 'Aggregated population metrics with small-group suppression applied (Public)' })
   async getStats() {
     return this.governance.getCouncilStats();
   }
 
-  // ------------------------------------------------------------- AI Feature Maker & Planner
-  @Public()
+  // ------------------------------------------------------------- Dynamic Features (security:manage)
+  @Roles(Role.ADMIN)
+  @RequireAdminPermissions(AdminPermission.SECURITY_MANAGE)
   @Post('features/ai-plan')
-  @ApiOperation({ summary: 'Generate a structured dynamic feature proposal from Super Admin natural language command' })
-  async planFeatureWithAi(@Body() dto: { prompt: string }) {
+  @ApiOperation({ summary: 'Generate dynamic feature proposal from text command (ADMIN + security:manage)' })
+  async planFeatureWithAi(@Body() dto: PlanFeatureDto) {
     return this.governance.planFeatureWithAi(dto.prompt);
   }
 
-  @Public()
+  @Roles(Role.ADMIN)
+  @RequireAdminPermissions(AdminPermission.SECURITY_MANAGE)
   @Post('features/publish')
-  @ApiOperation({ summary: 'Publish or update a dynamic feature to the live Main Site' })
+  @ApiOperation({ summary: 'Publish or update dynamic feature on live site (ADMIN + security:manage)' })
   async publishDynamicFeature(@Body() dto: DynamicFeatureItem) {
     return this.governance.publishDynamicFeature(dto);
   }
 
-  @Public()
+  @Roles(Role.ADMIN)
+  @RequireAdminPermissions(AdminPermission.SECURITY_MANAGE)
   @Patch('features/:id/toggle')
-  @ApiOperation({ summary: 'Toggle visibility of a dynamic feature on the live Main Site' })
+  @ApiOperation({ summary: 'Toggle dynamic feature visibility (ADMIN + security:manage)' })
   async toggleDynamicFeature(
     @Param('id') id: string,
-    @Body() dto: { enabled?: boolean },
+    @Body() dto: ToggleFeatureDto,
   ) {
     return this.governance.toggleDynamicFeature(id, dto.enabled);
   }
 
-  @Public()
+  @Roles(Role.ADMIN)
+  @RequireAdminPermissions(AdminPermission.SECURITY_MANAGE)
   @Delete('features/:id')
-  @ApiOperation({ summary: 'Remove a dynamic feature from the live Main Site' })
-  async deleteDynamicFeature(@Param('id') id: string) {
-    return this.governance.deleteDynamicFeature(id);
+  @ApiOperation({ summary: 'Remove a dynamic feature (Destructive: ADMIN + security:manage + fresh TOTP)' })
+  async deleteDynamicFeature(
+    @CurrentUser() admin: AuthenticatedUser,
+    @Param('id') id: string,
+    @Headers('x-totp-code') headerTotp?: string,
+    @Body() dto?: DestructiveActionDto,
+  ) {
+    const totpCode = headerTotp || dto?.totpCode;
+    return this.governance.deleteDynamicFeature(id, admin, totpCode);
   }
 
-  // ------------------------------------------------------------- Doctor Verification & Demo Purge
-  @Public()
+  // ------------------------------------------------------------- Doctor Verification (doctors:verify)
+  @Roles(Role.ADMIN)
+  @RequireAdminPermissions(AdminPermission.DOCTORS_VERIFY)
   @Get('doctors')
-  @ApiOperation({ summary: 'List all real registered doctors for Admin verification' })
+  @ApiOperation({ summary: 'List registered doctor profiles for verification (ADMIN + doctors:verify)' })
   async listDoctors() {
     return this.governance.listDoctors();
   }
 
-  @Public()
+  @Roles(Role.ADMIN)
+  @RequireAdminPermissions(AdminPermission.DOCTORS_VERIFY)
   @Post('doctors/:id/approve')
-  @ApiOperation({ summary: 'Approve doctor verification status' })
-  async approveDoctor(@Param('id') id: string) {
-    return this.governance.approveDoctor(id);
+  @ApiOperation({ summary: 'Approve clinician verification with mandatory external registry check (ADMIN + doctors:verify)' })
+  async approveDoctor(
+    @CurrentUser() admin: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: ApproveDoctorDto,
+  ) {
+    return this.governance.approveDoctor(id, dto, admin);
   }
 
-  @Public()
+  // ------------------------------------------------------------- Destructive Demo Purge (security:manage + TOTP)
+  @Roles(Role.ADMIN)
+  @RequireAdminPermissions(AdminPermission.SECURITY_MANAGE)
   @Post('purge-demo-data')
-  @ApiOperation({ summary: 'Purge all preloaded/synthetic demo accounts from database' })
-  async purgeDemoData() {
-    return this.governance.purgeDemoData();
+  @ApiOperation({ summary: 'Purge synthetic demo accounts (Destructive: ADMIN + security:manage + fresh TOTP)' })
+  async purgeDemoData(
+    @CurrentUser() admin: AuthenticatedUser,
+    @Headers('x-totp-code') headerTotp?: string,
+    @Body() dto?: DestructiveActionDto,
+  ) {
+    const totpCode = headerTotp || dto?.totpCode;
+    return this.governance.purgeDemoData(admin, totpCode);
   }
 }

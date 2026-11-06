@@ -1,6 +1,14 @@
-import { BadRequestException, Injectable, Logger, NotFoundException, type OnModuleInit } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+  type OnModuleInit,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import {
   AdminApplication,
   type AdminApplicationDocument,
@@ -13,6 +21,17 @@ import {
 import { User } from '../users/schemas/user.schema.js';
 import { DoctorProfile } from '../doctors/schemas/doctor-profile.schema.js';
 import { AiScreenerService } from './ai-screener.service.js';
+import { AuditService } from '../audit/audit.service.js';
+import { FieldEncryptionService } from '../../common/crypto/field-encryption.service.js';
+import { verifyTotp } from '../auth/totp.js';
+import { suppressOne } from '../admin/suppression.js';
+import type { AuthenticatedUser } from '../../common/auth/authenticated-user.js';
+import type {
+  ApproveDoctorDto,
+  ReviewApplicationDto,
+  UpdatePoliciesDto,
+  UpdateSettingsDto,
+} from './dto/governance.dto.js';
 import {
   type CouncilApplicationCredentials,
   type CouncilTaskProof,
@@ -37,14 +56,50 @@ export class GovernanceService implements OnModuleInit {
     @InjectModel(DoctorProfile.name)
     private readonly doctorModel: Model<any>,
     private readonly aiScreener: AiScreenerService,
+    private readonly audit: AuditService,
+    private readonly crypto: FieldEncryptionService,
   ) {}
 
   async onModuleInit() {
-    await this.purgeDemoData();
+    // Ensure baseline settings document exists without destructive operations
+    const exists = await this.settingsModel.findOne().lean();
+    if (!exists) {
+      await this.settingsModel.create({});
+    }
+  }
+
+  // ------------------------------------------------------------- Destructive Action TOTP Gate
+  async verifyAdminTotp(adminUserId: string, totpCode?: string): Promise<void> {
+    if (!totpCode || !/^\d{6}$/.test(totpCode.trim())) {
+      throw new BadRequestException({
+        code: 'TOTP_REQUIRED',
+        message: 'Destructive admin actions require a fresh 6-digit TOTP code (via x-totp-code header or totpCode field).',
+      });
+    }
+
+    const user = await this.userModel.findById(adminUserId).select('+mfaSecretEnc mfaEnabled');
+    if (!user || !user.mfaEnabled || !user.mfaSecretEnc) {
+      throw new ForbiddenException({
+        code: 'MFA_REQUIRED',
+        message: 'Destructive admin actions require two-factor authentication (TOTP) to be enabled on your account.',
+      });
+    }
+
+    const secret = this.crypto.decrypt(user.mfaSecretEnc);
+    if (!verifyTotp(secret, totpCode.trim())) {
+      throw new UnauthorizedException({
+        code: 'TOTP_INVALID',
+        message: 'The TOTP verification code is invalid or expired.',
+      });
+    }
   }
 
   // ------------------------------------------------------------- Doctor Verification & Demo Purge
-  async purgeDemoData() {
+  async purgeDemoData(admin?: AuthenticatedUser, totpCode?: string) {
+    if (admin) {
+      await this.verifyAdminTotp(admin.id, totpCode);
+    }
+
     try {
       // 1. Purge synthetic demo users from database
       const demoUsers = await this.userModel.find({
@@ -55,28 +110,40 @@ export class GovernanceService implements OnModuleInit {
         ],
       }).select('_id').lean();
 
+      let purgedCount = 0;
       if (demoUsers.length > 0) {
         const ids = demoUsers.map((u: any) => u._id);
         await this.doctorModel.deleteMany({ userId: { $in: ids } });
         await this.userModel.deleteMany({ _id: { $in: ids } });
-        this.logger.log(`Purged ${demoUsers.length} synthetic demo accounts from database.`);
+        purgedCount = demoUsers.length;
+        this.logger.log(`Purged ${purgedCount} synthetic demo accounts from database.`);
       }
 
       // Also clean up any lingering doctor profiles with (demo) in displayName
       await this.doctorModel.deleteMany({ displayName: { $regex: /\(demo\)/i } });
 
-      // 2. Automatically approve all real registered doctors so they reflect immediately in Find a Professional
-      const updated = await this.doctorModel.updateMany(
-        { verificationStatus: { $ne: DoctorVerificationStatus.APPROVED } },
-        { $set: { verificationStatus: DoctorVerificationStatus.APPROVED } }
-      );
-      if (updated.modifiedCount > 0) {
-        this.logger.log(`Auto-verified ${updated.modifiedCount} real registered doctors.`);
+      if (admin) {
+        await this.audit.record({
+          actorId: admin.id,
+          actorRole: admin.role,
+          action: 'governance.demo_purged',
+          outcome: 'SUCCESS',
+          metadata: { purgedAccounts: purgedCount },
+        });
       }
 
-      return { success: true, message: 'All demo data purged and real doctors verified.' };
+      return { success: true, message: `Successfully purged ${purgedCount} demo accounts. Real registered doctors require individual audited verification.` };
     } catch (err) {
-      this.logger.warn(`Demo purge / verification warning: ${(err as Error).message}`);
+      this.logger.warn(`Demo purge warning: ${(err as Error).message}`);
+      if (admin) {
+        await this.audit.record({
+          actorId: admin.id,
+          actorRole: admin.role,
+          action: 'governance.demo_purged',
+          outcome: 'FAILURE',
+          metadata: { error: (err as Error).message },
+        });
+      }
       return { success: false, error: (err as Error).message };
     }
   }
@@ -92,7 +159,7 @@ export class GovernanceService implements OnModuleInit {
       specialties: d.specialties || [],
       languages: d.languages || [],
       yearsExperience: d.yearsExperience || 0,
-      verificationStatus: d.verificationStatus || DoctorVerificationStatus.APPROVED,
+      verificationStatus: d.verificationStatus || DoctorVerificationStatus.PENDING_VERIFICATION,
       qualifications: d.qualifications || [],
       registrationNumber: d.registrationNumber || 'N/A',
       registrationCouncil: d.registrationCouncil || 'N/A',
@@ -102,13 +169,42 @@ export class GovernanceService implements OnModuleInit {
     }));
   }
 
-  async approveDoctor(doctorId: string) {
+  async approveDoctor(doctorId: string, dto: ApproveDoctorDto, admin: AuthenticatedUser) {
+    if (!dto.externalRegisterChecked || !dto.evidenceNote?.trim()) {
+      throw new BadRequestException({
+        code: 'EVIDENCE_REQUIRED',
+        message: 'Doctor approval requires an evidence note and confirmation that the external register was checked.',
+      });
+    }
+
     const doc = await this.doctorModel.findByIdAndUpdate(
       doctorId,
-      { $set: { verificationStatus: DoctorVerificationStatus.APPROVED } },
+      {
+        $set: {
+          verificationStatus: DoctorVerificationStatus.APPROVED,
+          verifiedAt: new Date(),
+          verifiedBy: new Types.ObjectId(admin.id),
+        },
+      },
       { new: true }
     );
     if (!doc) throw new NotFoundException('Doctor profile not found');
+
+    await this.audit.record({
+      actorId: admin.id,
+      actorRole: admin.role,
+      action: 'doctor.verified',
+      resourceType: 'doctor_profile',
+      resourceId: doctorId,
+      outcome: 'SUCCESS',
+      metadata: {
+        evidenceNote: dto.evidenceNote.trim(),
+        externalRegisterChecked: dto.externalRegisterChecked,
+        registrationNumber: doc.registrationNumber,
+        registrationCouncil: doc.registrationCouncil,
+      },
+    });
+
     return doc;
   }
 
@@ -137,7 +233,7 @@ export class GovernanceService implements OnModuleInit {
     };
   }
 
-  async updateSettings(dto: Partial<DynamicSiteSettings> & { policies?: any }): Promise<any> {
+  async updateSettings(dto: Partial<DynamicSiteSettings> & { policies?: any }, admin?: AuthenticatedUser): Promise<any> {
     let doc = await this.settingsModel.findOne();
     if (!doc) {
       doc = new this.settingsModel();
@@ -155,6 +251,17 @@ export class GovernanceService implements OnModuleInit {
     }
 
     await doc.save();
+
+    if (admin) {
+      await this.audit.record({
+        actorId: admin.id,
+        actorRole: admin.role,
+        action: 'governance.settings_updated',
+        outcome: 'SUCCESS',
+        metadata: { updatedKeys: Object.keys(dto) },
+      });
+    }
+
     return this.getSettings();
   }
 
@@ -235,16 +342,39 @@ Every interaction is monitored by a local, deterministic safety screener that in
     };
   }
 
-  async updatePolicies(dto: { terms?: string; privacy?: string; ai?: string; updatedBy?: string }) {
+  async updatePolicies(dto: UpdatePoliciesDto, admin?: AuthenticatedUser) {
     let doc = await this.settingsModel.findOne();
     if (!doc) doc = new this.settingsModel();
     const existing = (doc as any).policies || {};
+
+    // Audit each policy update with old and new text
+    if (admin) {
+      const keys: ('terms' | 'privacy' | 'ai')[] = ['terms', 'privacy', 'ai'];
+      for (const key of keys) {
+        if (dto[key] !== undefined && dto[key] !== existing[key]) {
+          await this.audit.record({
+            actorId: admin.id,
+            actorRole: admin.role,
+            action: 'governance.policy_updated',
+            resourceType: 'policy',
+            resourceId: key,
+            outcome: 'SUCCESS',
+            metadata: {
+              policyType: key,
+              oldText: existing[key] || '',
+              newText: dto[key],
+            },
+          });
+        }
+      }
+    }
+
     (doc as any).policies = {
       terms: dto.terms !== undefined ? dto.terms : existing.terms,
       privacy: dto.privacy !== undefined ? dto.privacy : existing.privacy,
       ai: dto.ai !== undefined ? dto.ai : existing.ai,
       updatedAt: new Date().toISOString(),
-      updatedBy: dto.updatedBy || 'Super Admin',
+      updatedBy: admin?.id || 'Admin',
     };
     await doc.save();
     return (doc as any).policies;
@@ -404,15 +534,35 @@ Every interaction is monitored by a local, deterministic safety screener that in
     return item;
   }
 
-  async deleteDynamicFeature(id: string) {
+  async deleteDynamicFeature(id: string, admin?: AuthenticatedUser, totpCode?: string) {
+    if (admin) {
+      await this.verifyAdminTotp(admin.id, totpCode);
+    }
+
     const doc = await this.settingsModel.findOne();
     if (!doc) throw new NotFoundException('Settings not found');
 
     let features: any[] = (doc as any).dynamicFeatures || [];
+    const beforeCount = features.length;
     features = features.filter((f) => f.id !== id);
+    if (features.length === beforeCount) {
+      throw new NotFoundException('Feature not found');
+    }
 
     (doc as any).dynamicFeatures = features;
     await doc.save();
+
+    if (admin) {
+      await this.audit.record({
+        actorId: admin.id,
+        actorRole: admin.role,
+        action: 'governance.feature_deleted',
+        resourceType: 'dynamic_feature',
+        resourceId: id,
+        outcome: 'SUCCESS',
+      });
+    }
+
     return { success: true, remainingCount: features.length };
   }
 
@@ -496,11 +646,12 @@ Every interaction is monitored by a local, deterministic safety screener that in
     id: string,
     decision: 'APPROVED' | 'REJECTED',
     notes?: string,
-    reviewer = 'Super Admin',
+    admin?: AuthenticatedUser,
   ) {
     const app = await this.applicationModel.findById(id);
     if (!app) throw new NotFoundException('Application not found');
 
+    const reviewer = admin?.id || 'Admin';
     app.status = decision;
     app.decisionNotes = notes;
     app.reviewedBy = reviewer;
@@ -514,6 +665,19 @@ Every interaction is monitored by a local, deterministic safety screener that in
     }
 
     await app.save();
+
+    if (admin) {
+      await this.audit.record({
+        actorId: admin.id,
+        actorRole: admin.role,
+        action: 'governance.application_reviewed',
+        resourceType: 'admin_application',
+        resourceId: id,
+        outcome: 'SUCCESS',
+        metadata: { decision, notes },
+      });
+    }
+
     return app;
   }
 
@@ -592,36 +756,24 @@ Every interaction is monitored by a local, deterministic safety screener that in
       : approvedCouncil;
     const availableSeats = Math.max(0, totalSeats - occupiedSeats);
 
-    // Override or live database calculation
-    const override = settingsDoc?.statsOverride;
-    const isOverrideActive = override?.enabled ?? true;
-
+    const min = 5;
     return {
       councilCapacity: totalSeats,
-      occupiedSeats,
-      availableSeats,
-      dataSource: 'LIVE_MONGODB_DATABASE',
+      occupiedSeats: suppressOne(occupiedSeats, min),
+      availableSeats: suppressOne(availableSeats, min),
+      dataSource: 'AGGREGATED_SUPPRESSED_TELEMETRY',
       applications: {
-        total: totalApps,
-        pending: pendingApps,
-        flaggedByAi: flaggedApps,
-        approved: approvedCouncil,
+        total: suppressOne(totalApps, min),
+        pending: suppressOne(pendingApps, min),
+        flaggedByAi: suppressOne(flaggedApps, min),
+        approved: suppressOne(approvedCouncil, min),
       },
       liveDatabaseMetrics: {
-        registeredUsers: realTotalUsers,
-        activePatients: realPatients,
-        verifiedDoctors: realDoctors,
-        totalApplicationsSubmitted: totalApps,
-        occupiedCouncilSeats: occupiedSeats,
-      },
-      populationMetrics: {
-        totalUsers: isOverrideActive && override?.totalUsers ? override.totalUsers : `${realTotalUsers}`,
-        activePatients: realPatients > 0 ? `${realPatients}` : `${realTotalUsers}`,
-        partnerNgos: isOverrideActive && override?.totalNgos ? override.totalNgos : '124',
-        cureRecoveryRate: isOverrideActive && override?.recoveryRate ? override.recoveryRate : '94.6%',
-        avgCrisisResponseSecs: isOverrideActive && override?.avgResponseTime ? override.avgResponseTime : '< 45s',
-        phq9ScoreReduction: '74.2% drop within 8 weeks',
-        gad7ScoreReduction: '78.5% drop within 8 weeks',
+        registeredUsers: suppressOne(realTotalUsers, min),
+        activePatients: suppressOne(realPatients, min),
+        verifiedDoctors: suppressOne(realDoctors, min),
+        totalApplicationsSubmitted: suppressOne(totalApps, min),
+        occupiedCouncilSeats: suppressOne(occupiedSeats, min),
       },
     };
   }

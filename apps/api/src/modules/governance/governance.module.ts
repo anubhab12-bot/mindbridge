@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { CryptoModule } from '../../common/crypto/crypto.module.js';
 import { GovernanceController } from './governance.controller.js';
 import { GovernanceService } from './governance.service.js';
 import { AiScreenerService } from './ai-screener.service.js';
@@ -17,6 +18,7 @@ import { DoctorProfile, DoctorProfileSchema } from '../doctors/schemas/doctor-pr
 
 @Module({
   imports: [
+    CryptoModule,
     MongooseModule.forFeature([
       { name: AdminApplication.name, schema: AdminApplicationSchema },
       { name: AdminTask.name, schema: AdminTaskSchema },
