@@ -24,7 +24,10 @@ import { TelehealthService, DoctorDutyInfo } from '../../core/services/telehealt
         <div class="launcher-card" (click)="$event.stopPropagation()">
           <div class="launcher-header">
             <div class="launcher-title-wrap">
-              <span class="pulse-live-badge">🏥 3 SPECIALISTS SUGGESTED BY YEARS OF EXPERIENCE</span>
+              <span class="pulse-live-badge">
+                <span class="live-ping-dot"></span>
+                <span>TOP SPECIALISTS · RANKED BY CLINICAL EXPERIENCE</span>
+              </span>
               <h2>1-on-1 Video Consultation & Live Support</h2>
               <p>Connect directly with top AIIMS-verified specialists. Video sessions feature mic & camera toggle controls.</p>
             </div>
@@ -39,7 +42,7 @@ import { TelehealthService, DoctorDutyInfo } from '../../core/services/telehealt
                 [class.selected]="selectedDoctorId() === doc.id"
                 (click)="selectedDoctorId.set(doc.id)"
               >
-                <div class="doc-avatar">{{ doc.avatar }}</div>
+                <div class="doc-avatar-badge">{{ doc.avatar }}</div>
                 <div class="doc-info">
                   <div class="doc-name-row">
                     <strong>{{ doc.name }}</strong>
@@ -47,9 +50,9 @@ import { TelehealthService, DoctorDutyInfo } from '../../core/services/telehealt
                   </div>
                   <div class="doc-role">{{ doc.role }}</div>
                   <div class="doc-meta">
-                    <span>🎓 {{ doc.qualification }}</span> ·
-                    <span>⭐ {{ doc.rating }}</span> ·
-                    <span>🗣️ {{ doc.languages.join(', ') }}</span>
+                    <span>{{ doc.qualification }}</span> ·
+                    <span>Rating: {{ doc.rating }} / 5.0</span> ·
+                    <span>{{ doc.languages.join(', ') }}</span>
                   </div>
                 </div>
               </div>
@@ -75,7 +78,9 @@ import { TelehealthService, DoctorDutyInfo } from '../../core/services/telehealt
                 class="btn-start-call video-call"
                 (click)="startCall('VIDEO')"
               >
-                <span class="btn-icon">📹</span>
+                <svg class="btn-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.934a.5.5 0 0 0-.777-.416L16 11"/><rect width="14" height="12" x="2" y="6" rx="2"/>
+                </svg>
                 <span class="btn-text-wrap">
                   <strong>Start 1-on-1 Video Consultation</strong>
                   <small>Face-to-face HD consultation with mic & camera controls</small>
@@ -87,7 +92,9 @@ import { TelehealthService, DoctorDutyInfo } from '../../core/services/telehealt
                 class="btn-start-call chat-call"
                 (click)="startCall('CHAT')"
               >
-                <span class="btn-icon">💬</span>
+                <svg class="btn-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
                 <span class="btn-text-wrap">
                   <strong>Start 1-on-1 Live Chat</strong>
                   <small>Direct encrypted real-time messaging</small>
@@ -104,7 +111,10 @@ import { TelehealthService, DoctorDutyInfo } from '../../core/services/telehealt
       <aside class="teams-call-toast" role="dialog" aria-label="Incoming Consultation Call">
         <div class="teams-toast-banner">
           <span class="teams-logo-pill">
-            <span class="teams-icon">📞</span> Microsoft Teams Link
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+            <span>Microsoft Teams Meeting</span>
           </span>
           <span class="teams-live-ping">Incoming Call…</span>
         </div>
@@ -113,13 +123,13 @@ import { TelehealthService, DoctorDutyInfo } from '../../core/services/telehealt
           <div class="teams-avatar-radar">
             <div class="radar-wave wave-1"></div>
             <div class="radar-wave wave-2"></div>
-            <div class="teams-avatar">{{ telehealth.currentCall()?.doctor?.avatar || '👨‍⚕️' }}</div>
+            <div class="teams-avatar-initials">{{ telehealth.currentCall()?.doctor?.avatar || 'MD' }}</div>
           </div>
 
           <div class="teams-call-meta">
             <h3 class="caller-name">{{ telehealth.currentCall()?.doctor?.name }}</h3>
             <span class="call-type">
-              {{ telehealth.currentCall()?.mode === 'VIDEO' ? '📹 Incoming Video Call' : '💬 Incoming Live Chat' }}
+              {{ telehealth.currentCall()?.mode === 'VIDEO' ? 'Incoming Video Consultation' : 'Incoming Live Chat' }}
             </span>
             <span class="call-sub">{{ telehealth.currentCall()?.doctor?.role }}</span>
             <span class="patient-tag">Calling: {{ telehealth.currentCall()?.patientName }}</span>
@@ -133,7 +143,15 @@ import { TelehealthService, DoctorDutyInfo } from '../../core/services/telehealt
             (click)="telehealth.acceptCall()"
             title="Accept Call"
           >
-            <span class="icon">{{ telehealth.currentCall()?.mode === 'VIDEO' ? '📹' : '💬' }}</span>
+            @if (telehealth.currentCall()?.mode === 'VIDEO') {
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.934a.5.5 0 0 0-.777-.416L16 11"/><rect width="14" height="12" x="2" y="6" rx="2"/>
+              </svg>
+            } @else {
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            }
             <span>Accept Call</span>
           </button>
 
@@ -157,9 +175,14 @@ import { TelehealthService, DoctorDutyInfo } from '../../core/services/telehealt
           <!-- Room Header -->
           <header class="room-header">
             <div class="room-header-left">
-              <span class="encrypt-badge">🔒 256-bit Encrypted Telehealth</span>
+              <span class="encrypt-badge">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <span>256-bit Encrypted Telehealth</span>
+              </span>
               <span class="doctor-badge">
-                {{ telehealth.currentCall()?.doctor?.avatar }}
+                <span class="doc-badge-pill">{{ telehealth.currentCall()?.doctor?.avatar }}</span>
                 <strong>{{ telehealth.currentCall()?.doctor?.name }}</strong>
                 ({{ telehealth.currentCall()?.doctor?.role }})
               </span>
@@ -174,7 +197,10 @@ import { TelehealthService, DoctorDutyInfo } from '../../core/services/telehealt
                 class="btn-toggle-chat"
                 (click)="chatSidebarOpen.set(!chatSidebarOpen())"
               >
-                💬 Chat {{ chatSidebarOpen() ? '▼' : '▲' }}
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span>Chat</span>
               </button>
             </div>
           </header>
@@ -187,7 +213,7 @@ import { TelehealthService, DoctorDutyInfo } from '../../core/services/telehealt
               <div class="remote-doctor-box">
                 <div class="doctor-feed-simulation">
                   <div class="doctor-live-halo">
-                    <span class="halo-avatar">{{ telehealth.currentCall()?.doctor?.avatar }}</span>
+                    <span class="halo-avatar-initials">{{ telehealth.currentCall()?.doctor?.avatar }}</span>
                     <div class="audio-waves-meter">
                       <span class="wave-bar b1"></span>
                       <span class="wave-bar b2"></span>
@@ -207,13 +233,25 @@ import { TelehealthService, DoctorDutyInfo } from '../../core/services/telehealt
                     <video #localVideo autoplay playsinline muted class="pip-video-feed"></video>
                   } @else {
                     <div class="camera-off-placeholder">
-                      <span>👤</span>
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/>
+                      </svg>
                       <small>Camera Off</small>
                     </div>
                   }
                   <div class="pip-overlay-tag">
                     <span>{{ telehealth.currentCall()?.patientName }} (You)</span>
-                    <span class="pip-mic-status">{{ micMuted() ? '🔇' : '🎙️' }}</span>
+                    <span class="pip-mic-status">
+                      @if (micMuted()) {
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <line x1="1" x2="23" y1="1" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" x2="12" y1="19" y2="23"/><line x1="8" x2="16" y1="23" y2="23"/>
+                        </svg>
+                      } @else {
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="23"/><line x1="8" x2="16" y1="23" y2="23"/>
+                        </svg>
+                      }
+                    </span>
                   </div>
                 </div>
               </div>
@@ -227,7 +265,17 @@ import { TelehealthService, DoctorDutyInfo } from '../../core/services/telehealt
                   (click)="toggleMic()"
                   [title]="micMuted() ? 'Unmute Microphone' : 'Mute Microphone'"
                 >
-                  <span class="dock-icon">{{ micMuted() ? '🔇' : '🎙️' }}</span>
+                  <span class="dock-icon">
+                    @if (micMuted()) {
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="1" x2="23" y1="1" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" x2="12" y1="19" y2="23"/><line x1="8" x2="16" y1="23" y2="23"/>
+                      </svg>
+                    } @else {
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="23"/><line x1="8" x2="16" y1="23" y2="23"/>
+                      </svg>
+                    }
+                  </span>
                   <span class="dock-label">{{ micMuted() ? 'Unmute' : 'Mute' }}</span>
                 </button>
 
@@ -238,7 +286,17 @@ import { TelehealthService, DoctorDutyInfo } from '../../core/services/telehealt
                   (click)="toggleCamera()"
                   [title]="cameraOn() ? 'Turn Camera Off' : 'Turn Camera On'"
                 >
-                  <span class="dock-icon">{{ cameraOn() ? '📹' : '🚫' }}</span>
+                  <span class="dock-icon">
+                    @if (cameraOn()) {
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.934a.5.5 0 0 0-.777-.416L16 11"/><rect width="14" height="12" x="2" y="6" rx="2"/>
+                      </svg>
+                    } @else {
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="2" x2="22" y1="2" y2="22"/><path d="M10.41 10.41a2 2 0 1 0 2.83 2.83"/><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.934a.5.5 0 0 0-.777-.416L16 11"/><rect width="14" height="12" x="2" y="6" rx="2"/>
+                      </svg>
+                    }
+                  </span>
                   <span class="dock-label">{{ cameraOn() ? 'Stop Video' : 'Start Video' }}</span>
                 </button>
 
@@ -249,7 +307,11 @@ import { TelehealthService, DoctorDutyInfo } from '../../core/services/telehealt
                   (click)="toggleScreenShare()"
                   title="Share Screen"
                 >
-                  <span class="dock-icon">🖥️</span>
+                  <span class="dock-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/>
+                    </svg>
+                  </span>
                   <span class="dock-label">{{ screenSharing() ? 'Sharing' : 'Share Screen' }}</span>
                 </button>
 
@@ -259,7 +321,11 @@ import { TelehealthService, DoctorDutyInfo } from '../../core/services/telehealt
                   (click)="telehealth.endCall()"
                   title="End Telehealth Call"
                 >
-                  <span class="dock-icon">🛑</span>
+                  <span class="dock-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/><line x1="2" x2="22" y1="2" y2="22"/>
+                    </svg>
+                  </span>
                   <span class="dock-label">End Session</span>
                 </button>
               </div>
@@ -403,9 +469,19 @@ import { TelehealthService, DoctorDutyInfo } from '../../core/services/telehealt
         background: var(--mb-primary-soft);
       }
     }
-    .doc-avatar {
-      font-size: 2.2rem;
-      line-height: 1;
+    .doc-avatar-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(13, 148, 136, 0.12), rgba(2, 132, 199, 0.12));
+      border: 1px solid rgba(13, 148, 136, 0.3);
+      color: var(--mb-teal-strong);
+      font-size: 0.95rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
     .doc-info {
       flex: 1;
@@ -546,9 +622,19 @@ import { TelehealthService, DoctorDutyInfo } from '../../core/services/telehealt
       align-items: center;
       justify-content: center;
     }
-    .teams-avatar {
-      font-size: 2.2rem;
+    .teams-avatar-initials {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: #5b5fc7;
+      color: #ffffff;
+      font-size: 1.1rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       z-index: 2;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
     .radar-wave {
       position: absolute;
@@ -751,8 +837,19 @@ import { TelehealthService, DoctorDutyInfo } from '../../core/services/telehealt
       align-items: center;
       justify-content: center;
     }
-    .halo-avatar {
-      font-size: 4.5rem;
+    .halo-avatar-initials {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: 0.05em;
+    }
+    .doc-badge-pill {
+      background: rgba(13, 148, 136, 0.25);
+      color: #5eead4;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 750;
+      font-size: 0.75rem;
     }
     .audio-waves-meter {
       position: absolute;

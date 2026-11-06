@@ -36,10 +36,10 @@ export interface RoomMessage {
             <strong>MindBridge Telehealth</strong>
           </div>
           <div class="participants-chip">
-            <span class="doc-icon">👨‍⚕️</span>
+            <span class="role-badge">Doctor</span>
             <span>{{ doctorName() }}</span>
             <span class="divider">⟷</span>
-            <span class="pat-icon">👤</span>
+            <span class="role-badge patient">Patient</span>
             <span>{{ patientName() }}</span>
           </div>
         </div>
@@ -55,7 +55,10 @@ export interface RoomMessage {
             [class.active]="chatOpen()"
             (click)="chatOpen.set(!chatOpen())"
           >
-            💬 Chat
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            <span>Chat</span>
           </button>
         </div>
       </header>
@@ -67,7 +70,7 @@ export interface RoomMessage {
           <!-- Remote Doctor View -->
           <div class="video-cell doctor-cell">
             <div class="cell-halo">
-              <div class="doc-avatar-large">👨‍⚕️</div>
+              <div class="doc-avatar-initials">MD</div>
               <div class="sound-wave-bars">
                 <span class="bar b1"></span>
                 <span class="bar b2"></span>
@@ -87,14 +90,30 @@ export interface RoomMessage {
               <video #localVideo autoplay playsinline muted class="camera-feed"></video>
             } @else {
               <div class="camera-off-state">
-                <div class="off-avatar">👤</div>
+                <div class="off-avatar">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/>
+                  </svg>
+                </div>
                 <strong>Camera Off</strong>
                 <small>Video is disabled</small>
               </div>
             }
             <div class="cell-overlay-name">
               <strong>{{ patientName() }} (You)</strong>
-              <span class="mic-status-chip">{{ audioOn() ? '🎙️ Mic Active' : '🔇 Muted' }}</span>
+              <span class="mic-status-chip">
+                @if (audioOn()) {
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 3px;">
+                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="23"/><line x1="8" x2="16" y1="23" y2="23"/>
+                  </svg>
+                  <span>Mic Active</span>
+                } @else {
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 3px;">
+                    <line x1="1" x2="23" y1="1" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" x2="12" y1="19" y2="23"/><line x1="8" x2="16" y1="23" y2="23"/>
+                  </svg>
+                  <span>Muted</span>
+                }
+              </span>
             </div>
           </div>
         </div>
@@ -108,7 +127,7 @@ export interface RoomMessage {
             </div>
             <div class="chat-messages-area">
               <div class="system-bubble">
-                🔒 End-to-end encrypted medical discussion. Messages in this room are completely private.
+                End-to-end encrypted medical discussion. Messages in this room are confidential under the DPDP Act.
               </div>
               @for (msg of messages(); track msg.id) {
                 <div class="chat-row" [class.mine]="msg.senderRole === myRole()">
@@ -145,7 +164,17 @@ export interface RoomMessage {
             (click)="toggleVideo()"
             [title]="videoOn() ? 'Turn Camera Off' : 'Turn Camera On'"
           >
-            <span class="dock-btn-icon">{{ videoOn() ? '📹' : '🚫' }}</span>
+            <span class="dock-btn-icon">
+              @if (videoOn()) {
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.934a.5.5 0 0 0-.777-.416L16 11"/><rect width="14" height="12" x="2" y="6" rx="2"/>
+                </svg>
+              } @else {
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="2" x2="22" y1="2" y2="22"/><path d="M10.41 10.41a2 2 0 1 0 2.83 2.83"/><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.934a.5.5 0 0 0-.777-.416L16 11"/><rect width="14" height="12" x="2" y="6" rx="2"/>
+                </svg>
+              }
+            </span>
             <span class="dock-btn-text">{{ videoOn() ? 'Video On' : 'Video Off' }}</span>
           </button>
 
@@ -157,7 +186,17 @@ export interface RoomMessage {
             (click)="toggleAudio()"
             [title]="audioOn() ? 'Mute Microphone' : 'Unmute Microphone'"
           >
-            <span class="dock-btn-icon">{{ audioOn() ? '🎙️' : '🔇' }}</span>
+            <span class="dock-btn-icon">
+              @if (audioOn()) {
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="23"/><line x1="8" x2="16" y1="23" y2="23"/>
+                </svg>
+              } @else {
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="1" x2="23" y1="1" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" x2="12" y1="19" y2="23"/><line x1="8" x2="16" y1="23" y2="23"/>
+                </svg>
+              }
+            </span>
             <span class="dock-btn-text">{{ audioOn() ? 'Mic On' : 'Muted' }}</span>
           </button>
 
@@ -169,7 +208,11 @@ export interface RoomMessage {
             (click)="toggleScreenShare()"
             title="Share Screen"
           >
-            <span class="dock-btn-icon">🖥️</span>
+            <span class="dock-btn-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/>
+              </svg>
+            </span>
             <span class="dock-btn-text">{{ screenSharing() ? 'Stop Share' : 'Share Screen' }}</span>
           </button>
 
@@ -181,7 +224,11 @@ export interface RoomMessage {
             (click)="chatOpen.set(!chatOpen())"
             title="Toggle In-Call Chat"
           >
-            <span class="dock-btn-icon">💬</span>
+            <span class="dock-btn-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            </span>
             <span class="dock-btn-text">Chat</span>
           </button>
 
@@ -192,8 +239,12 @@ export interface RoomMessage {
             (click)="leaveCall()"
             title="Leave Video Call"
           >
-            <span class="dock-btn-icon">📞</span>
-            <span class="dock-btn-text">Leave Call</span>
+            <span class="dock-btn-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/><line x1="2" x2="22" y1="2" y2="22"/>
+              </svg>
+            </span>
+            <span class="dock-btn-text">End Session</span>
           </button>
         </div>
       </footer>
@@ -250,6 +301,20 @@ export interface RoomMessage {
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+    .role-badge {
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: rgba(14, 165, 233, 0.2);
+      color: #38bdf8;
+      &.patient {
+        background: rgba(16, 185, 129, 0.2);
+        color: #34d399;
+      }
     }
     .divider {
       color: #64748b;
@@ -329,9 +394,18 @@ export interface RoomMessage {
       align-items: center;
       gap: 16px;
     }
-    .doc-avatar-large {
-      font-size: 80px;
-      filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.4));
+    .doc-avatar-initials {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0284c7, #0f766e);
+      color: #ffffff;
+      font-size: 2rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 25px rgba(2, 132, 199, 0.4);
     }
     .sound-wave-bars {
       display: flex;

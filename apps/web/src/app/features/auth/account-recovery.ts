@@ -58,7 +58,11 @@ export function matchPasswords(group: AbstractControl): ValidationErrors | null 
 
           @case ('idle') {
             <div class="state-icon-wrap idle">
-              <span class="icon">✉️</span>
+              <span class="icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                </svg>
+              </span>
             </div>
             <h1 class="verify-title">Confirm Your Email Address</h1>
             <p class="verify-subtitle">
@@ -71,9 +75,9 @@ export function matchPasswords(group: AbstractControl): ValidationErrors | null 
 
             @if (auth.isAuthenticated()) {
               <div class="staging-callout">
-                <div class="callout-badge">⚡ Cloud Staging Mode Active</div>
+                <div class="callout-badge">Instant Verification Mode</div>
                 <p class="callout-desc">
-                  On Render staging, outgoing SMTP is kept in-memory for security. Click below to instantly activate and verify your account:
+                  Activate and verify your account instantly:
                 </p>
                 <button
                   class="btn btn-primary-elevated btn-block"
@@ -84,7 +88,7 @@ export function matchPasswords(group: AbstractControl): ValidationErrors | null 
                   @if (busy()) {
                     <span class="spinner-sm"></span> Verifying Account…
                   } @else {
-                    ⚡ Verify Account Instantly Now
+                    Verify Account Instantly
                   }
                 </button>
               </div>
@@ -113,7 +117,7 @@ export function matchPasswords(group: AbstractControl): ValidationErrors | null 
                   (click)="resend()"
                   [disabled]="busy() || resent()"
                 >
-                  {{ resent() ? '✓ Verification link refreshed' : '📧 Resend verification email' }}
+                  {{ resent() ? 'Verification link refreshed' : 'Resend verification email' }}
                 </button>
                 <a class="btn btn-ghost btn-sm" [routerLink]="auth.homeFor()">
                   Back to Dashboard
@@ -121,7 +125,7 @@ export function matchPasswords(group: AbstractControl): ValidationErrors | null 
               </div>
             } @else {
               <div class="staging-callout">
-                <div class="callout-badge">⚡ Quick Email Verification</div>
+                <div class="callout-badge">Direct Email Verification</div>
                 <p class="callout-desc">
                   Enter the email address you registered with to verify your account immediately:
                 </p>
@@ -144,7 +148,7 @@ export function matchPasswords(group: AbstractControl): ValidationErrors | null 
                     @if (busy()) {
                       <span class="spinner-sm"></span> Verifying…
                     } @else {
-                      ⚡ Instant Verify Email
+                      Verify Email Address
                     }
                   </button>
                 </form>
@@ -160,7 +164,11 @@ export function matchPasswords(group: AbstractControl): ValidationErrors | null 
 
           @default {
             <div class="state-icon-wrap failed">
-              <span class="icon">⚠️</span>
+              <span class="icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+              </span>
             </div>
             <h1 class="verify-title">Verification Notice</h1>
             <div class="alert alert-danger" role="alert">
@@ -169,9 +177,9 @@ export function matchPasswords(group: AbstractControl): ValidationErrors | null 
 
             @if (auth.isAuthenticated()) {
               <div class="staging-callout">
-                <div class="callout-badge">⚡ Instant Staging Activation</div>
+                <div class="callout-badge">Direct Account Activation</div>
                 <p class="callout-desc">
-                  You can bypass the token check and verify your account directly right now:
+                  You can verify and activate your account directly:
                 </p>
                 <button
                   class="btn btn-primary-elevated btn-block"
@@ -182,7 +190,7 @@ export function matchPasswords(group: AbstractControl): ValidationErrors | null 
                   @if (busy()) {
                     <span class="spinner-sm"></span> Activating…
                   } @else {
-                    ⚡ Verify Account Instantly Now
+                    Verify Account Now
                   }
                 </button>
               </div>
@@ -500,7 +508,11 @@ export class VerifyEmailPage implements OnInit {
     <div class="verify-page-wrapper">
       <div class="verify-card">
         <div class="state-icon-wrap idle">
-          <span class="icon">🔑</span>
+          <span class="icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/>
+            </svg>
+          </span>
         </div>
         <h1 class="verify-title">Reset Your Password</h1>
         @if (message()) {
@@ -627,7 +639,11 @@ export class ForgotPasswordPage {
     <div class="verify-page-wrapper">
       <div class="verify-card">
         <div class="state-icon-wrap idle">
-          <span class="icon">🔒</span>
+          <span class="icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </span>
         </div>
         <h1 class="verify-title">Choose a New Password</h1>
         @if (done()) {

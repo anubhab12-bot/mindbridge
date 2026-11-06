@@ -190,7 +190,7 @@ interface RecoveryTrack {
                 class="mood-btn" 
                 [class.selected]="selectedMoodIndex() === i"
                 (click)="selectMood(i)">
-                <span class="mood-emoji">{{ m.emoji }}</span>
+                <span class="mood-dot" [class]="'tone-' + i">●</span>
                 <span class="mood-label">{{ m.label }}</span>
               </button>
             }
@@ -224,7 +224,11 @@ interface RecoveryTrack {
       <div class="container">
         <div class="impact-grid">
           <div class="impact-card">
-            <div class="impact-icon-wrapper teal">👥</div>
+            <div class="impact-icon-wrapper teal">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </div>
             <div class="impact-data">
               <span class="impact-number">{{ statTotalUsers() }}</span>
               <span class="impact-label">Persons Actively Using MindBridge</span>
@@ -233,7 +237,11 @@ interface RecoveryTrack {
           </div>
 
           <div class="impact-card">
-            <div class="impact-icon-wrapper indigo">🏛️</div>
+            <div class="impact-icon-wrapper indigo">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9h1"/><path d="M9 13h1"/><path d="M9 17h1"/>
+              </svg>
+            </div>
             <div class="impact-data">
               <span class="impact-number">{{ statTotalNgos() }}</span>
               <span class="impact-label">Partner NGOs & Regional Clinics</span>
@@ -242,7 +250,11 @@ interface RecoveryTrack {
           </div>
 
           <div class="impact-card highlight">
-            <div class="impact-icon-wrapper emerald">🌱</div>
+            <div class="impact-icon-wrapper emerald">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+              </svg>
+            </div>
             <div class="impact-data">
               <span class="impact-number">{{ statRecoveryRate() }}</span>
               <span class="impact-label">Recovery & Improvement Rate</span>
@@ -251,7 +263,11 @@ interface RecoveryTrack {
           </div>
 
           <div class="impact-card">
-            <div class="impact-icon-wrapper amber">⏱️</div>
+            <div class="impact-icon-wrapper amber">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </div>
             <div class="impact-data">
               <span class="impact-number">{{ statAvgResponseTime() }}</span>
               <span class="impact-label">Average Crisis Routing Time</span>
@@ -325,10 +341,10 @@ interface RecoveryTrack {
     <!-- MULTILINGUAL AI COMPANION CHARACTER SHOWCASE (Hindi, Bengali, English) -->
     <section class="container" style="margin-bottom: var(--mb-space-7);">
       <div class="ai-studio-header center">
-        <span class="eyebrow-accent">✨ Multilingual AI Sanctuary</span>
+        <span class="eyebrow-accent">24/7 MULTILINGUAL AI SANCTUARY</span>
         <h2>Meet Your 24/7 AI Companion in Your Own Language</h2>
         <p class="muted lead" style="max-width: 650px; margin: 0 auto 20px;">
-          Select your preferred character and language (Hindi, Bengali, or English) for comforting, non-judgmental guidance and active listening.
+          Select your preferred companion and language (Hindi, Bengali, or English) for comforting, non-judgmental guidance and active listening.
         </p>
 
         <!-- Language Selector Bar -->
@@ -338,21 +354,21 @@ interface RecoveryTrack {
             class="lang-pill" 
             [class.active]="selectedLang() === 'en'"
             (click)="selectLanguage('en')">
-            <span class="flag">🇬🇧</span> English
+            <span class="lang-code-tag">EN</span> English
           </button>
           <button 
             type="button"
             class="lang-pill" 
             [class.active]="selectedLang() === 'hi'"
             (click)="selectLanguage('hi')">
-            <span class="flag">🇮🇳</span> हिंदी (Hindi)
+            <span class="lang-code-tag">HI</span> हिंदी (Hindi)
           </button>
           <button 
             type="button"
             class="lang-pill" 
             [class.active]="selectedLang() === 'bn'"
             (click)="selectLanguage('bn')">
-            <span class="flag">🇮🇳</span> বাংলা (Bengali)
+            <span class="lang-code-tag">BN</span> বাংলা (Bengali)
           </button>
         </div>
       </div>
@@ -367,7 +383,7 @@ interface RecoveryTrack {
             [class.active]="selectedCharacter() === 'asha'"
             (click)="selectCharacter('asha')">
             <div class="char-avatar-ring rose">
-              <span class="char-emoji animate-float">🌸</span>
+              <span class="char-initials">AS</span>
             </div>
             <div class="char-meta">
               <strong>Asha (आशा / আশা)</strong>
@@ -383,7 +399,7 @@ interface RecoveryTrack {
             [class.active]="selectedCharacter() === 'aarav'"
             (click)="selectCharacter('aarav')">
             <div class="char-avatar-ring blue">
-              <span class="char-emoji animate-float">🩺</span>
+              <span class="char-initials">AM</span>
             </div>
             <div class="char-meta">
               <strong>Dr. Aarav (डॉ. आरव)</strong>
@@ -399,7 +415,7 @@ interface RecoveryTrack {
             [class.active]="selectedCharacter() === 'ananya'"
             (click)="selectCharacter('ananya')">
             <div class="char-avatar-ring purple">
-              <span class="char-emoji animate-float">✨</span>
+              <span class="char-initials">AN</span>
             </div>
             <div class="char-meta">
               <strong>Ananya (अनन्या)</strong>
@@ -414,8 +430,8 @@ interface RecoveryTrack {
         <div class="dialogue-stage-box">
           <div class="dialogue-avatar-col">
             <div class="large-avatar-halo" [class.rose]="selectedCharacter() === 'asha'" [class.blue]="selectedCharacter() === 'aarav'" [class.purple]="selectedCharacter() === 'ananya'">
-              <span class="stage-emoji animate-glow-ring">
-                {{ selectedCharacter() === 'asha' ? '🌸' : (selectedCharacter() === 'aarav' ? '🩺' : '✨') }}
+              <span class="stage-initials">
+                {{ selectedCharacter() === 'asha' ? 'AS' : (selectedCharacter() === 'aarav' ? 'AM' : 'AN') }}
               </span>
             </div>
             <span class="speaking-indicator">
@@ -438,7 +454,10 @@ interface RecoveryTrack {
                   type="button"
                   class="audio-toggle-btn" 
                   (click)="toggleAudio()">
-                  {{ isAudioPlaying() ? '🔊 Speaking Now (Click to Mute)' : '🔈 Play Audio Voice' }}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                  </svg>
+                  <span>{{ isAudioPlaying() ? 'Voice Active (Mute)' : 'Play Voice Narration' }}</span>
                 </button>
               </div>
 
@@ -448,7 +467,7 @@ interface RecoveryTrack {
 
               <div class="speech-footer">
                 <span class="lang-tag">
-                  {{ selectedLang() === 'hi' ? '🇮🇳 हिंदी (Hindi) Mode' : (selectedLang() === 'bn' ? '🇮🇳 বাংলা (Bengali) Mode' : '🇬🇧 English Mode') }}
+                  {{ selectedLang() === 'hi' ? 'हिंदी (Hindi) Voice Model' : (selectedLang() === 'bn' ? 'বাংলা (Bengali) Voice Model' : 'English Voice Model') }}
                 </span>
                 <a routerLink="/patient/companion" class="btn btn-primary btn-sm">
                   Start Live Chat with {{ selectedCharacter() === 'asha' ? 'Asha' : (selectedCharacter() === 'aarav' ? 'Dr. Aarav' : 'Ananya') }} →
@@ -480,8 +499,8 @@ interface RecoveryTrack {
             <span class="dot green"></span>
           </div>
           <div class="video-title-pill">
-            <span class="live-recording-badge">🔴 SIMULATED HD WALKTHROUGH</span>
-            <span>MindBridge User Journey · 1080p 60fps</span>
+            <span class="live-recording-badge">INTERACTIVE PLATFORM TOUR</span>
+            <span>MindBridge Clinical Care Journey</span>
           </div>
           <span class="time-stamp">{{ videoTime() }} / 03:00</span>
         </div>
@@ -539,9 +558,9 @@ interface RecoveryTrack {
                     <div class="demo-slider-track"><div class="demo-slider-fill" style="width: 80%;"></div></div>
                   </div>
                   <div class="demo-tags-row">
-                    <span class="demo-tag">🌿 Morning Walk</span>
-                    <span class="demo-tag">☕ Reduced Caffeine</span>
-                    <span class="demo-tag">🧘 10m Meditation</span>
+                    <span class="demo-tag">Morning Walk</span>
+                    <span class="demo-tag">Reduced Caffeine</span>
+                    <span class="demo-tag">10m Mindfulness</span>
                   </div>
                 </div>
               </div>
@@ -558,7 +577,7 @@ interface RecoveryTrack {
                   <div class="chat-bubble user">"I am feeling so overwhelmed with exams and family pressure."</div>
                   <div class="chat-bubble bot">
                     <div class="bot-header">
-                      <span>🌸 Asha Companion</span>
+                      <span class="bot-name">Asha AI Companion</span>
                       <span class="soundwave-container" style="height: 16px;">
                         <span class="soundwave-bar" style="height: 8px;"></span>
                         <span class="soundwave-bar" style="height: 14px;"></span>
@@ -580,12 +599,12 @@ interface RecoveryTrack {
                 <p class="muted">Patients browse verified council licenses, select tele-consultation slots, and share encrypted notes.</p>
                 <div class="screen-demo-ui doc-mode">
                   <div class="doc-demo-card">
-                    <div class="doc-avatar">🩺</div>
+                    <div class="doc-demo-initials">KR</div>
                     <div>
                       <strong>Dr. Kavitha Raman, MD Psychiatry</strong>
                       <span class="doc-sub">10 yrs exp · KMC-2016-9281 Verified · Tele-Consult ₹600</span>
                     </div>
-                    <span class="verified-pill">✓ Medical Council Approved</span>
+                    <span class="verified-pill">Medical Council Verified</span>
                   </div>
                 </div>
               </div>
@@ -600,7 +619,11 @@ interface RecoveryTrack {
                 <p class="muted">If acute distress is detected, instant emergency dialing to Tele-MANAS (14416) and local hospitals triggers immediately.</p>
                 <div class="screen-demo-ui crisis-mode">
                   <div class="crisis-demo-alert">
-                    <span class="alert-icon">🚨</span>
+                    <div class="alert-icon-wrap">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/>
+                      </svg>
+                    </div>
                     <div>
                       <strong>Tele-MANAS Active (Toll-Free 14416)</strong>
                       <span class="alert-sub">24/7 Government of India Mental Health Helpline Connected</span>
@@ -620,7 +643,14 @@ interface RecoveryTrack {
               type="button"
               class="play-pause-btn" 
               (click)="toggleVideoPlay()">
-              {{ isVideoPlaying() ? '⏸ Pause' : '▶ Play Demo' }}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
+                @if (isVideoPlaying()) {
+                  <rect width="4" height="16" x="6" y="4"/><rect width="4" height="16" x="14" y="4"/>
+                } @else {
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                }
+              </svg>
+              <span>{{ isVideoPlaying() ? 'Pause' : 'Play Tour' }}</span>
             </button>
             <span class="chapter-indicator-label">
               Chapter {{ activeVideoChapter() }} of 4: 
@@ -643,87 +673,76 @@ interface RecoveryTrack {
       </div>
     </section>
 
-    <!-- 12-MEMBER GOVERNANCE COUNCIL SPOTLIGHT -->
+    <!-- ACCREDITED CLINICAL SAFETY & QUALITY STANDARDS -->
     <section class="container" style="margin-bottom: var(--mb-space-6);">
-      <div class="council-spotlight-card card">
-        <div class="spotlight-left">
-          <div class="pill-badge-admin">🏛️ MindBridge Governance Council</div>
-          <h2>Apply to Join the Founding 12 Admin Board</h2>
-          <p class="lead-admin">
-            We are actively accepting applications for the 12 Governance Council seats from 
-            <strong>Clinical Specialists (Psychiatrists / Psychologists)</strong>, 
-            <strong>Accredited NGOs</strong>, and 
-            <strong>Brand-Safe Mental Health Creators</strong>.
+      <div class="clinical-ethics-card card">
+        <div class="ethics-left">
+          <div class="pill-badge-clinical">
+            <span class="live-dot-teal"></span>
+            <span>CLINICAL ETHICS & ACCREDITATION STANDARDS</span>
+          </div>
+          <h2>Rigorous Safety, Medical Ethics & Verified Clinicians</h2>
+          <p class="lead-clinical">
+            Every psychiatrist and clinical psychologist on MindBridge is individually verified against National Medical Commission (NMC) registration or Rehabilitation Council of India (RCI) licensing. Consultations are end-to-end encrypted under India's Digital Personal Data Protection (DPDP) Act.
           </p>
-          <div class="council-stats-row">
-            <div class="council-stat-item">
-              <span class="stat-big">7 / 12</span>
-              <span class="stat-small">Seats Currently Occupied</span>
+          <div class="clinical-pillars-row">
+            <div class="clinical-pillar-item">
+              <span class="pillar-title">100% Verified Licenses</span>
+              <span class="pillar-sub">NMC / RCI verified clinical credentials</span>
             </div>
-            <div class="council-stat-item">
-              <span class="stat-big">🛡️ AI Screen</span>
-              <span class="stat-small">Vulgarity & Adult Content Filtered</span>
+            <div class="clinical-pillar-item">
+              <span class="pillar-title">AES-256 Confidentiality</span>
+              <span class="pillar-sub">DPDP Act compliant zero-leakage data</span>
             </div>
-            <div class="council-stat-item">
-              <span class="stat-big">👑 Super Admin</span>
-              <span class="stat-small">Omnipotent Platform Governance</span>
+            <div class="clinical-pillar-item">
+              <span class="pillar-title">24/7 Crisis Escalation</span>
+              <span class="pillar-sub">Direct link to Tele-MANAS (14416)</span>
             </div>
           </div>
           <div class="row" style="margin-top: 18px; gap: 12px; flex-wrap: wrap;">
             <a routerLink="/professionals" class="btn btn-primary-elevated">
-              🩺 Consult Verified Specialists →
+              Browse Verified Specialists →
             </a>
             <a routerLink="/how-it-works" class="btn btn-secondary">
-              How MindBridge Works →
+              Clinical Telehealth Standards →
             </a>
           </div>
         </div>
 
-        <div class="spotlight-right">
-          <div class="seats-visual-box">
-            <h4>12 Council Seats Status</h4>
-            <div class="seats-preview-grid">
-              <div class="seat-circle filled specialist" title="Seat 1: Chief Psychiatrist">1</div>
-              <div class="seat-circle filled specialist" title="Seat 2: Clinical Psychologist">2</div>
-              <div class="seat-circle filled specialist" title="Seat 3: Neuropsychiatrist">3</div>
-              <div class="seat-circle available" title="Seat 4: Available Specialist Spot">4</div>
-
-              <div class="seat-circle filled ngo" title="Seat 5: NIMHANS Partner">5</div>
-              <div class="seat-circle filled ngo" title="Seat 6: Vandrevala Foundation">6</div>
-              <div class="seat-circle available" title="Seat 7: Available NGO Spot">7</div>
-              <div class="seat-circle available" title="Seat 8: Available NGO Spot">8</div>
-
-              <div class="seat-circle filled influencer" title="Seat 9: @MentalHealthIndia">9</div>
-              <div class="seat-circle filled influencer" title="Seat 10: @WellnessWithDrMaya">10</div>
-              <div class="seat-circle available" title="Seat 11: Available Creator Spot">11</div>
-              <div class="seat-circle available" title="Seat 12: Available Creator Spot">12</div>
-            </div>
-            <div class="seat-legend">
-              <span><span class="dot blue"></span> Specialists</span>
-              <span><span class="dot amber"></span> NGOs</span>
-              <span><span class="dot purple"></span> Influencers</span>
-              <span><span class="dot gray"></span> Open Spots (5)</span>
+        <div class="ethics-right">
+          <div class="contact-support-box">
+            <span class="contact-pill-tag">CLINICAL HELPDESK</span>
+            <h3>Have Questions or Need Guidance?</h3>
+            <p>Our care coordination team is available to assist you with specialist matching, video appointments, and confidentiality inquiries.</p>
+            <div class="contact-box-actions">
+              <a href="mailto:support@mindbridge.health?subject=Clinical%20Inquiry%20-%20MindBridge" class="btn btn-primary btn-block">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 6px;">
+                  <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                </svg>
+                <span>Contact via Email (support&#64;mindbridge.health)</span>
+              </a>
+              <span class="emergency-reminder">In immediate crisis? Call toll-free <strong>14416</strong> (Tele-MANAS)</span>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- DYNAMIC SUPER ADMIN AI FEATURES & INITIATIVES -->
+    <!-- ACTIVE CLINICAL PROGRAMS & INITIATIVES -->
     @if (dynamicFeatures().length > 0) {
       <section class="container dynamic-features-section">
         <div class="section-header center">
-          <span class="eyebrow-accent">⚡ Executive Council Live Directives</span>
-          <h2>Active Community Initiatives & Crisis Fast-Tracks</h2>
-          <p class="muted">Live features introduced and deployed dynamically via the Super Admin AI Feature Planner.</p>
+          <span class="eyebrow-accent">Specialized Healthcare Programs</span>
+          <h2>Active Clinical Programs & Community Support</h2>
+          <p class="muted">Evidence-based programs and care pathways designed by our clinical advisory team.</p>
         </div>
 
         <div class="dynamic-features-grid">
           @for (item of dynamicFeatures(); track item.id) {
             <article class="dynamic-feature-card" [class]="'df-theme-' + item.themeColor">
               <div class="df-card-top">
-                <span class="df-emoji">{{ item.iconEmoji }}</span>
-                <span class="df-badge">{{ item.badgeLabel || 'Dynamic Initiative' }}</span>
+                <span class="df-bullet-dot">●</span>
+                <span class="df-badge">{{ item.badgeLabel || 'Featured Program' }}</span>
               </div>
               <h3 class="df-title">{{ item.title }}</h3>
               <p class="df-desc">{{ item.description }}</p>
@@ -745,9 +764,42 @@ interface RecoveryTrack {
       </div>
 
       <div class="grid features">
-        @for (f of features; track f.title) {
+        @for (f of features; track f.title; let i = $index) {
           <article class="card-feature card-interactive">
-            <div class="feature-icon">{{ f.icon }}</div>
+            <div class="feature-icon-badge">
+              @switch (i) {
+                @case (0) {
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                }
+                @case (1) {
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/>
+                  </svg>
+                }
+                @case (2) {
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                }
+                @case (3) {
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>
+                  </svg>
+                }
+                @case (4) {
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9h1"/><path d="M9 13h1"/><path d="M9 17h1"/>
+                  </svg>
+                }
+                @default {
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/>
+                  </svg>
+                }
+              }
+            </div>
             <h3>{{ f.title }}</h3>
             <p class="muted">{{ f.text }}</p>
           </article>
@@ -787,10 +839,10 @@ interface RecoveryTrack {
           </div>
           <div class="app-download-actions">
             <button type="button" class="btn btn-primary-elevated btn-lg btn-install-app" (click)="pwa.openDownloadModal()">
-              <span>📲 Download & Install Mobile App</span>
+              <span>Download & Install Mobile App</span>
               <span class="btn-subtext">Free · Instant PWA · Android & iOS</span>
             </button>
-            <span class="app-install-note">🔒 Zero tracking · No credit card required</span>
+            <span class="app-install-note">Client-side encrypted · No credit card required</span>
           </div>
         </div>
 
@@ -799,28 +851,28 @@ interface RecoveryTrack {
             <div class="phone-speaker-notch"></div>
             <div class="phone-screen-content">
               <div class="mockup-header-bar">
-                <span class="mockup-logo">◐ MindBridge</span>
-                <span class="mockup-status">🟢 Online</span>
+                <span class="mockup-logo">MindBridge.health</span>
+                <span class="mockup-status">Available 24/7</span>
               </div>
               <div class="mockup-chat-card">
-                <div class="bubble-title">🌸 Asha AI Companion</div>
+                <div class="bubble-title">Asha AI Companion</div>
                 <div class="chat-msg">
                   "नमस्ते! आज आपका दिन कैसा रहा? मैं हमेशा आपके साथ हूँ।"
                 </div>
               </div>
               <div class="mockup-specialist-call">
-                <div class="spec-avatar">🩺</div>
+                <div class="spec-avatar-initials">SS</div>
                 <div class="spec-info">
                   <strong>Dr. Sunita Sen</strong>
                   <span>11 yrs exp · Video Telehealth</span>
                 </div>
-                <button type="button" class="btn-mockup-call" (click)="telehealth.openLauncher()">📹 Call</button>
+                <button type="button" class="btn-mockup-call" (click)="telehealth.openLauncher()">Consult</button>
               </div>
               <div class="mockup-quick-dock">
-                <span>🏠 Home</span>
-                <span>🌸 Asha</span>
-                <span>📹 Video</span>
-                <span>📊 Mood</span>
+                <span>Home</span>
+                <span>Companion</span>
+                <span>Video Call</span>
+                <span>Mood</span>
               </div>
             </div>
           </div>
@@ -1494,97 +1546,176 @@ interface RecoveryTrack {
       .emerald-bg { background: #10b981; }
     }
 
-    /* Council Spotlight */
-    .council-spotlight-card {
-      background: linear-gradient(135deg, rgba(107, 79, 163, 0.08) 0%, rgba(13, 148, 136, 0.06) 100%);
-      border: 1px solid rgba(107, 79, 163, 0.25);
+    /* Clinical Ethics & Accreditation Card */
+    .clinical-ethics-card {
+      background: linear-gradient(135deg, rgba(13, 148, 136, 0.05) 0%, rgba(2, 132, 199, 0.04) 100%), var(--mb-surface);
+      border: 1px solid var(--mb-border);
+      border-left: 4px solid var(--mb-teal);
       border-radius: var(--mb-radius-lg);
       padding: 32px;
       display: grid;
       grid-template-columns: 1.4fr 1fr;
-      gap: 28px;
+      gap: 32px;
       align-items: center;
+      box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
     }
-    .pill-badge-admin {
-      display: inline-block;
-      background: rgba(107, 79, 163, 0.15);
-      color: #6b4fa3;
-      font-weight: 700;
-      font-size: 0.8rem;
+    @media (max-width: 900px) {
+      .clinical-ethics-card {
+        grid-template-columns: 1fr;
+        padding: 24px 20px;
+        gap: 24px;
+      }
+    }
+    .pill-badge-clinical {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(13, 148, 136, 0.1);
+      color: var(--mb-teal-strong);
+      font-weight: 750;
+      font-size: 0.72rem;
       padding: 4px 12px;
       border-radius: 999px;
-      margin-bottom: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      margin-bottom: 10px;
+      letter-spacing: 0.04em;
     }
-    .council-stats-row {
-      display: flex;
-      gap: 20px;
-      margin: 16px 0 8px;
-      flex-wrap: wrap;
+    .live-dot-teal {
+      width: 6px;
+      height: 6px;
+      background: #0d9488;
+      border-radius: 50%;
     }
-    .council-stat-item {
+    .lead-clinical {
+      font-size: 0.94rem;
+      line-height: 1.6;
+      color: var(--mb-text-muted);
+      margin-bottom: 18px;
+    }
+    .clinical-pillars-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+      margin: 18px 0;
+    }
+    .clinical-pillar-item {
+      background: var(--mb-surface-2);
+      border: 1px solid var(--mb-border);
+      border-radius: var(--mb-radius-sm);
+      padding: 12px 14px;
       display: flex;
       flex-direction: column;
+      gap: 3px;
     }
-    .stat-big {
-      font-size: 1.3rem;
+    .pillar-title {
+      font-size: 0.88rem;
       font-weight: 800;
       color: var(--mb-text);
     }
-    .stat-small {
-      font-size: 0.78rem;
+    .pillar-sub {
+      font-size: 0.74rem;
       color: var(--mb-text-muted);
     }
-    .seats-visual-box {
+    .contact-support-box {
       background: var(--mb-surface);
       border: 1px solid var(--mb-border);
       border-radius: var(--mb-radius);
-      padding: 20px;
-      box-shadow: var(--mb-shadow);
-      h4 { margin: 0 0 14px; font-size: 0.95rem; }
+      padding: 24px 22px;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
-    .seats-preview-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
+    .contact-pill-tag {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 800;
+      color: #0284c7;
+      letter-spacing: 0.05em;
+    }
+    .contact-support-box h3 {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--mb-text);
+    }
+    .contact-support-box p {
+      margin: 0;
+      font-size: 0.84rem;
+      color: var(--mb-text-muted);
+      line-height: 1.5;
+    }
+    .contact-box-actions {
+      display: flex;
+      flex-direction: column;
       gap: 8px;
-      margin-bottom: 14px;
+      margin-top: 6px;
     }
-    .seat-circle {
+    .emergency-reminder {
+      font-size: 0.72rem;
+      color: var(--mb-crisis);
+      font-weight: 600;
+    }
+    .df-bullet-dot {
+      color: var(--mb-teal);
+      font-size: 10px;
+    }
+    .char-initials,
+    .stage-initials {
+      font-weight: 800;
+      color: #ffffff;
+      font-size: 0.95rem;
+      letter-spacing: 0.05em;
+    }
+    .stage-initials {
+      font-size: 1.8rem;
+    }
+    .lang-code-tag {
+      font-weight: 800;
+      font-size: 0.75rem;
+      padding: 2px 5px;
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.06);
+      margin-right: 4px;
+    }
+    .doc-demo-initials,
+    .spec-avatar-initials {
+      width: 38px;
       height: 38px;
-      border-radius: 8px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--mb-teal), var(--mb-primary));
+      color: #ffffff;
+      font-size: 0.85rem;
+      font-weight: 800;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: #fff;
-      &.specialist { background: #3b82f6; }
-      &.ngo { background: #f59e0b; color: #000; }
-      &.influencer { background: #8b5cf6; }
-      &.available {
-        background: var(--mb-bg);
-        color: var(--mb-text-dim);
-        border: 1px dashed var(--mb-border);
-      }
+      flex-shrink: 0;
     }
-    .seat-legend {
-      display: flex;
-      gap: 12px;
-      font-size: 0.75rem;
-      color: var(--mb-text-muted);
-      flex-wrap: wrap;
-      .dot {
-        display: inline-block;
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        margin-right: 4px;
-        &.blue { background: #3b82f6; }
-        &.amber { background: #f59e0b; }
-        &.purple { background: #8b5cf6; }
-        &.gray { background: #6b7280; }
-      }
+    .mood-dot {
+      font-size: 10px;
+      margin-right: 4px;
+      &.tone-0 { color: #0d9488; }
+      &.tone-1 { color: #f59e0b; }
+      &.tone-2 { color: #6366f1; }
+      &.tone-3 { color: #ef4444; }
+      &.tone-4 { color: #10b981; }
+    }
+    .feature-icon-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      border-radius: var(--mb-radius-sm);
+      background: rgba(13, 148, 136, 0.08);
+      border: 1px solid rgba(13, 148, 136, 0.2);
+      color: #0f766e;
+      margin-bottom: 12px;
+    }
+    :host-context([data-theme='dark']) .feature-icon-badge {
+      background: rgba(45, 212, 191, 0.12);
+      border-color: rgba(45, 212, 191, 0.25);
+      color: #2dd4bf;
     }
 
     /* Dynamic Features Section */
@@ -2445,35 +2576,35 @@ export class HomePage implements OnInit {
 
   protected readonly moods: MoodOption[] = [
     {
-      emoji: '😌',
+      emoji: '',
       label: 'Calm & Centered',
       tip: 'Great moment to write a reflection in your encrypted journal or set a positive intention for your day.',
       action: 'Open Private Journal',
       toolLink: '/patient/journal',
     },
     {
-      emoji: '😰',
+      emoji: '',
       label: 'Anxious & Overthinking',
       tip: 'Follow the 4-7-8 breathing pacer on the right. Inhale for 4s, hold for 7s, exhale slowly for 8s to calm your vagus nerve.',
       action: 'Try Grounding Exercise',
       toolLink: '/self-help',
     },
     {
-      emoji: '😔',
+      emoji: '',
       label: 'Low & Exhausted',
       tip: 'You do not have to carry this alone. Taking things one gentle breath at a time is enough for right now.',
       action: 'Read Self-Help Guidance',
       toolLink: '/self-help',
     },
     {
-      emoji: '😤',
+      emoji: '',
       label: 'Stressed & Burnt Out',
       tip: 'Name 5 things you can see, 4 you can touch, 3 you can hear, 2 you can smell, and 1 you can taste to reground your senses.',
       action: 'Sensory Reset Guide',
       toolLink: '/self-help',
     },
     {
-      emoji: '🌱',
+      emoji: '',
       label: 'Hopeful & Ready',
       tip: 'Take this forward momentum and book a 1-on-1 session with a certified mental healthcare specialist.',
       action: 'Find a Specialist',
@@ -2518,32 +2649,32 @@ export class HomePage implements OnInit {
 
   protected readonly features = [
     {
-      icon: '🤖',
+      icon: '',
       title: 'Empathetic AI Companion',
       text: 'Available 24/7 for calm, non-judgmental active listening, grounding exercises, and safety screening with zero clinical coldness.',
     },
     {
-      icon: '🩺',
+      icon: '',
       title: 'Verified Medical Specialists',
       text: 'Every psychiatrist and clinical psychologist is verified with state medical councils and the Rehabilitation Council of India.',
     },
     {
-      icon: '🔒',
+      icon: '',
       title: 'End-to-End Encryption',
       text: 'Your journal entries, AI companion chats, and clinical reflections are encrypted at rest with AES-256-GCM. Privacy is guaranteed.',
     },
     {
-      icon: '🚨',
+      icon: '',
       title: 'Zero-Delay Crisis Triage',
       text: 'Directly integrated with the Government of India Tele-MANAS (14416) crisis infrastructure for immediate safety escalations.',
     },
     {
-      icon: '🏛️',
+      icon: '',
       title: '124+ Partner NGOs',
       text: 'A nationwide grassroots network of mental health non-profits providing free community distress counseling and local camps.',
     },
     {
-      icon: '📊',
+      icon: '',
       title: 'Transparent Outcomes',
       text: 'Real-time population health telemetry tracking 94.6% symptom recovery across India through evidence-based methodologies.',
     },

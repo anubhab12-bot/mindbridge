@@ -116,9 +116,9 @@ export const EMOTIONS = [
 
             <button class="btn btn-save-checkin" type="submit" [disabled]="busy() || form.invalid">
               @if (busy()) {
-                <span>⏳ Saving check-in...</span>
+                <span>Saving check-in...</span>
               } @else {
-                <span>✨ Save check-in</span>
+                <span>Save check-in</span>
               }
             </button>
           </form>
@@ -208,7 +208,7 @@ export const EMOTIONS = [
                   <!-- Header row: Mood badge + Timestamp -->
                   <div class="history-top-row">
                     <div class="mood-pill" [class]="moodClass(e.score)">
-                      <span class="mood-pill-emoji">{{ moodEmoji(e.score) }}</span>
+                      <span class="mood-pill-bullet">●</span>
                       <strong class="mood-pill-name">{{ label(e.score) }}</strong>
                       <span class="mood-pill-score">{{ e.score }}/5</span>
                     </div>
@@ -242,7 +242,9 @@ export const EMOTIONS = [
                     [attr.aria-label]="'Delete check-in from ' + (e.createdAt | date: 'medium')"
                     title="Delete check-in"
                   >
-                    <span class="del-icon">🗑️</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
                     <span>Delete</span>
                   </button>
                 </div>
@@ -636,8 +638,7 @@ export class MoodPage implements OnInit {
     return MOOD_LABELS[score - 1] ?? String(score);
   }
   protected moodEmoji(score: number): string {
-    const emojis = ['🌧️', '☁️', '⛅', '🌤️', '☀️'];
-    return emojis[score - 1] ?? '✨';
+    return '●';
   }
   protected moodClass(score: number): string {
     const classes = ['mood-1', 'mood-2', 'mood-3', 'mood-4', 'mood-5'];

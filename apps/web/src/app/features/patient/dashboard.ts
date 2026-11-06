@@ -34,7 +34,11 @@ export interface TopDoctor {
       <!-- SUCCESS / EMAIL NOTICE TOAST -->
       @if (emailNotice()) {
         <div class="email-sent-banner animated-fade">
-          <div class="banner-icon">✉️</div>
+          <div class="banner-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+            </svg>
+          </div>
           <div class="banner-body">
             <strong>Video Call Link Sent via Email!</strong>
             <p>{{ emailNotice() }}</p>
@@ -67,7 +71,10 @@ export interface TopDoctor {
                 class="btn-call-action primary"
                 (click)="joinVideoCall(appt)"
               >
-                📹 Join 1-on-1 Video Call Now
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.934a.5.5 0 0 0-.777-.416L16 11"/><rect width="14" height="12" x="2" y="6" rx="2"/>
+                </svg>
+                <span>Join Video Consultation</span>
               </button>
               <button
                 type="button"
@@ -75,17 +82,20 @@ export interface TopDoctor {
                 (click)="resendVideoEmail(appt.id)"
                 [disabled]="resendingEmail()"
               >
-                {{ resendingEmail() ? 'Sending Email…' : '📧 Resend Meeting Link to Email' }}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                </svg>
+                <span>{{ resendingEmail() ? 'Sending Email…' : 'Resend Meeting Link to Email' }}</span>
               </button>
             </div>
           </div>
 
           <div class="card-right-preview">
             <div class="doc-card-highlight">
-              <div class="doc-big-avatar">👨‍⚕️</div>
+              <div class="doc-big-avatar">{{ getInitials(appt.doctor.displayName) }}</div>
               <strong>{{ appt.doctor.displayName }}</strong>
               <small>{{ label(appt.doctor.professionalCategory) }}</small>
-              <div class="telehealth-tag">✓ Video Consultation Confirmed</div>
+              <div class="telehealth-tag">Video Consultation Confirmed</div>
             </div>
           </div>
         </section>
@@ -96,18 +106,33 @@ export interface TopDoctor {
         <div class="card-left">
           <div class="status-badge-row">
             <span class="live-dot-green"></span>
-            <span class="badge-text">3 SPECIALISTS SUGGESTED BY YEARS OF EXPERIENCE</span>
+            <span class="badge-text">SPECIALISTS RANKED BY CLINICAL EXPERIENCE</span>
           </div>
           <h2>Live 1-on-1 Clinical Video Consultation</h2>
           <p>
-            Consult with our top verified professionals ranked by years of clinical experience.
+            Consult with top verified professionals ranked by years of clinical experience.
             When you schedule, a direct 1-on-1 video call link is immediately emailed to both your email
             and the doctor's email to join.
           </p>
           <div class="security-pills">
-            <span>🔒 AES-256 Encrypted</span>
-            <span>📹 Video & Mic Controls</span>
-            <span>✉️ Meeting Link via Email</span>
+            <span class="sec-pill">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <span>AES-256 Encrypted</span>
+            </span>
+            <span class="sec-pill">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.934a.5.5 0 0 0-.777-.416L16 11"/><rect width="14" height="12" x="2" y="6" rx="2"/>
+              </svg>
+              <span>Video & Mic Controls</span>
+            </span>
+            <span class="sec-pill">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+              </svg>
+              <span>Direct Link Emailed</span>
+            </span>
           </div>
         </div>
 
@@ -115,7 +140,7 @@ export interface TopDoctor {
           @for (doc of topDoctors(); track doc.id) {
             <div class="portal-doctor-row">
               <div class="portal-doc-header">
-                <div class="doc-avatar">{{ doc.avatar }}</div>
+                <div class="doc-avatar-badge">{{ doc.avatar }}</div>
                 <div class="doc-meta">
                   <div class="doc-title-row">
                     <strong>{{ doc.name }}</strong>
@@ -123,7 +148,7 @@ export interface TopDoctor {
                   </div>
                   <div class="doc-category">{{ doc.category }}</div>
                   <div class="doc-stars-exp">
-                    <span class="stars">⭐ {{ doc.ratingAverage }}</span> ·
+                    <span class="stars">Rating: {{ doc.ratingAverage }} / 5.0</span> ·
                     <strong class="exp-badge">{{ doc.yearsExperience }} yrs exp</strong>
                   </div>
                 </div>
@@ -136,7 +161,10 @@ export interface TopDoctor {
                   (click)="openScheduleModal(doc)"
                   [disabled]="bookingLoading()"
                 >
-                  📹 Schedule Video Call
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.934a.5.5 0 0 0-.777-.416L16 11"/><rect width="14" height="12" x="2" y="6" rx="2"/>
+                  </svg>
+                  <span>Schedule Consultation</span>
                 </button>
               </div>
             </div>
@@ -149,12 +177,12 @@ export interface TopDoctor {
         <div class="telehealth-modal-backdrop" (click)="schedulingDoctor.set(null)">
           <div class="schedule-dialog" (click)="$event.stopPropagation()">
             <div class="dialog-header">
-              <h3>Schedule 1-on-1 Video Call</h3>
+              <h3>Schedule 1-on-1 Video Consultation</h3>
               <button type="button" class="btn-close" (click)="schedulingDoctor.set(null)">✕</button>
             </div>
             <div class="dialog-body">
               <div class="selected-doc-banner">
-                <span class="doc-avatar-sm">{{ doc.avatar }}</span>
+                <span class="doc-avatar-badge sm">{{ doc.avatar }}</span>
                 <div>
                   <strong>{{ doc.name }}</strong>
                   <div class="small muted">{{ doc.category }} · {{ doc.yearsExperience }} years experience</div>
@@ -164,7 +192,7 @@ export interface TopDoctor {
               <div class="field">
                 <label for="schedTime">Select Consultation Time</label>
                 <select id="schedTime" class="input" [(ngModel)]="selectedTimeSlot">
-                  <option value="now">⚡ Right Now (Instant Consultation)</option>
+                  <option value="now">Immediate Consultation (Right Now)</option>
                   <option value="today-18">Today at 6:00 PM</option>
                   <option value="today-20">Today at 8:00 PM</option>
                   <option value="tomorrow-10">Tomorrow at 10:00 AM</option>
@@ -184,7 +212,11 @@ export interface TopDoctor {
               </div>
 
               <div class="email-info-box">
-                <div class="box-icon">ℹ️</div>
+                <div class="box-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+                  </svg>
+                </div>
                 <div class="box-text">
                   Upon confirmation, an email with the direct video meeting link will be sent to
                   <strong>{{ auth.user()?.email }}</strong> and the doctor's email.
@@ -299,122 +331,153 @@ export interface TopDoctor {
       margin-top: var(--mb-space-6);
     }
 
-    /* TELEHEALTH SECTION MATCHING DESIGN */
+    /* TELEHEALTH SECTION: SERENE CLINICAL HEALTHLINE THEME */
     .portal-telehealth-card {
-      background: #091e1d;
-      color: #f0fdfa;
-      border-radius: 20px;
-      padding: 30px 32px;
+      background: #ffffff;
+      color: var(--mb-text);
+      border-radius: var(--mb-radius-lg);
+      padding: 28px 30px;
       margin-bottom: 24px;
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
-      border: 1px solid rgba(20, 184, 166, 0.25);
+      box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+      border: 1px solid var(--mb-border);
+      border-left: 4px solid var(--mb-teal);
       display: grid;
       grid-template-columns: 1.15fr 1fr;
-      gap: 30px;
+      gap: 28px;
       align-items: center;
       position: relative;
       overflow: hidden;
     }
+    :host-context([data-theme='dark']) .portal-telehealth-card {
+      background: #111827;
+      border-color: #334155;
+      border-left-color: #2dd4bf;
+    }
     @media (max-width: 900px) {
       .portal-telehealth-card {
         grid-template-columns: 1fr;
-        padding: 24px 20px;
+        padding: 22px 18px;
+        gap: 22px;
       }
     }
     .scheduled-mode {
-      background: linear-gradient(135deg, #091e1d 0%, #0f3d39 100%);
-      border-color: #14b8a6;
+      border-left-color: var(--mb-primary);
+      background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+    }
+    :host-context([data-theme='dark']) .scheduled-mode {
+      background: linear-gradient(135deg, #0f172a 0%, #082f49 100%);
     }
     .status-badge-row {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: rgba(20, 184, 166, 0.15);
-      border: 1px solid rgba(20, 184, 166, 0.3);
-      padding: 5px 12px;
+      background: rgba(13, 148, 136, 0.08);
+      border: 1px solid rgba(13, 148, 136, 0.25);
+      padding: 4px 12px;
       border-radius: 999px;
-      font-size: 0.76rem;
+      font-size: 0.72rem;
       font-weight: 700;
-      letter-spacing: 0.5px;
-      color: #5eead4;
+      letter-spacing: 0.03em;
+      color: var(--mb-teal-strong);
       margin-bottom: 12px;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    :host-context([data-theme='dark']) .status-badge-row {
+      background: rgba(45, 212, 191, 0.12);
+      color: #2dd4bf;
+      border-color: rgba(45, 212, 191, 0.3);
     }
     .live-dot-green {
       width: 8px;
       height: 8px;
       background: #10b981;
       border-radius: 50%;
-      box-shadow: 0 0 8px #10b981;
+      flex-shrink: 0;
       animation: pulse 1.5s infinite;
     }
     .card-left h2 {
-      font-size: 1.65rem;
-      color: #ffffff;
-      margin: 0 0 10px;
-      font-weight: 700;
+      font-size: 1.45rem;
+      color: var(--mb-text);
+      margin: 0 0 8px;
+      font-weight: 800;
       line-height: 1.25;
+      letter-spacing: -0.02em;
+      word-break: break-word;
+      overflow-wrap: break-word;
     }
     .doctor-sub-details {
-      font-size: 0.95rem;
-      color: #a7f3d0;
-      margin-bottom: 12px;
+      font-size: 0.9rem;
+      color: var(--mb-teal-strong);
+      margin-bottom: 10px;
+      font-weight: 600;
     }
     .time-highlight {
-      color: #ffffff;
+      color: var(--mb-text);
     }
     .appointment-notice {
       font-size: 0.88rem;
       line-height: 1.5;
-      color: #99f6e4;
-      margin: 0 0 20px;
+      color: var(--mb-text-muted);
+      margin: 0 0 18px;
     }
     .card-left p {
-      color: #ccfbf1;
-      font-size: 0.9rem;
+      color: var(--mb-text-muted);
+      font-size: 0.88rem;
       line-height: 1.55;
-      margin: 0 0 18px;
+      margin: 0 0 16px;
     }
     .security-pills {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
-      font-size: 0.78rem;
-      color: #99f6e4;
-      span {
-        background: rgba(255, 255, 255, 0.08);
-        padding: 4px 10px;
-        border-radius: 6px;
-      }
+      gap: 8px;
+      font-size: 0.76rem;
+      color: var(--mb-text-muted);
+    }
+    .sec-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--mb-surface-2);
+      border: 1px solid var(--mb-border);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 600;
     }
     .scheduled-actions-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 18px;
+      gap: 10px;
+      margin-top: 16px;
     }
     .btn-call-action {
-      padding: 12px 22px;
-      border-radius: 12px;
-      font-size: 0.92rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: var(--mb-radius);
+      font-size: 0.88rem;
       font-weight: 700;
       cursor: pointer;
       border: none;
       transition: all 0.2s ease;
+      font-family: inherit;
       &.primary {
-        background: #14b8a6;
-        color: #042f2e;
-        box-shadow: 0 4px 14px rgba(20, 184, 166, 0.4);
+        background: var(--mb-primary);
+        color: #ffffff;
+        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
         &:hover {
-          background: #2dd4bf;
-          transform: translateY(-2px);
+          background: var(--mb-primary-strong);
+          transform: translateY(-1px);
         }
       }
       &.secondary {
-        background: rgba(255, 255, 255, 0.12);
-        color: #ffffff;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: var(--mb-surface-2);
+        color: var(--mb-text);
+        border: 1px solid var(--mb-border);
         &:hover {
-          background: rgba(255, 255, 255, 0.2);
+          background: var(--mb-border);
         }
       }
     }
@@ -423,58 +486,84 @@ export interface TopDoctor {
       justify-content: center;
     }
     .doc-card-highlight {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(20, 184, 166, 0.3);
-      border-radius: 16px;
-      padding: 24px;
+      background: var(--mb-surface-2);
+      border: 1px solid var(--mb-border);
+      border-radius: var(--mb-radius);
+      padding: 22px;
       text-align: center;
       width: 100%;
-      max-width: 280px;
+      max-width: 260px;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 8px;
     }
     .doc-big-avatar {
-      font-size: 52px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--mb-teal), var(--mb-primary));
+      color: #ffffff;
+      font-size: 1.25rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(13, 148, 136, 0.25);
     }
     .telehealth-tag {
-      background: rgba(16, 185, 129, 0.2);
-      color: #6ee7b7;
-      border: 1px solid rgba(16, 185, 129, 0.4);
-      padding: 4px 10px;
+      background: rgba(16, 185, 129, 0.12);
+      color: #059669;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 3px 10px;
       border-radius: 999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      margin-top: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      margin-top: 4px;
     }
     .card-right-doctors {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
     .portal-doctor-row {
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 14px;
-      padding: 12px 16px;
+      background: var(--mb-surface-2);
+      border: 1px solid var(--mb-border);
+      border-radius: var(--mb-radius);
+      padding: 10px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
       transition: all 0.2s ease;
       &:hover {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(20, 184, 166, 0.4);
+        border-color: var(--mb-teal);
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
       }
     }
     .portal-doc-header {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
-    .doc-avatar {
-      font-size: 28px;
+    .doc-avatar-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(13, 148, 136, 0.15), rgba(2, 132, 199, 0.15));
+      border: 1px solid rgba(13, 148, 136, 0.3);
+      color: var(--mb-teal-strong);
+      font-size: 0.82rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      &.sm {
+        width: 32px;
+        height: 32px;
+        font-size: 0.75rem;
+      }
     }
     .doc-meta {
       display: flex;
@@ -485,39 +574,46 @@ export interface TopDoctor {
       display: flex;
       align-items: center;
       gap: 6px;
-      strong { font-size: 0.95rem; color: #ffffff; }
+      strong { font-size: 0.92rem; color: var(--mb-text); }
     }
     .active-dot {
       color: #10b981;
-      font-size: 10px;
+      font-size: 9px;
     }
     .doc-category {
-      font-size: 0.76rem;
-      color: #99f6e4;
-    }
-    .doc-stars-exp {
       font-size: 0.74rem;
-      color: #ccfbf1;
-      margin-top: 2px;
-    }
-    .exp-badge {
-      color: #5eead4;
+      color: var(--mb-teal-strong);
       font-weight: 600;
     }
+    .doc-stars-exp {
+      font-size: 0.72rem;
+      color: var(--mb-text-muted);
+      margin-top: 1px;
+    }
+    .exp-badge {
+      color: var(--mb-text);
+      font-weight: 700;
+    }
     .btn-schedule-mini {
-      background: rgba(20, 184, 166, 0.25);
-      border: 1px solid rgba(20, 184, 166, 0.5);
-      color: #5eead4;
-      padding: 8px 14px;
-      border-radius: 8px;
-      font-size: 0.8rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(13, 148, 136, 0.08);
+      border: 1px solid rgba(13, 148, 136, 0.3);
+      color: var(--mb-teal-strong);
+      padding: 7px 12px;
+      border-radius: var(--mb-radius-sm);
+      font-size: 0.78rem;
       font-weight: 700;
       cursor: pointer;
       white-space: nowrap;
       transition: all 0.2s ease;
+      font-family: inherit;
       &:hover {
-        background: #14b8a6;
-        color: #042f2e;
+        background: var(--mb-teal);
+        color: #ffffff;
+      }
+    }
       }
     }
 
@@ -683,6 +779,17 @@ export class PatientDashboardPage implements OnInit {
     if (appts.status === 'fulfilled') this.upcoming.set(appts.value.items);
   }
 
+  getInitials(name?: string): string {
+    if (!name) return 'MD';
+    return name
+      .replace(/^(Dr\.?|Doctor)\s+/i, '')
+      .split(' ')
+      .filter(Boolean)
+      .map((w: string) => w[0].toUpperCase())
+      .slice(0, 2)
+      .join('') || 'MD';
+  }
+
   async loadTopExperiencedDoctors() {
     try {
       const res = await fetch(apiUrl('/doctors/top-experienced'));
@@ -690,8 +797,7 @@ export class PatientDashboardPage implements OnInit {
         const data = await res.json();
         const items = Array.isArray(data) ? data : data?.data || [];
         if (items.length > 0) {
-          const avatars = ['👨‍⚕️', '👩‍⚕️', '🩺'];
-          const mapped: TopDoctor[] = items.slice(0, 3).map((d: any, idx: number) => ({
+          const mapped: TopDoctor[] = items.slice(0, 3).map((d: any) => ({
             id: d.id,
             name: d.displayName,
             category: d.professionalCategory
@@ -700,7 +806,7 @@ export class PatientDashboardPage implements OnInit {
             yearsExperience: d.yearsExperience || 10,
             qualifications: d.qualifications || [],
             ratingAverage: d.ratingAverage || 4.9,
-            avatar: avatars[idx % avatars.length],
+            avatar: this.getInitials(d.displayName),
             languages: d.languages || ['English', 'Hindi', 'Bengali'],
           }));
           this.topDoctors.set(mapped);
@@ -720,7 +826,7 @@ export class PatientDashboardPage implements OnInit {
         yearsExperience: 14,
         qualifications: ['MBBS', 'MD (Psychiatry) AIIMS'],
         ratingAverage: 4.9,
-        avatar: '👨‍⚕️',
+        avatar: 'AM',
         languages: ['English', 'Hindi', 'Bengali'],
       },
       {
@@ -730,7 +836,7 @@ export class PatientDashboardPage implements OnInit {
         yearsExperience: 11,
         qualifications: ['PhD Clinical Psychology', 'M.Phil'],
         ratingAverage: 4.95,
-        avatar: '👩‍⚕️',
+        avatar: 'SS',
         languages: ['English', 'Bengali', 'Hindi'],
       },
       {
@@ -740,7 +846,7 @@ export class PatientDashboardPage implements OnInit {
         yearsExperience: 9,
         qualifications: ['MBBS', 'DPM NIMHANS'],
         ratingAverage: 4.88,
-        avatar: '🩺',
+        avatar: 'PS',
         languages: ['English', 'Hindi'],
       },
     ]);

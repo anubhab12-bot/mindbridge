@@ -11,7 +11,7 @@ import { AuthService } from '../../core/auth/auth.service';
         <!-- Header -->
         <header class="portal-header">
           <div class="portal-badge">
-            <span class="badge-icon">👑</span>
+            <span class="badge-dot">●</span>
             <span>SUPER ADMINISTRATOR PRIVILEGES DETECTED</span>
           </div>
           <h1>Welcome back, <span class="highlight">{{ auth.user()?.displayName || 'Anubhab' }}</span></h1>
@@ -26,7 +26,11 @@ import { AuthService } from '../../core/auth/auth.service';
           <div class="portal-card patient-card" (click)="enterPatient()">
             <div class="card-glow patient-glow"></div>
             <div class="card-icon-wrap patient-icon-wrap">
-              <span class="card-icon">🏥</span>
+              <span class="card-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                </svg>
+              </span>
               <span class="role-pill patient-pill">Patient Experience</span>
             </div>
             <h2>Enter as Patient</h2>
@@ -61,7 +65,11 @@ import { AuthService } from '../../core/auth/auth.service';
           <div class="portal-card admin-card" (click)="enterAdmin()">
             <div class="card-glow admin-glow"></div>
             <div class="card-icon-wrap admin-icon-wrap">
-              <span class="card-icon">⚡</span>
+              <span class="card-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+              </span>
               <span class="role-pill admin-pill">Super Admin Portal</span>
             </div>
             <h2>Enter as Super Admin</h2>
@@ -96,7 +104,7 @@ import { AuthService } from '../../core/auth/auth.service';
         <!-- Footer Switcher Info -->
         <div class="portal-footer">
           <p class="switch-hint">
-            💡 <strong>Seamless Switching:</strong> You can toggle between <em>Patient View</em> and <em>Super Admin Portal</em> at any time using the quick portal switcher in the top navigation bar.
+            <strong>Seamless Switching:</strong> You can toggle between <em>Patient View</em> and <em>Super Admin Portal</em> at any time using the quick portal switcher in the top navigation bar.
           </p>
           <div class="portal-footer-links">
             <a routerLink="/" class="link-muted">← Back to MindBridge Home</a>

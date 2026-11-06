@@ -92,7 +92,11 @@ interface Dashboard {
             <!-- 1. Total Persons Using MindBridge -->
             <div class="impact-kpi-card card-interactive">
               <div class="kpi-icon-bar">
-                <span class="kpi-emoji teal">👥</span>
+                <span class="kpi-emoji teal">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                </span>
                 <span class="kpi-growth">+18.4% MoM</span>
               </div>
               <div class="kpi-main-num">{{ govStats()?.populationMetrics?.totalUsers || '14,850+' }}</div>
@@ -103,7 +107,11 @@ interface Dashboard {
             <!-- 2. Registered & Accredited NGOs -->
             <div class="impact-kpi-card card-interactive">
               <div class="kpi-icon-bar">
-                <span class="kpi-emoji indigo">🏛️</span>
+                <span class="kpi-emoji indigo">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 21h18"/><path d="M3 10h18"/><path d="M5 10v11"/><path d="M19 10v11"/><path d="M9 10v11"/><path d="M15 10v11"/><path d="m12 3 9 7H3z"/>
+                  </svg>
+                </span>
                 <span class="kpi-growth neutral">Partner Network</span>
               </div>
               <div class="kpi-main-num">{{ govStats()?.populationMetrics?.partnerNgos || '124' }}</div>
@@ -114,7 +122,11 @@ interface Dashboard {
             <!-- 3. Cure & Recovery Improvement Rate -->
             <div class="impact-kpi-card highlight-cure card-interactive">
               <div class="kpi-icon-bar">
-                <span class="kpi-emoji emerald">🌱</span>
+                <span class="kpi-emoji emerald">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>
+                  </svg>
+                </span>
                 <span class="kpi-growth positive">Validated Outcomes</span>
               </div>
               <div class="kpi-main-num text-emerald">{{ govStats()?.populationMetrics?.cureRecoveryRate || '94.6%' }}</div>
@@ -125,7 +137,11 @@ interface Dashboard {
             <!-- 4. Crisis Intervention Latency -->
             <div class="impact-kpi-card card-interactive">
               <div class="kpi-icon-bar">
-                <span class="kpi-emoji amber">🚨</span>
+                <span class="kpi-emoji amber">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+                  </svg>
+                </span>
                 <span class="kpi-growth warning">100% Routed</span>
               </div>
               <div class="kpi-main-num">{{ govStats()?.populationMetrics?.avgCrisisResponseSecs || '< 45s' }}</div>

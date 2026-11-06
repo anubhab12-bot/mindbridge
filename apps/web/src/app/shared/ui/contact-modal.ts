@@ -70,11 +70,11 @@ import { FormsModule } from '@angular/forms';
               <div class="field">
                 <label for="contactTopic">Inquiry Category</label>
                 <select id="contactTopic" class="input" [(ngModel)]="topic" name="topic">
-                  <option value="Appointment Booking Support">📅 Appointment & Video Consultation Support</option>
-                  <option value="Find a Specialist Guidance">🩺 Guidance Finding the Right Specialist</option>
-                  <option value="Doctor Registration & Verification">👨‍⚕️ Doctor Onboarding & Verification</option>
-                  <option value="Confidentiality & Medical Data">🔒 Privacy, DPDP & Data Confidentiality</option>
-                  <option value="General Clinical Inquiry">💬 General Inquiry</option>
+                  <option value="Appointment Booking Support">Appointment & Video Consultation Support</option>
+                  <option value="Find a Specialist Guidance">Guidance Finding the Right Specialist</option>
+                  <option value="Doctor Registration & Verification">Doctor Onboarding & Verification</option>
+                  <option value="Confidentiality & Medical Data">Privacy, DPDP & Data Confidentiality</option>
+                  <option value="General Clinical Inquiry">General Inquiry</option>
                 </select>
               </div>
 
@@ -93,10 +93,16 @@ import { FormsModule } from '@angular/forms';
 
               <div class="form-actions">
                 <button type="submit" class="btn btn-primary-elevated btn-send">
-                  <span>✉️ Open in Your Email App to Send</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                  </svg>
+                  <span>Open in Your Email App to Send</span>
                 </button>
                 <button type="button" class="btn btn-secondary btn-copy" (click)="copyEmail()">
-                  <span>{{ copied() ? '✓ Email Copied!' : '📋 Copy Email Address' }}</span>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+                  </svg>
+                  <span>{{ copied() ? 'Email Address Copied' : 'Copy Email Address' }}</span>
                 </button>
               </div>
             </form>

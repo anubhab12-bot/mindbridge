@@ -37,7 +37,11 @@ import type { CouncilApplicationCredentials } from '@mindbridge/shared-types';
       <div class="card card-interactive apply-card">
         @if (submitted()) {
           <div class="success-box center">
-            <div class="success-icon">✅</div>
+            <div class="success-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
             <h2>Application Submitted Successfully</h2>
             <p class="muted">
               Thank you, <strong>{{ applicantName() }}</strong>. Your application has been logged and screened 
@@ -45,7 +49,7 @@ import type { CouncilApplicationCredentials } from '@mindbridge/shared-types';
             </p>
             <div class="ai-safety-result" [class.flagged]="aiFlagged()">
               <div class="result-title">
-                {{ aiFlagged() ? '⚠️ AI Content Safety Warning' : '🟢 AI Safety Screen: Verified Brand-Safe (Score: 96%)' }}
+                {{ aiFlagged() ? 'AI Content Safety Warning' : 'AI Safety Screen: Verified Brand-Safe (Score: 96%)' }}
               </div>
               <p class="small" style="margin: 6px 0 0;">
                 {{ aiSummary() }}
@@ -57,7 +61,6 @@ import type { CouncilApplicationCredentials } from '@mindbridge/shared-types';
             </p>
             <div class="row center" style="margin-top: 24px; gap: 12px;">
               <a routerLink="/" class="btn btn-secondary">Return to Home</a>
-              <a href="/admin-portal/" target="_blank" class="btn btn-primary">Open Admin Portal ↗</a>
             </div>
           </div>
         } @else {
@@ -85,7 +88,11 @@ import type { CouncilApplicationCredentials } from '@mindbridge/shared-types';
             <div class="category-selector">
               <label class="category-radio" [class.selected]="form.controls.category.value === 'SPECIALIST'">
                 <input type="radio" value="SPECIALIST" formControlName="category" />
-                <span class="cat-emoji">🩺</span>
+                <span class="cat-emoji">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/>
+                  </svg>
+                </span>
                 <div>
                   <strong>Clinical Specialist Admin</strong>
                   <p class="small muted">Psychiatrist / Psychologist (Handles doctor verifications)</p>
@@ -94,7 +101,11 @@ import type { CouncilApplicationCredentials } from '@mindbridge/shared-types';
 
               <label class="category-radio" [class.selected]="form.controls.category.value === 'NGO'">
                 <input type="radio" value="NGO" formControlName="category" />
-                <span class="cat-emoji">🏛️</span>
+                <span class="cat-emoji">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 21h18"/><path d="M3 10h18"/><path d="M5 10v11"/><path d="M19 10v11"/><path d="M9 10v11"/><path d="M15 10v11"/><path d="m12 3 9 7H3z"/>
+                  </svg>
+                </span>
                 <div>
                   <strong>Partner NGO Coordinator</strong>
                   <p class="small muted">NGO Director / Healthcare Clinic Supervisor</p>
@@ -103,7 +114,11 @@ import type { CouncilApplicationCredentials } from '@mindbridge/shared-types';
 
               <label class="category-radio" [class.selected]="form.controls.category.value === 'INFLUENCER'">
                 <input type="radio" value="INFLUENCER" formControlName="category" />
-                <span class="cat-emoji">🌟</span>
+                <span class="cat-emoji">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                </span>
                 <div>
                   <strong>Mental Health Influencer / Creator</strong>
                   <p class="small muted">Advocate / Content Creator (Awareness reels & outreach)</p>
@@ -147,7 +162,11 @@ import type { CouncilApplicationCredentials } from '@mindbridge/shared-types';
             @if (form.controls.category.value === 'INFLUENCER') {
               <div class="category-details-box animated-fade">
                 <div class="ai-screener-notice">
-                  <span>🛡️</span>
+                  <span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                  </span>
                   <div>
                     <strong>AI Content Safety Screening Active</strong>
                     <p class="small" style="margin-top: 2px;">

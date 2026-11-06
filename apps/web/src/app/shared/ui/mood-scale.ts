@@ -1,8 +1,8 @@
 import { Component, forwardRef, input, signal, ChangeDetectionStrategy } from '@angular/core';
 import { type ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
-export const MOOD_LABELS = ['Very low', 'Low', 'Okay', 'Good', 'Very good'];
-export const MOOD_EMOJIS = ['🌧️', '☁️', '⛅', '🌤️', '☀️'];
+export const MOOD_LABELS = ['Very low', 'Low', 'Steady', 'Good', 'Thriving'];
+export const MOOD_COLORS = ['#ef4444', '#f97316', '#0ea5e9', '#0d9488', '#10b981'];
 
 /** Accessible 1-5 mood picker (a radio group), usable with reactive forms. */
 @Component({
@@ -24,7 +24,7 @@ export const MOOD_EMOJIS = ['🌧️', '☁️', '⛅', '🌤️', '☀️'];
               [disabled]="disabled()"
               (change)="select($index + 1)"
             />
-            <span class="emoji" aria-hidden="true">{{ emojis[$index] }}</span>
+            <span class="clinical-tone-dot" [style.background-color]="colors[$index]"></span>
             <span class="dot" aria-hidden="true">{{ $index + 1 }}</span>
             <span class="text">{{ label }}</span>
           </label>
@@ -59,7 +59,7 @@ export const MOOD_EMOJIS = ['🌧️', '☁️', '⛅', '🌤️', '☀️'];
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
       padding: 12px 6px;
       border: 1.5px solid var(--mb-border);
       border-radius: var(--mb-radius);
@@ -84,11 +84,13 @@ export const MOOD_EMOJIS = ['🌧️', '☁️', '⛅', '🌤️', '☀️'];
       outline: 3px solid var(--mb-focus);
       outline-offset: 2px;
     }
-    .emoji {
-      font-size: 1.35rem;
-      line-height: 1;
+    .clinical-tone-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
       margin-bottom: 2px;
       transition: transform 0.2s ease;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.12);
     }
     .dot {
       font-weight: 800;
@@ -110,8 +112,8 @@ export const MOOD_EMOJIS = ['🌧️', '☁️', '⛅', '🌤️', '☀️'];
     .selected .dot {
       color: var(--mb-primary-strong);
     }
-    .selected .emoji {
-      transform: scale(1.18);
+    .selected .clinical-tone-dot {
+      transform: scale(1.3);
     }
   `,
 })
@@ -119,7 +121,7 @@ export class MoodScaleComponent implements ControlValueAccessor {
   readonly legend = input('How are you feeling right now?');
   readonly name = input('mood');
   protected readonly labels = MOOD_LABELS;
-  protected readonly emojis = MOOD_EMOJIS;
+  protected readonly colors = MOOD_COLORS;
   protected readonly value = signal<number | null>(null);
   protected readonly disabled = signal(false);
   private onChange: (v: number) => void = () => undefined;

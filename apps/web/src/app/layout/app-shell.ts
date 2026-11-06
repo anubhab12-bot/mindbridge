@@ -19,6 +19,7 @@ import { TelehealthService } from '../core/services/telehealth.service';
 import { PwaService } from '../core/services/pwa.service';
 import { TeamsTelehealthModalComponent } from '../shared/ui/teams-telehealth-modal';
 import { AppDownloadModalComponent } from '../shared/ui/app-download-modal';
+import { ContactModalComponent } from '../shared/ui/contact-modal';
 
 interface NavItem {
   label: string;
@@ -81,20 +82,28 @@ const ADMIN_NAV: NavItem[] = [
 
 @Component({
   selector: 'mb-app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, TeamsTelehealthModalComponent, AppDownloadModalComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, TeamsTelehealthModalComponent, AppDownloadModalComponent, ContactModalComponent],
   template: `
     <a class="skip-link" href="#main">Skip to content</a>
     <div class="shell" [class.open]="menuOpen()">
       <aside class="sidebar" aria-label="Sections">
-        <a class="brand" [routerLink]="auth.homeFor()"
-          ><span class="logo" aria-hidden="true">◐</span> MindBridge</a
-        >
+        <a class="brand" [routerLink]="auth.homeFor()">
+          <span class="brand-medical-mark">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+          </span>
+          <div class="brand-headings">
+            <span class="brand-name">MindBridge<span class="brand-dot">.health</span></span>
+            <span class="brand-tagline">Clinical Healthcare</span>
+          </div>
+        </a>
         <button
           type="button"
           class="btn btn-sm btn-primary-elevated sidebar-telehealth-btn"
           (click)="telehealth.openLauncher()"
         >
-          📹 Talk to Doctor Now
+          Consult Doctor
         </button>
         <nav>
           <ul>
@@ -111,7 +120,7 @@ const ADMIN_NAV: NavItem[] = [
           </ul>
         </nav>
         @if (isPatient()) {
-          <a routerLink="/crisis" class="btn btn-crisis btn-block help">Get help now</a>
+          <a routerLink="/crisis" class="btn btn-crisis btn-block help">Crisis Support (14416)</a>
         }
         <div class="sidebar-theme-wrap">
           <button
@@ -120,7 +129,7 @@ const ADMIN_NAV: NavItem[] = [
             (click)="themeService.toggleTheme()"
             [title]="themeService.isDark() ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
           >
-            <span>{{ themeService.isDark() ? '☀️ Light Mode' : '🌙 Dark Mode' }}</span>
+            <span>{{ themeService.isDark() ? 'Light Mode' : 'Dark Mode' }}</span>
           </button>
         </div>
       </aside>
@@ -136,17 +145,18 @@ const ADMIN_NAV: NavItem[] = [
             [attr.aria-expanded]="menuOpen()"
             aria-label="Toggle navigation"
           >
-            ☰
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/>
+            </svg>
           </button>
           <span class="spacer"></span>
           <button
             type="button"
-            class="btn btn-sm btn-telehealth-instant"
+            class="btn btn-sm btn-primary-elevated topbar-consult-btn"
             (click)="telehealth.openLauncher()"
-            title="Instant Video or Chat Consultation with an On-Duty Doctor"
+            title="Video Consultation with an On-Duty Doctor"
           >
-            <span class="live-dot-pulse"></span>
-            <span>Talk to Doctor Now</span>
+            <span>Consult Doctor</span>
           </button>
           <button
             type="button"
@@ -155,27 +165,37 @@ const ADMIN_NAV: NavItem[] = [
             [attr.aria-label]="themeService.isDark() ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
             [title]="themeService.isDark() ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
           >
-            <span class="theme-icon">{{ themeService.isDark() ? '☀️' : '🌙' }}</span>
-            <span class="theme-text">{{ themeService.isDark() ? 'Light' : 'Dark' }}</span>
+            @if (themeService.isDark()) {
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+              </svg>
+            } @else {
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+              </svg>
+            }
           </button>
           <button
             type="button"
-            class="btn btn-ghost btn-sm btn-pwa-dock"
+            class="btn btn-ghost btn-sm topbar-app-btn"
             (click)="pwa.openDownloadModal()"
             title="Download MindBridge Mobile App"
           >
-            📲 App
+            Get App
           </button>
-          @if (isSuperAdmin()) {
-            <a href="/admin-portal/" class="btn btn-sm btn-superadmin-pill" title="Open Super Admin Portal">
-              👑 Admin Portal ↗
-            </a>
-            <a routerLink="/portal-select" class="btn btn-ghost btn-sm" title="Choose Workspace (Patient vs Admin)">
-              ⇄ Portals
-            </a>
-          }
+          <button
+            type="button"
+            class="nav-contact-btn"
+            (click)="openContactModal()"
+            title="Contact Support via Email"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+            </svg>
+            <span>Contact via Email</span>
+          </button>
           @if (isPatient()) {
-            <a routerLink="/crisis" class="btn btn-crisis btn-sm top-help">Get help now</a>
+            <a routerLink="/crisis" class="header-crisis-btn" title="24/7 Emergency Crisis Helpline">Crisis: 14416</a>
           }
           <a
             routerLink="/notifications"
@@ -196,7 +216,11 @@ const ADMIN_NAV: NavItem[] = [
           <div class="container mb-banner-wrap">
             <div class="alert alert-warning banner-content" role="status">
               <div class="banner-text">
-                <span class="banner-icon">✉️</span>
+                <span class="banner-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                  </svg>
+                </span>
                 <span>
                   Please confirm your email address (<strong>{{ auth.user()!.email }}</strong>) to book appointments, message professionals, and use the AI companion.
                 </span>
@@ -208,7 +232,7 @@ const ADMIN_NAV: NavItem[] = [
                   (click)="quickVerify()"
                   [disabled]="verifying()"
                 >
-                  {{ verifying() ? 'Verifying…' : '⚡ Quick Verify Now' }}
+                  {{ verifying() ? 'Verifying…' : 'Verify Email Address' }}
                 </button>
                 <a class="btn btn-sm btn-secondary" routerLink="/verify-email">Options</a>
               </div>
@@ -233,35 +257,41 @@ const ADMIN_NAV: NavItem[] = [
     <!-- MOBILE PWA APP DOWNLOAD MODAL -->
     <mb-app-download-modal />
 
+    <!-- CLINICAL CONTACT VIA EMAIL MODAL -->
+    <mb-contact-modal />
+
     <!-- MOBILE BOTTOM NAVIGATION DOCK (Shown on viewports <= 768px) -->
     <nav class="mobile-bottom-dock" aria-label="Mobile Navigation Dock">
       <a [routerLink]="isPatient() ? '/patient/dashboard' : auth.homeFor()" routerLinkActive="active" class="dock-item">
-        <span class="dock-icon">🏠</span>
+        <svg class="dock-svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
         <span class="dock-label">Home</span>
       </a>
       <a routerLink="/patient/companion" routerLinkActive="active" class="dock-item">
-        <span class="dock-icon">🌸</span>
+        <svg class="dock-svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
         <span class="dock-label">Asha AI</span>
       </a>
       <button type="button" class="dock-item dock-telehealth-pulse" (click)="telehealth.openLauncher()">
-        <span class="dock-icon-pulse">📹</span>
-        <span class="dock-label">Doctor</span>
+        <svg class="dock-svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.934a.5.5 0 0 0-.777-.416L16 11"/><rect width="14" height="12" x="2" y="6" rx="2"/>
+        </svg>
+        <span class="dock-label">Consult</span>
       </button>
       <button type="button" class="dock-item" (click)="pwa.openDownloadModal()">
-        <span class="dock-icon">📲</span>
+        <svg class="dock-svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>
+        </svg>
         <span class="dock-label">App</span>
       </button>
-      @if (isSuperAdmin()) {
-        <a routerLink="/portal-select" class="dock-item">
-          <span class="dock-icon">👑</span>
-          <span class="dock-label">Portals</span>
-        </a>
-      } @else {
-        <a routerLink="/settings" routerLinkActive="active" class="dock-item">
-          <span class="dock-icon">⚙️</span>
-          <span class="dock-label">Settings</span>
-        </a>
-      }
+      <button type="button" class="dock-item" (click)="openContactModal()">
+        <svg class="dock-svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+        </svg>
+        <span class="dock-label">Email</span>
+      </button>
     </nav>
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -284,13 +314,93 @@ const ADMIN_NAV: NavItem[] = [
       gap: var(--mb-space-4);
     }
     .brand {
-      font-weight: 750;
-      font-size: 1.15rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
       text-decoration: none;
       color: var(--mb-text);
     }
-    .logo {
+    .brand-medical-mark {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, var(--mb-primary), var(--mb-primary-strong));
+      color: #fff;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+    .brand-headings {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.15;
+    }
+    .brand-name {
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--mb-text);
+    }
+    .brand-dot {
       color: var(--mb-primary);
+    }
+    .brand-tagline {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--mb-text-muted);
+    }
+    .nav-contact-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(13, 148, 136, 0.08);
+      border: 1px solid rgba(13, 148, 136, 0.3);
+      color: #0d9488;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: var(--mb-radius-sm);
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      &:hover {
+        background: #0d9488;
+        color: #ffffff;
+      }
+    }
+    :host-context([data-theme='dark']) .nav-contact-btn {
+      background: rgba(45, 212, 191, 0.12);
+      border-color: rgba(45, 212, 191, 0.3);
+      color: #2dd4bf;
+    }
+    .topbar-consult-btn {
+      font-weight: 700;
+      font-size: 0.82rem;
+      padding: 0 14px;
+    }
+    .topbar-app-btn {
+      font-weight: 600;
+      font-size: 0.82rem;
+    }
+    .header-crisis-btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 12px;
+      border-radius: var(--mb-radius-sm);
+      background: var(--mb-crisis-soft);
+      color: var(--mb-crisis);
+      border: 1px solid rgba(220, 38, 38, 0.35);
+      font-weight: 750;
+      font-size: 0.82rem;
+      text-decoration: none;
+      transition: all 0.15s ease;
+      &:hover {
+        background: var(--mb-crisis);
+        color: #fff;
+      }
     }
     nav ul {
       list-style: none;
@@ -525,24 +635,26 @@ const ADMIN_NAV: NavItem[] = [
         color: var(--mb-primary);
       }
     }
-    .dock-icon {
-      font-size: 1.25rem;
-      line-height: 1;
+    .dock-svg {
+      color: var(--mb-text-muted);
+      transition: color 0.15s ease;
       margin-bottom: 2px;
+    }
+    .dock-item.active .dock-svg {
+      color: var(--mb-primary);
     }
     .dock-label {
       font-size: 0.68rem;
       line-height: 1;
+      font-weight: 600;
     }
     .dock-telehealth-pulse {
-      background: linear-gradient(135deg, #0d9488, #2563eb);
+      background: var(--mb-primary);
       color: #fff !important;
-      border-radius: 12px;
-      padding: 6px 12px;
-      box-shadow: 0 4px 10px rgba(13, 148, 136, 0.35);
-      .dock-icon-pulse {
-        font-size: 1.2rem;
-        line-height: 1;
+      border-radius: 8px;
+      padding: 5px 10px;
+      .dock-svg {
+        color: #fff;
       }
       .dock-label {
         color: #fff;
@@ -595,7 +707,12 @@ export class AppShellComponent implements OnInit {
   private readonly realtime = inject(RealtimeService);
   private readonly router = inject(Router);
   protected readonly pwa = inject(PwaService);
+  protected readonly contactModalOpen = signal(false);
   protected readonly menuOpen = signal(false);
+
+  openContactModal() {
+    this.contactModalOpen.set(true);
+  }
   protected readonly verifying = signal(false);
   protected readonly isPatient = computed(() => this.auth.role() === Role.PATIENT);
   protected readonly isSuperAdmin = computed(() => {

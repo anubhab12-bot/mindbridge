@@ -22,8 +22,8 @@ import { ContactModalComponent } from '../shared/ui/contact-modal';
         <div class="container announcement-inner">
           <div class="announcement-left">
             <span class="announcement-badge">LIVE NOTICE</span>
-            <strong class="announcement-title">{{ bannerTitle() }}</strong>
-            <span class="announcement-text">{{ bannerMsg() }}</span>
+            <strong class="announcement-title">{{ cleanText(bannerTitle()) }}</strong>
+            <span class="announcement-text">{{ cleanText(bannerMsg()) }}</span>
           </div>
           <div class="announcement-actions">
             <a routerLink="/crisis" class="announcement-btn">Crisis Helplines (14416) →</a>
@@ -134,11 +134,7 @@ import { ContactModalComponent } from '../shared/ui/contact-modal';
             <span>Consult On-Duty Specialist</span>
             <span class="badge badge-success">3 Online</span>
           </button>
-          @if (isSuperAdmin()) {
-            <a routerLink="/portal-select" (click)="closeMobileNav()" class="mobile-admin-choice-link">
-              Super Admin Workspace →
-            </a>
-          }
+
           <a routerLink="/professionals" routerLinkActive="active" (click)="closeMobileNav()">Specialists & Doctors</a>
           <a routerLink="/how-it-works" routerLinkActive="active" (click)="closeMobileNav()">Video Consultations</a>
           <a routerLink="/self-help" routerLinkActive="active" (click)="closeMobileNav()">Clinical Self-Help</a>
@@ -173,9 +169,9 @@ import { ContactModalComponent } from '../shared/ui/contact-modal';
               <span>24/7 National Mental Health Helpline: <strong>14416</strong> (Tele-MANAS)</span>
             </div>
             <div class="trust-tags">
-              <span>🔒 AES-256 Encrypted</span> ·
-              <span>🛡️ NMC Verified</span> ·
-              <span>🤝 124 Partner NGOs</span>
+              <span>AES-256 Encrypted</span> ·
+              <span>NMC Verified Doctors</span> ·
+              <span>124+ Partner NGOs</span>
             </div>
           </div>
 
@@ -184,7 +180,7 @@ import { ContactModalComponent } from '../shared/ui/contact-modal';
             <h4>Clinical Care</h4>
             <ul class="footer-links-clean">
               <li><a routerLink="/professionals">Find a Specialist</a></li>
-              <li><button type="button" class="link-clean-btn" (click)="telehealth.openLauncher()">Instant Doctor Video Call</button></li>
+              <li><button type="button" class="link-clean-btn" (click)="telehealth.openLauncher()">Doctor Video Consultation</button></li>
               <li><a routerLink="/self-help">Self-Help & CBT Modules</a></li>
               <li><a routerLink="/crisis">Emergency Crisis Helplines</a></li>
             </ul>
@@ -208,15 +204,18 @@ import { ContactModalComponent } from '../shared/ui/contact-modal';
             <ul class="footer-links-clean">
               <li>
                 <button type="button" class="footer-app-install-btn" (click)="pwa.openDownloadModal()">
-                  <span>📲 Download Mobile App</span>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>
+                  </svg>
+                  <span>Download Mobile App</span>
                 </button>
               </li>
-              <li><button type="button" class="link-clean-btn" (click)="openContactModal()">✉️ Clinical Helpdesk</button></li>
+              <li><button type="button" class="link-clean-btn" (click)="openContactModal()">Clinical Helpdesk via Email</button></li>
               <li><a href="mailto:support@mindbridge.health" class="link-clean-btn">support&#64;mindbridge.health</a></li>
               <li><a routerLink="/how-it-works">How Platform Works</a></li>
               <li>
                 <button type="button" class="footer-theme-toggle" (click)="themeService.toggleTheme()">
-                  {{ themeService.isDark() ? '☀️ Switch to Light' : '🌙 Switch to Dark' }}
+                  {{ themeService.isDark() ? 'Switch to Light Mode' : 'Switch to Dark Mode' }}
                 </button>
               </li>
             </ul>
@@ -224,7 +223,7 @@ import { ContactModalComponent } from '../shared/ui/contact-modal';
         </div>
 
         <div class="footer-bottom-row">
-          <p class="copyright">© 2026 MindBridge Healthcare Foundation. Governed by the MindBridge Healthcare Council. All rights reserved.</p>
+          <p class="copyright">© 2026 MindBridge Healthcare Foundation. Accredited Mental Healthcare. All rights reserved.</p>
           <div class="bottom-legal-row">
             <a routerLink="/legal/privacy">Privacy</a>
             <span>•</span>
@@ -242,10 +241,10 @@ import { ContactModalComponent } from '../shared/ui/contact-modal';
     @if (floatingPill(); as pill) {
       <div class="dynamic-floating-pill" [class]="'pill-theme-' + pill.themeColor">
         <a [href]="pill.ctaLink" class="floating-pill-content">
-          <span class="pill-icon">{{ pill.iconEmoji }}</span>
+          <span class="pill-medical-bullet">●</span>
           <div class="pill-text-col">
-            <span class="pill-badge-tag">{{ pill.badgeLabel || 'Instant Tool' }}</span>
-            <strong class="pill-title">{{ pill.title }}</strong>
+            <span class="pill-badge-tag">{{ cleanText(pill.badgeLabel || 'CLINICAL TOOL') }}</span>
+            <strong class="pill-title">{{ cleanText(pill.title) }}</strong>
           </div>
           <span class="pill-arrow">→</span>
         </a>
@@ -289,11 +288,11 @@ import { ContactModalComponent } from '../shared/ui/contact-modal';
         <span class="dock-label">App</span>
       </button>
       @if (auth.isAuthenticated()) {
-        <a [routerLink]="isSuperAdmin() ? '/portal-select' : auth.homeFor()" routerLinkActive="active" class="dock-item">
+        <a [routerLink]="auth.homeFor()" routerLinkActive="active" class="dock-item">
           <svg class="dock-svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/>
           </svg>
-          <span class="dock-label">{{ isSuperAdmin() ? 'Admin' : 'Portal' }}</span>
+          <span class="dock-label">Account</span>
         </a>
       } @else {
         <a routerLink="/login" routerLinkActive="active" class="dock-item">
@@ -968,6 +967,11 @@ import { ContactModalComponent } from '../shared/ui/contact-modal';
       transform: translateY(-3px) scale(1.02);
       box-shadow: 0 14px 30px -5px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.25);
     }
+    .pill-medical-bullet {
+      color: #14b8a6;
+      font-size: 10px;
+      line-height: 1;
+    }
     .pill-theme-teal { border-left: 4px solid #14b8a6; }
     .pill-theme-indigo { border-left: 4px solid #6366f1; }
     .pill-theme-rose { border-left: 4px solid #f43f5e; }
@@ -1229,7 +1233,7 @@ export class PublicLayoutComponent implements OnInit {
   });
 
   protected readonly bannerVisible = signal(true);
-  protected readonly bannerTitle = signal('🌟 24/7 National Mental Health Helplines Active');
+  protected readonly bannerTitle = signal('24/7 National Mental Health Helplines Active');
   protected readonly bannerMsg = signal('Free, confidential support via Tele-MANAS (14416) & Kiran (1800-599-0019) is available across all Indian states.');
   protected readonly floatingPill = signal<any | null>(null);
   protected readonly mobileNavOpen = signal(false);
@@ -1292,5 +1296,10 @@ export class PublicLayoutComponent implements OnInit {
 
   dismissFloatingPill() {
     this.floatingPill.set(null);
+  }
+
+  cleanText(str?: string | null): string {
+    if (!str) return '';
+    return str.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{2300}-\u{23FF}\u{FE0F}]/gu, '').replace(/\s+/g, ' ').trim();
   }
 }

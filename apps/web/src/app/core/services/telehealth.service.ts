@@ -41,7 +41,7 @@ export class TelehealthService {
       role: 'Senior Neuro-Psychiatrist',
       experience: '14 yrs exp',
       qualification: 'MBBS, MD (Psychiatry), AIIMS',
-      avatar: '👨‍⚕️',
+      avatar: 'AM',
       status: 'ONLINE',
       rating: 4.9,
       languages: ['English', 'Hindi', 'Bengali'],
@@ -52,7 +52,7 @@ export class TelehealthService {
       role: 'Clinical Psychologist & Trauma Specialist',
       experience: '11 yrs exp',
       qualification: 'PhD Clinical Psychology, M.Phil',
-      avatar: '👩‍⚕️',
+      avatar: 'SS',
       status: 'ONLINE',
       rating: 4.95,
       languages: ['English', 'Bengali', 'Hindi'],
@@ -63,7 +63,7 @@ export class TelehealthService {
       role: 'Consultant Psychiatrist & Anxiety Coach',
       experience: '9 yrs exp',
       qualification: 'MBBS, DPM (NIMHANS)',
-      avatar: '🩺',
+      avatar: 'PS',
       status: 'ONLINE',
       rating: 4.88,
       languages: ['English', 'Hindi'],
@@ -116,15 +116,21 @@ export class TelehealthService {
         const data = await res.json();
         const items = Array.isArray(data) ? data : data?.data || [];
         if (items.length > 0) {
-          const mapped: DoctorDutyInfo[] = items.slice(0, 3).map((d: any, idx: number) => {
-            const avatars = ['👨‍⚕️', '👩‍⚕️', '🩺'];
+          const mapped: DoctorDutyInfo[] = items.slice(0, 3).map((d: any) => {
+            const initials = (d.displayName || 'Doctor')
+              .replace(/^(Dr\.?|Doctor)\s+/i, '')
+              .split(' ')
+              .filter(Boolean)
+              .map((w: string) => w[0].toUpperCase())
+              .slice(0, 2)
+              .join('') || 'MD';
             return {
               id: d.id,
               name: d.displayName,
               role: d.professionalCategory ? d.professionalCategory.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase()) : 'Specialist',
               experience: `${d.yearsExperience || 10} yrs exp`,
               qualification: d.qualifications?.join(', ') || 'AIIMS Certified',
-              avatar: avatars[idx % avatars.length],
+              avatar: initials,
               status: 'ONLINE',
               rating: d.ratingAverage || 4.9,
               languages: d.languages || ['English', 'Hindi', 'Bengali'],

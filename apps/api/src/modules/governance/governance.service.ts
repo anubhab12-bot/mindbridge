@@ -257,9 +257,9 @@ Every interaction is monitored by a local, deterministic safety screener that in
     let type: 'ANNOUNCEMENT_BANNER' | 'HERO_PROMO_CARD' | 'FLOATING_CRISIS_PILL' | 'INTERACTIVE_WIDGET' | 'COMMUNITY_CAMPAIGN' = 'HERO_PROMO_CARD';
     let placement: 'TOP_HEADER' | 'HERO_SECTION' | 'SIDE_STICKY' | 'FEATURED_GRID' | 'BOTTOM_CTA' = 'HERO_SECTION';
     let themeColor: 'emerald' | 'indigo' | 'rose' | 'amber' | 'purple' | 'teal' | 'blue' = 'indigo';
-    let iconEmoji = '✨';
-    let badgeLabel = 'AI Feature';
-    let title = 'New Community Wellness Initiative';
+    let iconEmoji = '';
+    let badgeLabel = 'Clinical Feature';
+    let title = 'Community Wellness Initiative';
     let description = 'Designed to provide instant support, confidential resources, and clinical care.';
     let ctaText = 'Explore Support';
     let ctaLink = '/self-help';
@@ -268,9 +268,9 @@ Every interaction is monitored by a local, deterministic safety screener that in
       type = 'HERO_PROMO_CARD';
       placement = 'HERO_SECTION';
       themeColor = 'indigo';
-      iconEmoji = '🎓';
-      badgeLabel = 'Student Stress Fast-Track';
-      title = '🎓 24/7 Student Academic & Exam Stress Helpline';
+      iconEmoji = '';
+      badgeLabel = 'Student Stress Support';
+      title = 'Student Academic & Exam Stress Helpline';
       description = 'Feeling overwhelmed by exams, deadlines, or future anxiety? Connect with empathetic counselors and peer mentors confidentially.';
       ctaText = 'Connect with Counselor';
       ctaLink = '/crisis';
@@ -278,9 +278,9 @@ Every interaction is monitored by a local, deterministic safety screener that in
       type = 'FLOATING_CRISIS_PILL';
       placement = 'SIDE_STICKY';
       themeColor = 'teal';
-      iconEmoji = '🌬️';
-      badgeLabel = 'Instant Calming';
-      title = '🌬️ 60-Second Box Breathing & Grounding';
+      iconEmoji = '';
+      badgeLabel = 'Somatic Grounding';
+      title = '60-Second Box Breathing & Grounding';
       description = 'Rapid panic relief. Inhale for 4s, hold 4s, exhale 4s, rest 4s. Tap to trigger our guided sensory reset.';
       ctaText = 'Start 60s Breathing';
       ctaLink = '/self-help';
@@ -288,9 +288,9 @@ Every interaction is monitored by a local, deterministic safety screener that in
       type = 'ANNOUNCEMENT_BANNER';
       placement = 'TOP_HEADER';
       themeColor = 'rose';
-      iconEmoji = '🚨';
+      iconEmoji = '';
       badgeLabel = 'Emergency Protocol';
-      title = '🚨 Immediate 24/7 Crisis Intervention Active';
+      title = 'Immediate 24/7 Crisis Intervention Active';
       description = 'If you or someone you know is in acute distress, free confidential emergency help is one tap away with Tele-MANAS (14416).';
       ctaText = 'Get Emergency Help';
       ctaLink = '/crisis';
@@ -298,9 +298,9 @@ Every interaction is monitored by a local, deterministic safety screener that in
       type = 'ANNOUNCEMENT_BANNER';
       placement = 'TOP_HEADER';
       themeColor = 'emerald';
-      iconEmoji = '📞';
+      iconEmoji = '';
       badgeLabel = 'Govt. Verified 24/7';
-      title = '🇮🇳 National Tele-MANAS Mental Health Network (14416)';
+      title = 'National Tele-MANAS Mental Health Network (14416)';
       description = 'Toll-free mental healthcare support across India in English, Hindi, Bengali, and 17 regional languages.';
       ctaText = 'Call 14416 Now';
       ctaLink = 'tel:14416';
@@ -308,9 +308,9 @@ Every interaction is monitored by a local, deterministic safety screener that in
       type = 'INTERACTIVE_WIDGET';
       placement = 'FEATURED_GRID';
       themeColor = 'amber';
-      iconEmoji = '📋';
-      badgeLabel = '3-Min Assessment';
-      title = '📋 Free Anonymous Clinical Wellness Check-In';
+      iconEmoji = '';
+      badgeLabel = 'Clinical Assessment';
+      title = 'Free Anonymous Clinical Wellness Check-In';
       description = 'Scientifically validated PHQ-9 & GAD-7 screening. Understand your depression & anxiety score in under 3 minutes with zero signup.';
       ctaText = 'Take Free Screening';
       ctaLink = '/self-help';
@@ -318,9 +318,9 @@ Every interaction is monitored by a local, deterministic safety screener that in
       type = 'HERO_PROMO_CARD';
       placement = 'HERO_SECTION';
       themeColor = 'purple';
-      iconEmoji = '💼';
+      iconEmoji = '';
       badgeLabel = 'Workplace Wellness';
-      title = '💼 Professional Burnout & Career Recovery Track';
+      title = 'Professional Burnout & Career Recovery Track';
       description = 'Struggling with corporate exhaustion, imposter syndrome, or work-life imbalance? Speak with certified organizational psychologists.';
       ctaText = 'Find a Specialist';
       ctaLink = '/professionals';
@@ -328,16 +328,16 @@ Every interaction is monitored by a local, deterministic safety screener that in
       type = 'COMMUNITY_CAMPAIGN';
       placement = 'FEATURED_GRID';
       themeColor = 'emerald';
-      iconEmoji = '🤝';
+      iconEmoji = '';
       badgeLabel = 'Community Action';
-      title = '🤝 Grassroots Mental Health Alliance';
+      title = 'Grassroots Mental Health Alliance';
       description = 'Partnering with 120+ verified grassroots NGOs to bring in-person therapy, rehabilitation, and emotional aid to underserved districts.';
       ctaText = 'View Partner NGOs';
       ctaLink = '/impact';
     } else {
       // Custom AI interpretation from prompt words
       const words = prompt.trim().split(/\s+/).slice(0, 8).join(' ');
-      title = `✨ ${words}`;
+      title = words;
       description = `AI-generated feature in response to Super Admin directive: "${prompt.trim()}". Providing real-time patient support and enhanced healthcare discovery.`;
       ctaText = 'Explore Initiative';
       ctaLink = '/self-help';

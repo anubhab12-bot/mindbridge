@@ -88,7 +88,7 @@ export function renderTemplate(template: MailTemplate, d: TemplateData) {
           'You can join directly using the button below or opening the meeting room link. Ensure your webcam and microphone are connected.',
           `Meeting Room Link: ${String(d['videoUrl'] ?? `${app}/telehealth/room`)}`,
         ],
-        { label: '📹 Join 1-on-1 Video Call Now', url: String(d['videoUrl'] ?? `${app}/telehealth/room`) },
+        { label: 'Join 1-on-1 Video Call Now', url: String(d['videoUrl'] ?? `${app}/telehealth/room`) },
       );
     case 'new-secure-message':
       return layout(

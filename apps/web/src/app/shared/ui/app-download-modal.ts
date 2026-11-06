@@ -44,7 +44,7 @@ import { PwaService } from '../../core/services/pwa.service';
               [class.active]="activeTab() === 'android'"
               (click)="activeTab.set('android')"
             >
-              <span class="tab-icon">🤖</span> Android
+              Android
             </button>
             <button
               type="button"
@@ -52,7 +52,7 @@ import { PwaService } from '../../core/services/pwa.service';
               [class.active]="activeTab() === 'ios'"
               (click)="activeTab.set('ios')"
             >
-              <span class="tab-icon">🍎</span> iOS (iPhone/iPad)
+              iOS (iPhone/iPad)
             </button>
             <button
               type="button"
@@ -60,7 +60,7 @@ import { PwaService } from '../../core/services/pwa.service';
               [class.active]="activeTab() === 'desktop'"
               (click)="activeTab.set('desktop')"
             >
-              <span class="tab-icon">💻</span> Desktop / PC
+              Desktop / PC
             </button>
           </div>
 
@@ -72,7 +72,7 @@ import { PwaService } from '../../core/services/pwa.service';
                   <span class="step-num">1</span>
                   <div class="step-text">
                     <strong>Open in Chrome or Edge</strong>
-                    <p>Visit <code>mindbridge-web.onrender.com</code> on your Android phone.</p>
+                    <p>Visit <code>mindbridge-web.onrender.com</code> on your Android device.</p>
                   </div>
                 </div>
                 <div class="step-item">
@@ -103,7 +103,7 @@ import { PwaService } from '../../core/services/pwa.service';
                   <span class="step-num">2</span>
                   <div class="step-text">
                     <strong>Tap the Share Button</strong>
-                    <p>Tap the share icon <span class="share-icon">⎙ / 📤</span> at the bottom of Safari.</p>
+                    <p>Tap the share icon at the bottom of Safari.</p>
                   </div>
                 </div>
                 <div class="step-item">
@@ -120,7 +120,7 @@ import { PwaService } from '../../core/services/pwa.service';
                   <span class="step-num">1</span>
                   <div class="step-text">
                     <strong>Chrome / Edge Address Bar</strong>
-                    <p>Look for the <strong>Install Icon (⊕ / 💻)</strong> on the right side of the URL bar.</p>
+                    <p>Look for the <strong>Install Icon</strong> on the right side of the URL bar.</p>
                   </div>
                 </div>
                 <div class="step-item">
@@ -137,9 +137,9 @@ import { PwaService } from '../../core/services/pwa.service';
           <!-- Direct Download & Features Row -->
           <div class="modal-footer-info">
             <div class="pwa-features-row">
-              <span>⚡ Zero App Store Download Size</span> ·
-              <span>🔒 Encrypted Local Storage</span> ·
-              <span>🔔 Teams Video Calling</span>
+              <span>Instant PWA Launch</span> ·
+              <span>Encrypted Storage</span> ·
+              <span>HD Video Consultations</span>
             </div>
             <button class="btn btn-secondary btn-sm" (click)="pwa.closeDownloadModal()">Got It, Close</button>
           </div>
