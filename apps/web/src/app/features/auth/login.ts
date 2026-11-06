@@ -253,17 +253,14 @@ export class LoginPage implements OnInit {
 
   private done() {
     const target = this.returnUrl();
-    const user = this.auth.user();
-    const isSuperAdmin = Boolean(
-      user?.role === Role.ADMIN ||
-      user?.email?.toLowerCase().includes('admin') ||
-      user?.email?.toLowerCase().includes('anubhab')
-    );
-    if (isSuperAdmin) {
-      return this.router.navigateByUrl('/portal-select');
-    }
     const safe =
-      target && target.startsWith('/') && !target.startsWith('//') ? target : this.auth.homeFor();
+      target &&
+      target.startsWith('/') &&
+      !target.startsWith('//') &&
+      !target.includes('admin') &&
+      !target.includes('portal-select')
+        ? target
+        : this.auth.homeFor();
     return this.router.navigateByUrl(safe);
   }
 }

@@ -1305,14 +1305,7 @@ export class PublicLayoutComponent implements OnInit {
     this.contactModalOpen.set(true);
   }
 
-  protected readonly isSuperAdmin = computed(() => {
-    const u = this.auth.user();
-    return Boolean(
-      u?.role === Role.ADMIN ||
-      u?.email?.toLowerCase().includes('admin') ||
-      u?.email?.toLowerCase().includes('anubhab')
-    );
-  });
+  protected readonly isSuperAdmin = computed(() => false);
 
   protected readonly bannerVisible = signal(true);
   protected readonly bannerTitle = signal('24/7 National Mental Health Helplines Active');

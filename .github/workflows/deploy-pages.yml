@@ -81,3 +81,14 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./apps/web/dist/web/browser
           force_orphan: true
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./apps/web/dist/web/browser
+        continue-on-error: true
+
+      - name: Deploy to GitHub Pages (Actions Deployment)
+        id: deployment
+        uses: actions/deploy-pages@v4
+        continue-on-error: true

@@ -2480,12 +2480,12 @@ interface RecoveryTrack {
         gap: 16px;
         width: 100% !important;
         max-width: 100% !important;
-        overflow: hidden;
       }
       .copy {
         min-width: 0 !important;
         max-width: 100% !important;
-        overflow: hidden;
+        word-break: break-word !important;
+        overflow-wrap: anywhere !important;
       }
       .medical-authority-pill {
         font-size: 0.68rem !important;
@@ -2502,23 +2502,26 @@ interface RecoveryTrack {
       }
       .authority-text {
         white-space: normal !important;
-        word-break: normal !important;
-        overflow-wrap: break-word !important;
+        word-break: break-word !important;
+        overflow-wrap: anywhere !important;
       }
       .medical-hero-title {
-        font-size: 1.3rem !important;
-        line-height: 1.3 !important;
+        font-size: clamp(1.2rem, 5vw, 1.4rem) !important;
+        line-height: 1.25 !important;
         letter-spacing: -0.02em !important;
         margin: 0 0 12px !important;
-        word-break: normal !important;
-        overflow-wrap: break-word !important;
+        word-break: break-word !important;
+        overflow-wrap: anywhere !important;
+        hyphens: auto !important;
         max-width: 100% !important;
       }
       .lead {
-        font-size: 0.92rem !important;
+        font-size: 0.9rem !important;
         line-height: 1.55 !important;
         margin-bottom: 16px !important;
         max-width: 100% !important;
+        word-break: break-word !important;
+        overflow-wrap: anywhere !important;
       }
       .hero-actions {
         flex-direction: column;
@@ -2533,6 +2536,7 @@ interface RecoveryTrack {
         text-align: center;
         justify-content: center;
         padding: 10px 12px;
+        box-sizing: border-box !important;
       }
       .clinical-trust-row {
         display: grid !important;
@@ -2552,8 +2556,8 @@ interface RecoveryTrack {
         padding: 6px 4px !important;
         text-align: center !important;
         white-space: normal !important;
-        word-break: normal !important;
-        overflow-wrap: break-word !important;
+        word-break: break-word !important;
+        overflow-wrap: anywhere !important;
         line-height: 1.25 !important;
         box-sizing: border-box !important;
         border-radius: 6px !important;
@@ -2568,12 +2572,14 @@ interface RecoveryTrack {
       }
       .btn-emergency-cta {
         font-size: 0.82rem !important;
-        padding: 10px 8px !important;
+        padding: 10px 10px !important;
         white-space: normal !important;
-        word-break: normal !important;
-        overflow-wrap: break-word !important;
+        word-break: break-word !important;
+        overflow-wrap: anywhere !important;
         line-height: 1.35 !important;
         text-align: center !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
       }
       .telehealth-card-banner {
         grid-template-columns: minmax(0, 1fr) !important;
