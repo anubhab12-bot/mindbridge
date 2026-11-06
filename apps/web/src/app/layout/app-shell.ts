@@ -238,7 +238,7 @@ const ADMIN_NAV: NavItem[] = [
                   (click)="quickVerify()"
                   [disabled]="verifying()"
                 >
-                  {{ verifying() ? 'Verifying…' : 'Verify Email Address' }}
+                  {{ verifying() ? 'Verifyingâ€¦' : 'Verify Email Address' }}
                 </button>
                 <a class="btn btn-sm btn-secondary" routerLink="/verify-email">Options</a>
               </div>
@@ -723,11 +723,7 @@ export class AppShellComponent implements OnInit {
   protected readonly isPatient = computed(() => this.auth.role() === Role.PATIENT);
   protected readonly isSuperAdmin = computed(() => {
     const u = this.auth.user();
-    return Boolean(
-      u?.role === Role.ADMIN ||
-      u?.email?.toLowerCase().includes('admin') ||
-      u?.email?.toLowerCase().includes('anubhab')
-    );
+    return u?.role === Role.ADMIN;
   });
 
   /**

@@ -208,3 +208,11 @@ export class ChangePasswordDto {
   @MaxLength(128)
   newPassword!: string;
 }
+
+export class EnrollAdminDto {
+  @ApiProperty({ example: 'MB-SUPERADMIN-ENBLE2026' })
+  @Transform(trim)
+  @IsString()
+  @Length(10, 60)
+  enrollmentKey!: string;
+}

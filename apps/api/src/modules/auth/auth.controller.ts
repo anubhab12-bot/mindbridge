@@ -25,6 +25,7 @@ import { ParseObjectIdPipe } from '../../common/pipes/parse-object-id.pipe.js';
 import { AuthService, type IssuedTokens, type RequestMeta } from './auth.service.js';
 import {
   ChangePasswordDto,
+  EnrollAdminDto,
   ForgotPasswordDto,
   LoginDto,
   MfaCodeDto,
@@ -149,11 +150,7 @@ export class AuthController {
     const user = await this.auth.findOrCreateUserByEmail(emailParam, requestMeta(req));
     const tokens = await this.auth.issueTokens(user, requestMeta(req));
     this.setRefreshCookie(res, tokens);
-    const isSuperAdmin = Boolean(
-      user.role === Role.ADMIN ||
-      user.email?.toLowerCase().includes('admin') ||
-      user.email?.toLowerCase().includes('anubhab')
-    );
+    const isSuperAdmin = user.role === Role.ADMIN;
     const destination = (isSuperAdmin ? '/portal-select' : '/patient/dashboard') + `?token=${encodeURIComponent(tokens.accessToken)}`;
     return res.redirect(`${webAppUrl}${destination}`);
   }
@@ -260,11 +257,7 @@ export class AuthController {
     const user = await this.auth.findOrCreateUserByEmail(email, requestMeta(req), displayName);
     const tokens = await this.auth.issueTokens(user, requestMeta(req));
     this.setRefreshCookie(res, tokens);
-    const isSuperAdmin = Boolean(
-      user.role === Role.ADMIN ||
-      user.email?.toLowerCase().includes('admin') ||
-      user.email?.toLowerCase().includes('anubhab')
-    );
+    const isSuperAdmin = user.role === Role.ADMIN;
     const destination = (isSuperAdmin ? '/portal-select' : '/patient/dashboard') + `?token=${encodeURIComponent(tokens.accessToken)}`;
     return res.redirect(`${webAppUrl}${destination}`);
   }
@@ -277,6 +270,18 @@ export class AuthController {
   async logout(@Req() req: Request & { user?: AuthenticatedUser }, @Res({ passthrough: true }) res: Response) {
     await this.auth.logout(req.cookies?.[REFRESH_COOKIE], req.user?.sessionId, requestMeta(req));
     this.clearRefreshCookie(res);
+  }
+
+  @Roles(...ALL_ROLES)
+  @ApiBearerAuth()
+  @Post('enroll-admin')
+  @ApiOperation({ summary: 'Enroll as administrator using a verified organizational key' })
+  async enrollAdmin(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: EnrollAdminDto,
+    @Req() req: Request,
+  ) {
+    return this.auth.enrollAdmin(user, dto.enrollmentKey, requestMeta(req));
   }
 
   @Roles(...ALL_ROLES)

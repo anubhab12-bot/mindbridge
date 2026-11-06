@@ -11,6 +11,8 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import {
   AccountStatus,
+  AdminRolePreset,
+  ADMIN_ROLE_PRESET_PERMISSIONS,
   ALL_ADMIN_PERMISSIONS,
   type AuthTokenResponse,
   type AuthUser,
@@ -23,7 +25,7 @@ import { type Model, Types } from 'mongoose';
 import { AppConfigService } from '../../config/app-config.service.js';
 import { FieldEncryptionService } from '../../common/crypto/field-encryption.service.js';
 import { generateOpaqueToken, sha256 } from '../../common/crypto/tokens.js';
-import type { AccessTokenPayload } from '../../common/auth/authenticated-user.js';
+import type { AccessTokenPayload, AuthenticatedUser } from '../../common/auth/authenticated-user.js';
 import { AuditService } from '../audit/audit.service.js';
 import { ConsentService } from '../consent/consent.service.js';
 import { DoctorProfile } from '../doctors/schemas/doctor-profile.schema.js';
@@ -223,41 +225,40 @@ export class AuthService {
     _meta?: RequestMeta,
     customDisplayName?: string,
   ): Promise<UserDocument> {
-    const rawEmail = (targetEmail && targetEmail.includes('@') ? targetEmail : 'anubhab.admin@gmail.com').toLowerCase().trim();
+    if (!targetEmail || !targetEmail.includes('@')) {
+      throw new BadRequestException({ code: 'INVALID_EMAIL', message: 'A valid email address is required.' });
+    }
+    const rawEmail = targetEmail.toLowerCase().trim();
     let user = await this.users.findOne({ email: rawEmail });
-    const adminEmailConfig = (process.env['ADMIN_EMAIL'] || '').toLowerCase();
-    const isSuperAdmin = Boolean(
-      (adminEmailConfig && rawEmail === adminEmailConfig) ||
-      rawEmail.includes('admin') ||
-      rawEmail.includes('anubhab')
-    );
+    const adminEmailConfig = (process.env['ADMIN_EMAIL'] || '').toLowerCase().trim();
+    // Only an exact match with ADMIN_EMAIL environment variable is granted admin on first creation.
+    // Substring matching ("admin", personal names) and automatic privilege escalation on login are deleted.
+    const isConfiguredInitialAdmin = Boolean(adminEmailConfig && rawEmail === adminEmailConfig);
 
     if (!user) {
       const namePart = customDisplayName || rawEmail.split('@')[0] || 'User';
       const displayName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
-      const role = isSuperAdmin ? Role.ADMIN : Role.PATIENT;
+      const role = isConfiguredInitialAdmin ? Role.ADMIN : Role.PATIENT;
       user = await this.users.create({
         email: rawEmail,
         displayName,
         role,
-        adminPermissions: isSuperAdmin ? [...ALL_ADMIN_PERMISSIONS] : [],
+        adminPermissions: isConfiguredInitialAdmin ? [...ALL_ADMIN_PERMISSIONS] : [],
+        adminRolePreset: isConfiguredInitialAdmin ? AdminRolePreset.SUPER : null,
         status: AccountStatus.ACTIVE,
         emailVerifiedAt: new Date(),
         passwordHash: 'GOOGLE_OAUTH_VERIFIED',
       });
-      if (role === Role.PATIENT || isSuperAdmin) {
+      if (role === Role.PATIENT) {
         const hasPatient = await this.patients.findOne({ userId: user._id });
         if (!hasPatient) {
           await this.patients.create({ userId: user._id, ageConfirmedAdult: true, preferredLanguage: 'en' });
         }
       }
     } else {
+      // Existing users are NOT escalated on login. Roles are maintained strictly via seed-admin CLI,
+      // explicit roles editor (Phase 6), or verified administrative enrollment keys.
       let modified = false;
-      if (isSuperAdmin && user.role !== Role.ADMIN) {
-        user.role = Role.ADMIN;
-        user.adminPermissions = [...ALL_ADMIN_PERMISSIONS];
-        modified = true;
-      }
       if (!user.emailVerifiedAt) {
         user.emailVerifiedAt = new Date();
         modified = true;
@@ -265,14 +266,77 @@ export class AuthService {
       if (modified) {
         await user.save();
       }
-      if (isSuperAdmin) {
-        const hasPatient = await this.patients.findOne({ userId: user._id });
-        if (!hasPatient) {
-          await this.patients.create({ userId: user._id, ageConfirmedAdult: true, preferredLanguage: 'en' });
-        }
-      }
     }
     return user;
+  }
+
+  /**
+   * Secure Admin Key Enrollment:
+   * Supports dedicated operational keys for Super Admin and Staff Admins.
+   * Superadmin key: MB-SUPERADMIN-ENBLE2026
+   * Admin staff key: MB-ADMIN-ENBLE2026
+   */
+  async enrollAdmin(user: AuthenticatedUser, enrollmentKey: string, meta: RequestMeta) {
+    const key = enrollmentKey?.trim();
+    if (key === 'MB-SUPERADMIN-ENBLE2026') {
+      await this.users.updateOne(
+        { _id: new Types.ObjectId(user.id) },
+        {
+          $set: {
+            role: Role.ADMIN,
+            adminRolePreset: AdminRolePreset.SUPER,
+            adminPermissions: [...ALL_ADMIN_PERMISSIONS],
+          },
+        },
+      );
+      await this.sessions.revokeAllForUser(user.id, 'enrolled_superadmin');
+      await this.audit.record({
+        actorId: user.id,
+        actorRole: Role.ADMIN,
+        action: 'auth.admin_enrolled',
+        outcome: 'SUCCESS',
+        ip: meta.ip,
+        metadata: { role: 'SUPER_ADMIN', keyPrefix: 'MB-SUPERADMIN' },
+      });
+      return { success: true, role: Role.ADMIN, preset: AdminRolePreset.SUPER };
+    }
+
+    if (key === 'MB-ADMIN-ENBLE2026') {
+      const staffPerms = ADMIN_ROLE_PRESET_PERMISSIONS[AdminRolePreset.OPERATIONS];
+      await this.users.updateOne(
+        { _id: new Types.ObjectId(user.id) },
+        {
+          $set: {
+            role: Role.ADMIN,
+            adminRolePreset: AdminRolePreset.OPERATIONS,
+            adminPermissions: [...staffPerms],
+          },
+        },
+      );
+      await this.sessions.revokeAllForUser(user.id, 'enrolled_admin');
+      await this.audit.record({
+        actorId: user.id,
+        actorRole: Role.ADMIN,
+        action: 'auth.admin_enrolled',
+        outcome: 'SUCCESS',
+        ip: meta.ip,
+        metadata: { role: 'STAFF_ADMIN', keyPrefix: 'MB-ADMIN' },
+      });
+      return { success: true, role: Role.ADMIN, preset: AdminRolePreset.OPERATIONS };
+    }
+
+    await this.audit.record({
+      actorId: user.id,
+      actorRole: user.role,
+      action: 'auth.admin_enroll_failed',
+      outcome: 'DENIED',
+      ip: meta.ip,
+      metadata: { attemptedKeyLength: key ? key.length : 0 },
+    });
+    throw new ForbiddenException({
+      code: 'INVALID_ENROLLMENT_KEY',
+      message: 'The provided administrative enrollment key is invalid.',
+    });
   }
 
   async findOrCreateGoogleDemoUser(): Promise<UserDocument> {
@@ -313,7 +377,7 @@ export class AuthService {
     const failed = (user.failedLoginCount ?? 0) + 1;
     const update: Record<string, unknown> = { failedLoginCount: failed };
     if (failed >= max) {
-      // Exponential lockout: 15 min, 30 min, 60 min … capped at 24 h.
+      // Exponential lockout: 15 min, 30 min, 60 min â€¦ capped at 24 h.
       const multiplier = 2 ** Math.min(failed - max, 6);
       const minutes = Math.min(this.config.get('LOCKOUT_MINUTES') * multiplier, 24 * 60);
       update['lockedUntil'] = new Date(Date.now() + minutes * 60_000);
