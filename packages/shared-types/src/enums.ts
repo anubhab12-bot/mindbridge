@@ -140,6 +140,14 @@ export const RiskLevel = {
 } as const;
 export type RiskLevel = (typeof RiskLevel)[keyof typeof RiskLevel];
 
+export const SafetyEventStatus = {
+  UNACKNOWLEDGED: 'UNACKNOWLEDGED',
+  ASSIGNED: 'ASSIGNED',
+  RESOLVED: 'RESOLVED',
+  ESCALATED: 'ESCALATED',
+} as const;
+export type SafetyEventStatus = (typeof SafetyEventStatus)[keyof typeof SafetyEventStatus];
+
 export const CrisisServiceType = {
   EMERGENCY: 'EMERGENCY',
   MENTAL_HEALTH_HELPLINE: 'MENTAL_HEALTH_HELPLINE',
@@ -207,9 +215,43 @@ export const AdminPermission = {
   SUPPORT_MANAGE: 'support:manage',
   SETTINGS_MANAGE: 'settings:manage',
   REPORTS_EXPORT: 'reports:export',
+  SAFETY_TRIAGE: 'safety:triage',
 } as const;
 export type AdminPermission = (typeof AdminPermission)[keyof typeof AdminPermission];
 export const ALL_ADMIN_PERMISSIONS = Object.values(AdminPermission);
+
+/** Admin role presets stored per user and editable only with settings:manage */
+export const AdminRolePreset = {
+  CLINICIAN_ON_CALL: 'CLINICIAN_ON_CALL',
+  VERIFICATION_REVIEWER: 'VERIFICATION_REVIEWER',
+  CONTENT_EDITOR: 'CONTENT_EDITOR',
+  OPERATIONS: 'OPERATIONS',
+  SUPER: 'SUPER',
+} as const;
+export type AdminRolePreset = (typeof AdminRolePreset)[keyof typeof AdminRolePreset];
+
+export const ADMIN_ROLE_PRESET_PERMISSIONS: Record<AdminRolePreset, readonly AdminPermission[]> = {
+  CLINICIAN_ON_CALL: [
+    AdminPermission.SAFETY_TRIAGE,
+    AdminPermission.CRISIS_MANAGE,
+    AdminPermission.AUDIT_READ,
+  ],
+  VERIFICATION_REVIEWER: [
+    AdminPermission.DOCTORS_VERIFY,
+    AdminPermission.USERS_MANAGE,
+    AdminPermission.AUDIT_READ,
+  ],
+  CONTENT_EDITOR: [
+    AdminPermission.CONTENT_MANAGE,
+    AdminPermission.CRISIS_MANAGE,
+  ],
+  OPERATIONS: [
+    AdminPermission.SUPPORT_MANAGE,
+    AdminPermission.SETTINGS_MANAGE,
+    AdminPermission.REPORTS_EXPORT,
+  ],
+  SUPER: ALL_ADMIN_PERMISSIONS,
+};
 
 export const WellnessContentType = {
   ARTICLE: 'ARTICLE',

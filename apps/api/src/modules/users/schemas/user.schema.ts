@@ -3,6 +3,7 @@ import {
   AccountStatus,
   type AdminPermission,
   ALL_ADMIN_PERMISSIONS,
+  AdminRolePreset,
   Role,
 } from '@mindbridge/shared-types';
 import type { HydratedDocument } from 'mongoose';
@@ -43,6 +44,9 @@ export class User {
 
   @Prop({ type: [String], enum: ALL_ADMIN_PERMISSIONS, default: [] })
   adminPermissions!: AdminPermission[];
+
+  @Prop({ type: String, enum: Object.values(AdminRolePreset), default: null })
+  adminRolePreset?: AdminRolePreset | null;
 
   @Prop({ default: false })
   mfaEnabled!: boolean;

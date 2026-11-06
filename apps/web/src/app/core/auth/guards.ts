@@ -3,7 +3,10 @@ import { type CanActivateFn, Router } from '@angular/router';
 import { AdminPermission, DoctorVerificationStatus, Role } from '@mindbridge/shared-types';
 import { AuthService } from './auth.service';
 
-/** UX-only guards. The API enforces every rule again; these just keep people on the right pages. */
+/**
+ * UX-only guards. Client guards are UX only; the API is the authority so it is never mistaken for the control.
+ * These client guards keep users on the appropriate views, while the backend API strictly enforces authorization.
+ */
 export const authGuard: CanActivateFn = (_route, state) => {
   const auth = inject(AuthService);
   if (auth.isAuthenticated()) return true;

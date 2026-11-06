@@ -2,9 +2,11 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppointmentsModule } from '../appointments/appointments.module.js';
 import { AuthModule } from '../auth/auth.module.js';
+import { SafetyEvent, SafetyEventSchema } from '../ai/schemas/safety-event.schema.js';
 import { PolicyDocument, PolicyDocumentSchema } from '../consent/schemas/policy-document.schema.js';
 import { DoctorProfile, DoctorProfileSchema } from '../doctors/schemas/doctor-profile.schema.js';
 import { Feedback, FeedbackSchema } from '../feedback/schemas/feedback.schema.js';
+import { SupportTicket, SupportTicketSchema } from '../support/schemas/support-ticket.schema.js';
 import { SupportModule } from '../support/support.module.js';
 import { User, UserSchema } from '../users/schemas/user.schema.js';
 import { VerificationModule } from '../verification/verification.module.js';
@@ -22,6 +24,8 @@ import { AdminService } from './admin.service.js';
       { name: DoctorProfile.name, schema: DoctorProfileSchema },
       { name: Feedback.name, schema: FeedbackSchema },
       { name: PolicyDocument.name, schema: PolicyDocumentSchema },
+      { name: SafetyEvent.name, schema: SafetyEventSchema },
+      { name: SupportTicket.name, schema: SupportTicketSchema },
     ]),
   ],
   controllers: [AdminController],

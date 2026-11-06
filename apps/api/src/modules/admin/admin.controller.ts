@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Header, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, Header, HttpCode, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AccountStatus, AdminPermission, ALL_ADMIN_PERMISSIONS, Role } from '@mindbridge/shared-types';
 import { Type } from 'class-transformer';
@@ -11,6 +11,7 @@ import { ParseObjectIdPipe } from '../../common/pipes/parse-object-id.pipe.js';
 import { AuditService, type AuditOutcome } from '../audit/audit.service.js';
 import { PolicyDocumentType } from '../consent/schemas/policy-document.schema.js';
 import { AdminService } from './admin.service.js';
+import { AdminRolePresetDto, PatchSafetyEventDto, SafetyQueryDto } from './dto/admin.dto.js';
 
 class UserSearchDto extends PaginationQueryDto {
   @IsOptional() @IsString() @MaxLength(100) q?: string;
@@ -62,6 +63,12 @@ export class AdminController {
     private readonly audit: AuditService,
   ) {}
 
+  @Get('worklist')
+  @ApiOperation({ summary: 'Prioritized operational worklist sorted by potential harm (ADMIN).' })
+  worklist() {
+    return this.admin.getWorklist();
+  }
+
   @Get('dashboard')
   @ApiOperation({ summary: 'Aggregated, small-group-suppressed platform metrics (ADMIN).' })
   dashboard() {
@@ -106,6 +113,48 @@ export class AdminController {
   @ApiOperation({ summary: "Change another administrator's permissions (ADMIN security:manage)." })
   permissions(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseObjectIdPipe) id: string, @Body() dto: PermissionsDto) {
     return this.admin.setAdminPermissions(user, id, dto.permissions);
+  }
+
+  @Put('users/:id/preset')
+  @RequireAdminPermissions(AdminPermission.SETTINGS_MANAGE)
+  @ApiOperation({ summary: "Assign an admin role preset to another administrator (ADMIN settings:manage)." })
+  preset(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseObjectIdPipe) id: string,
+    @Body() dto: AdminRolePresetDto,
+  ) {
+    return this.admin.setAdminRolePreset(user, id, dto.preset);
+  }
+
+  // --------------------------------------------------------- Phase 3: Safety triage endpoints
+
+  @Get('safety-events')
+  @RequireAdminPermissions(AdminPermission.SAFETY_TRIAGE)
+  @ApiOperation({ summary: 'Safety events for triage board (ADMIN safety:triage). Never contains journal/chat text.' })
+  safetyEvents(@Query() q: SafetyQueryDto) {
+    return this.admin.getSafetyEvents(q);
+  }
+
+  @Post('safety-events/:id/ack')
+  @HttpCode(200)
+  @RequireAdminPermissions(AdminPermission.SAFETY_TRIAGE)
+  @ApiOperation({ summary: 'Acknowledge an unassigned safety event (ADMIN safety:triage).' })
+  acknowledgeSafety(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseObjectIdPipe) id: string,
+  ) {
+    return this.admin.acknowledgeSafetyEvent(user, id);
+  }
+
+  @Patch('safety-events/:id')
+  @RequireAdminPermissions(AdminPermission.SAFETY_TRIAGE)
+  @ApiOperation({ summary: 'Assign, resolve or escalate a safety event (ADMIN safety:triage).' })
+  patchSafety(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseObjectIdPipe) id: string,
+    @Body() dto: PatchSafetyEventDto,
+  ) {
+    return this.admin.patchSafetyEvent(user, id, dto);
   }
 
   @Get('feedback/pending')

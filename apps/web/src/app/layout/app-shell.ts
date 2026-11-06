@@ -59,7 +59,13 @@ const PENDING_DOCTOR_NAV: NavItem[] = [
 ];
 
 const ADMIN_NAV: NavItem[] = [
-  { label: 'Overview', link: '/admin' },
+  { label: 'Today', link: '/admin/today' },
+  {
+    label: 'Safety Triage',
+    link: '/admin/safety-triage',
+    permission: AdminPermission.SAFETY_TRIAGE,
+  },
+  { label: 'Analytics', link: '/admin/overview' },
   {
     label: 'Verifications',
     link: '/admin/verifications',
@@ -724,6 +730,11 @@ export class AppShellComponent implements OnInit {
     );
   });
 
+  /**
+   * UX only: Nav renders from the session's permission set.
+   * Client guards and sidebar navigation filters are purely user experience affordances;
+   * the backend API is the strict authority enforcing every permission so it is never mistaken for the control.
+   */
   protected readonly nav = computed<NavItem[]>(() => {
     const u = this.auth.user();
     if (!u) return [];

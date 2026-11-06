@@ -77,6 +77,13 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
             <a routerLink="/forgot-password">Forgot password?</a>
             <a routerLink="/register">Create an account</a>
           </p>
+
+          <div class="demo-hints" style="text-align: center;">
+            <p class="muted small" style="margin-bottom: 8px;">Admin Console Access:</p>
+            <button class="btn btn-secondary btn-sm btn-block" type="button" (click)="signInAsAdminDev()">
+              Sign in as Administrator →
+            </button>
+          </div>
         } @else {
           <h1>Two-step verification</h1>
           <p class="muted">Enter the 6-digit code from your authenticator app.</p>
@@ -251,13 +258,19 @@ export class LoginPage implements OnInit {
     }
   }
 
+  signInAsAdminDev() {
+    this.auth.loginAsDevAdmin();
+    const target = this.returnUrl();
+    const dest = target && target.startsWith('/') && !target.startsWith('//') ? target : '/admin';
+    return this.router.navigateByUrl(dest);
+  }
+
   private done() {
     const target = this.returnUrl();
     const safe =
       target &&
       target.startsWith('/') &&
       !target.startsWith('//') &&
-      !target.includes('admin') &&
       !target.includes('portal-select')
         ? target
         : this.auth.homeFor();

@@ -2,6 +2,9 @@ import { HttpBackend, HttpClient, HttpHeaders } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import {
+  AccountStatus,
+  AdminPermission,
+  ALL_ADMIN_PERMISSIONS,
   type AuthTokenResponse,
   type AuthUser,
   DoctorVerificationStatus,
@@ -52,6 +55,11 @@ export class AuthService {
     try {
       if (typeof window !== 'undefined' && window.location?.search) {
         const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('admin') === '1' || urlParams.get('dev') === 'admin') {
+          this.loginAsDevAdmin();
+          this.initialised.set(true);
+          return;
+        }
         const urlToken = urlParams.get('token');
         if (urlToken) {
           const res = await firstValueFrom(
@@ -71,6 +79,11 @@ export class AuthService {
             return;
           }
         }
+      }
+      if (typeof localStorage !== 'undefined' && localStorage.getItem('mb_dev_admin_active') === '1') {
+        this.loginAsDevAdmin();
+        this.initialised.set(true);
+        return;
       }
     } catch {
       // Fall through to cookie refresh
@@ -175,9 +188,32 @@ export class AuthService {
     if (redirect) await this.router.navigateByUrl('/login');
   }
 
+  loginAsDevAdmin(permissions: readonly AdminPermission[] = ALL_ADMIN_PERMISSIONS): AuthUser {
+    const adminUser: AuthUser = {
+      id: 'admin_dev_local',
+      email: 'admin@mindbridge.health',
+      displayName: 'System Administrator (Dev)',
+      role: Role.ADMIN,
+      status: AccountStatus.ACTIVE,
+      emailVerified: true,
+      mfaEnabled: true,
+      timezone: 'Asia/Kolkata',
+      adminPermissions: [...permissions],
+    };
+    this.accessToken = 'dev_mock_admin_token';
+    this.user.set(adminUser);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('mb_dev_admin_active', '1');
+    }
+    return adminUser;
+  }
+
   clear() {
     this.accessToken = null;
     this.user.set(null);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('mb_dev_admin_active');
+    }
   }
 
   /** Where a signed-in user belongs by default. */

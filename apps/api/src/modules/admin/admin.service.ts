@@ -1,11 +1,25 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { AccountStatus, AdminPermission, ContentStatus, ModerationStatus, Role } from '@mindbridge/shared-types';
+import {
+  AccountStatus,
+  AdminPermission,
+  AdminRolePreset,
+  ADMIN_ROLE_PRESET_PERMISSIONS,
+  ContentStatus,
+  DoctorVerificationStatus,
+  ModerationStatus,
+  RiskLevel,
+  Role,
+  SafetyEventStatus,
+  SupportTicketCategory,
+  SupportTicketStatus,
+} from '@mindbridge/shared-types';
 import { type Model, Types } from 'mongoose';
 import type { AuthenticatedUser } from '../../common/auth/authenticated-user.js';
 import { AppConfigService } from '../../config/app-config.service.js';
 import { AiChatService } from '../ai/ai-chat.service.js';
 import { AiClientService } from '../ai/ai-client.service.js';
+import { SafetyEvent } from '../ai/schemas/safety-event.schema.js';
 import { AppointmentsService } from '../appointments/appointments.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { SessionService } from '../auth/session.service.js';
@@ -15,6 +29,7 @@ import { CrisisResourcesService } from '../crisis-resources/crisis-resources.ser
 import { DoctorProfile } from '../doctors/schemas/doctor-profile.schema.js';
 import { Feedback } from '../feedback/schemas/feedback.schema.js';
 import { JobsService } from '../queues/jobs.service.js';
+import { SupportTicket } from '../support/schemas/support-ticket.schema.js';
 import { SupportService } from '../support/support.service.js';
 import { User } from '../users/schemas/user.schema.js';
 import { VerificationService } from '../verification/verification.service.js';
@@ -34,6 +49,8 @@ export class AdminService {
     @InjectModel(DoctorProfile.name) private readonly doctors: Model<DoctorProfile>,
     @InjectModel(Feedback.name) private readonly feedback: Model<Feedback>,
     @InjectModel(PolicyDocument.name) private readonly policies: Model<PolicyDocument>,
+    @InjectModel(SafetyEvent.name) private readonly safetyEvents: Model<SafetyEvent>,
+    @InjectModel(SupportTicket.name) private readonly supportTickets: Model<SupportTicket>,
     private readonly config: AppConfigService,
     private readonly appointments: AppointmentsService,
     private readonly verification: VerificationService,
@@ -269,5 +286,355 @@ export class AdminService {
     push('safety_events_by_level_30d', d.ai.safetyEventsByLevelLast30Days);
     await this.audit.record({ actorId: admin.id, actorRole: admin.role, action: 'admin.report_exported' });
     return lines.join('\n') + '\n';
+  }
+
+  // --------------------------------------------------------- Phase 1: Preset assignment
+
+  async setAdminRolePreset(admin: AuthenticatedUser, userId: string, preset: AdminRolePreset) {
+    if (userId === admin.id) {
+      throw new BadRequestException({ code: 'SELF_ACTION', message: 'Ask another administrator to modify your permissions or preset.' });
+    }
+    const permissions = ADMIN_ROLE_PRESET_PERMISSIONS[preset];
+    if (!permissions) {
+      throw new BadRequestException({ code: 'INVALID_PRESET', message: 'Invalid admin role preset requested.' });
+    }
+    const res = await this.users.updateOne(
+      { _id: new Types.ObjectId(userId), role: Role.ADMIN },
+      { $set: { adminRolePreset: preset, adminPermissions: [...permissions] } },
+    );
+    if (!res.matchedCount) {
+      throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Admin user not found.' });
+    }
+    await this.sessions.revokeAllForUser(userId, 'preset_assigned');
+    await this.audit.record({
+      actorId: admin.id,
+      actorRole: admin.role,
+      action: 'admin.preset_assigned',
+      resourceType: 'User',
+      resourceId: userId,
+      metadata: { preset, permissions },
+    });
+    return { id: userId, preset, permissions };
+  }
+
+  // --------------------------------------------------------- Phase 2: Prioritized worklist
+
+  async getWorklist() {
+    const now = Date.now();
+    const items: Array<{
+      kind: 'SAFETY_EVENT' | 'SUPPORT_HANDOFF' | 'DOCTOR_VERIFICATION' | 'SAFETY_CONCERN_TICKET' | 'CRISIS_RESOURCE_STALE' | 'CONTENT_REVIEW';
+      severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+      harmRank: number;
+      id: string;
+      title: string;
+      meta: string;
+      ageMinutes: number;
+      primaryAction: { label: string; url: string };
+    }> = [];
+
+    // 1. Safety Events (HIGH or IMMINENT, unacknowledged or assigned)
+    try {
+      const activeSafetyEvents = await this.safetyEvents
+        .find({
+          status: { $in: [SafetyEventStatus.UNACKNOWLEDGED, SafetyEventStatus.ASSIGNED] },
+        })
+        .sort({ createdAt: 1 })
+        .lean();
+
+      for (const ev of activeSafetyEvents) {
+        const ageMinutes = Math.max(0, Math.floor((now - new Date(ev.createdAt).getTime()) / 60000));
+        const isImminent = ev.riskLevel === RiskLevel.IMMINENT;
+        const isHigh = ev.riskLevel === RiskLevel.HIGH;
+
+        if (isImminent || isHigh) {
+          items.push({
+            kind: 'SAFETY_EVENT',
+            severity: isImminent ? 'CRITICAL' : 'HIGH',
+            harmRank: isImminent ? 1 : 2,
+            id: ev._id.toString(),
+            title: `${isImminent ? 'IMMINENT' : 'HIGH'} Risk Signal (${ev.signals.join(', ') || 'Crisis trigger'})`,
+            meta: `SLA timer: ${ageMinutes}m · Status: ${ev.status} · Source: ${ev.source}`,
+            ageMinutes,
+            primaryAction: {
+              label: 'Triage Event',
+              url: `/admin/safety-triage?id=${ev._id.toString()}`,
+            },
+          });
+        }
+
+        if (ev.handoffRequested && ev.status !== SafetyEventStatus.RESOLVED) {
+          items.push({
+            kind: 'SUPPORT_HANDOFF',
+            severity: 'HIGH',
+            harmRank: 3,
+            id: `handoff-${ev._id.toString()}`,
+            title: `Human Support Handoff Requested by Patient`,
+            meta: `Waiting: ${ageMinutes}m · Risk: ${ev.riskLevel} · Care Team: ${ev.careTeamNotified > 0 ? 'Notified' : 'None'}`,
+            ageMinutes,
+            primaryAction: {
+              label: 'Connect Care Team',
+              url: `/admin/safety-triage?id=${ev._id.toString()}`,
+            },
+          });
+        }
+      }
+    } catch {
+      // Non-fatal if safety events collection is empty
+    }
+
+    // 2. SAFETY_CONCERN support tickets
+    try {
+      const safetyTickets = await this.supportTickets
+        .find({
+          category: SupportTicketCategory.SAFETY_CONCERN,
+          status: SupportTicketStatus.OPEN,
+        })
+        .sort({ createdAt: 1 })
+        .lean();
+
+      for (const ticket of safetyTickets) {
+        const ageMinutes = Math.max(0, Math.floor((now - new Date(ticket.createdAt).getTime()) / 60000));
+        items.push({
+          kind: 'SAFETY_CONCERN_TICKET',
+          severity: 'MEDIUM',
+          harmRank: 4,
+          id: ticket._id.toString(),
+          title: `Safety Concern Support Ticket: ${ticket.subject.slice(0, 50)}`,
+          meta: `Opened ${ageMinutes}m ago · Role: ${ticket.userRole}`,
+          ageMinutes,
+          primaryAction: {
+            label: 'Resolve Ticket',
+            url: `/admin/support?id=${ticket._id.toString()}`,
+          },
+        });
+      }
+    } catch {
+      // Non-fatal if support tickets collection is empty
+    }
+
+    // 3. Doctor verifications waiting
+    try {
+      const pendingDoctors = await this.doctors
+        .find({ verificationStatus: DoctorVerificationStatus.PENDING_VERIFICATION })
+        .sort({ createdAt: 1 })
+        .lean();
+
+      for (const doc of pendingDoctors) {
+        const ageMinutes = Math.max(0, Math.floor((now - new Date(doc.createdAt).getTime()) / 60000));
+        items.push({
+          kind: 'DOCTOR_VERIFICATION',
+          severity: 'MEDIUM',
+          harmRank: 5,
+          id: doc._id.toString(),
+          title: `Doctor Credentials Review (${doc.registrationNumber || 'Pending Document'})`,
+          meta: `Council: ${doc.council || 'State Medical Council'} · Waiting: ${ageMinutes}m`,
+          ageMinutes,
+          primaryAction: {
+            label: 'Review Credentials',
+            url: `/admin/verifications/${doc._id.toString()}`,
+          },
+        });
+      }
+    } catch {
+      // Non-fatal
+    }
+
+    // 4. Stale crisis resources
+    try {
+      const staleRes = await this.crisis.adminList({ stale: true, skip: 0, limit: 10 });
+      for (const res of staleRes.items) {
+        const ageMinutes = Math.max(0, Math.floor((now - new Date(res.verifiedAt).getTime()) / 60000));
+        items.push({
+          kind: 'CRISIS_RESOURCE_STALE',
+          severity: 'MEDIUM',
+          harmRank: 6,
+          id: res.id,
+          title: `Stale Crisis Resource: ${res.name} (${res.country})`,
+          meta: `Verification expired · Stale since ${new Date(res.verifiedAt).toLocaleDateString()}`,
+          ageMinutes,
+          primaryAction: {
+            label: 'Verify Helpline',
+            url: `/admin/crisis-resources?q=${encodeURIComponent(res.name)}`,
+          },
+        });
+      }
+    } catch {
+      // Non-fatal
+    }
+
+    // 5. Content awaiting review / feedback moderation
+    try {
+      const pendingFeedbacks = await this.feedback
+        .find({ moderationStatus: ModerationStatus.PENDING })
+        .sort({ createdAt: 1 })
+        .limit(10)
+        .lean();
+
+      for (const fb of pendingFeedbacks) {
+        const ageMinutes = Math.max(0, Math.floor((now - new Date(fb.createdAt).getTime()) / 60000));
+        items.push({
+          kind: 'CONTENT_REVIEW',
+          severity: 'LOW',
+          harmRank: 7,
+          id: fb._id.toString(),
+          title: `Public Feedback Moderation Pending (${fb.rating}/5 stars)`,
+          meta: `Submitted ${ageMinutes}m ago`,
+          ageMinutes,
+          primaryAction: {
+            label: 'Moderate Feedback',
+            url: `/admin/feedback`,
+          },
+        });
+      }
+    } catch {
+      // Non-fatal
+    }
+
+    // Sort strictly by potential harm, not by date:
+    // harmRank ascending (CRITICAL -> HIGH -> MEDIUM -> LOW)
+    // Within same rank: oldest first (ageMinutes descending)
+    items.sort((a, b) => {
+      if (a.harmRank !== b.harmRank) return a.harmRank - b.harmRank;
+      return b.ageMinutes - a.ageMinutes;
+    });
+
+    return items.map(({ harmRank, ...rest }) => rest);
+  }
+
+  // --------------------------------------------------------- Phase 3: Safety triage board
+
+  async getSafetyEvents(q: { status?: SafetyEventStatus; risk?: RiskLevel; from?: Date; to?: Date }) {
+    const filter: Record<string, unknown> = {};
+    if (q.status) filter['status'] = q.status;
+    if (q.risk) filter['riskLevel'] = q.risk;
+    if (q.from || q.to) {
+      filter['createdAt'] = {};
+      if (q.from) (filter['createdAt'] as Record<string, unknown>)['$gte'] = q.from;
+      if (q.to) (filter['createdAt'] as Record<string, unknown>)['$lte'] = q.to;
+    }
+
+    const events = await this.safetyEvents
+      .find(filter)
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .populate('assigneeUserId', 'displayName email')
+      .lean();
+
+    const now = Date.now();
+    return events.map((e) => {
+      const ageMinutes = Math.max(0, Math.floor((now - new Date(e.createdAt).getTime()) / 60000));
+      const isUnack = e.status === SafetyEventStatus.UNACKNOWLEDGED;
+      const isHighOrImminent = e.riskLevel === RiskLevel.HIGH || e.riskLevel === RiskLevel.IMMINENT;
+
+      let slaState: 'NORMAL' | 'WARNING_15M' | 'BREACHED_30M' = 'NORMAL';
+      if (isUnack && isHighOrImminent) {
+        if (ageMinutes >= 30) slaState = 'BREACHED_30M';
+        else if (ageMinutes >= 15) slaState = 'WARNING_15M';
+      }
+
+      const assignee = e.assigneeUserId as unknown as { _id?: Types.ObjectId; displayName?: string; email?: string } | null;
+
+      // Hard rule: Never render journal, chat, or transcript text. Only signal codes.
+      return {
+        id: e._id.toString(),
+        patientReference: `PT-${e.patientId.toString().slice(-6).toUpperCase()}`,
+        riskLevel: e.riskLevel,
+        signals: e.signals ?? [],
+        source: e.source,
+        hasCareTeam: (e.careTeamNotified ?? 0) > 0,
+        careTeamNotified: e.careTeamNotified ?? 0,
+        handoffRequested: Boolean(e.handoffRequested),
+        status: e.status ?? SafetyEventStatus.UNACKNOWLEDGED,
+        assignee: assignee ? { id: assignee._id?.toString(), name: assignee.displayName, email: assignee.email } : null,
+        timerMinutes: ageMinutes,
+        slaState,
+        acknowledgedAt: e.acknowledgedAt ?? null,
+        resolvedAt: e.resolvedAt ?? null,
+        outcomeReasonCode: e.outcomeReasonCode ?? null,
+        notes: e.notes ?? null,
+        createdAt: e.createdAt,
+      };
+    });
+  }
+
+  async acknowledgeSafetyEvent(admin: AuthenticatedUser, id: string) {
+    const ev = await this.safetyEvents.findById(id);
+    if (!ev) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Safety event not found.' });
+
+    ev.status = SafetyEventStatus.ASSIGNED;
+    ev.assigneeUserId = new Types.ObjectId(admin.id);
+    ev.acknowledgedAt = new Date();
+    await ev.save();
+
+    await this.audit.record({
+      actorId: admin.id,
+      actorRole: admin.role,
+      action: 'safety_event.acknowledged',
+      resourceType: 'SafetyEvent',
+      resourceId: id,
+      metadata: { riskLevel: ev.riskLevel, signals: ev.signals },
+    });
+
+    return {
+      id,
+      status: ev.status,
+      acknowledgedAt: ev.acknowledgedAt,
+      assigneeUserId: admin.id,
+    };
+  }
+
+  async patchSafetyEvent(
+    admin: AuthenticatedUser,
+    id: string,
+    dto: { action: 'assign' | 'resolve' | 'escalate'; assigneeUserId?: string; outcomeReasonCode?: string; notes?: string },
+  ) {
+    const ev = await this.safetyEvents.findById(id);
+    if (!ev) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Safety event not found.' });
+
+    if (dto.action === 'assign') {
+      if (!dto.assigneeUserId) {
+        throw new BadRequestException({ code: 'ASSIGNEE_REQUIRED', message: 'assigneeUserId is required when assigning.' });
+      }
+      ev.status = SafetyEventStatus.ASSIGNED;
+      ev.assigneeUserId = new Types.ObjectId(dto.assigneeUserId);
+      if (!ev.acknowledgedAt) ev.acknowledgedAt = new Date();
+      if (dto.notes) ev.notes = dto.notes;
+    } else if (dto.action === 'resolve') {
+      if (!dto.outcomeReasonCode) {
+        throw new BadRequestException({ code: 'OUTCOME_REQUIRED', message: 'outcomeReasonCode is mandatory to resolve.' });
+      }
+      ev.status = SafetyEventStatus.RESOLVED;
+      ev.resolvedAt = new Date();
+      ev.outcomeReasonCode = dto.outcomeReasonCode;
+      if (dto.notes) ev.notes = dto.notes;
+    } else if (dto.action === 'escalate') {
+      ev.status = SafetyEventStatus.ESCALATED;
+      if (dto.notes) ev.notes = dto.notes;
+    }
+
+    await ev.save();
+
+    await this.audit.record({
+      actorId: admin.id,
+      actorRole: admin.role,
+      action: `safety_event.${dto.action}`,
+      resourceType: 'SafetyEvent',
+      resourceId: id,
+      metadata: {
+        action: dto.action,
+        status: ev.status,
+        outcomeReasonCode: ev.outcomeReasonCode,
+        notes: dto.notes,
+      },
+    });
+
+    return {
+      id,
+      status: ev.status,
+      assigneeUserId: ev.assigneeUserId?.toString() ?? null,
+      resolvedAt: ev.resolvedAt ?? null,
+      outcomeReasonCode: ev.outcomeReasonCode ?? null,
+      notes: ev.notes ?? null,
+    };
   }
 }
