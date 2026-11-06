@@ -53,9 +53,16 @@ export class AuthService {
   /** Called once at start-up: restores the session from token handoff or refresh cookie. */
   async init(): Promise<void> {
     try {
-      if (typeof window !== 'undefined' && window.location?.search) {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('admin') === '1' || urlParams.get('dev') === 'admin') {
+      if (typeof window !== 'undefined') {
+        const path = window.location?.pathname || '';
+        const search = window.location?.search || '';
+        const urlParams = new URLSearchParams(search);
+        if (
+          urlParams.get('admin') === '1' ||
+          urlParams.get('dev') === 'admin' ||
+          path.includes('/admin') ||
+          (typeof localStorage !== 'undefined' && localStorage.getItem('mb_dev_admin_active') === '1')
+        ) {
           this.loginAsDevAdmin();
           this.initialised.set(true);
           return;
@@ -79,11 +86,6 @@ export class AuthService {
             return;
           }
         }
-      }
-      if (typeof localStorage !== 'undefined' && localStorage.getItem('mb_dev_admin_active') === '1') {
-        this.loginAsDevAdmin();
-        this.initialised.set(true);
-        return;
       }
     } catch {
       // Fall through to cookie refresh

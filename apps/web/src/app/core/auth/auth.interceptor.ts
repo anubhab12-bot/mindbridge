@@ -17,6 +17,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(withToken(auth.token)).pipe(
     catchError((err: unknown) => {
+      // If using the local/demo admin session, let components handle API fallbacks rather than bouncing to login
+      if (auth.token === 'dev_mock_admin_token') {
+        return throwError(() => err);
+      }
       if (!(err instanceof HttpErrorResponse) || err.status !== 401 || !auth.token) return throwError(() => err);
       return from(auth.refresh()).pipe(
         switchMap((ok) => {

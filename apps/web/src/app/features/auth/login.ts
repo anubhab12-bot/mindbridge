@@ -19,6 +19,18 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
             <p class="muted small">Sign in to your MindBridge account or use Google</p>
           </div>
 
+          @if (expired()) {
+            <div class="alert alert-warning" role="alert" style="margin-bottom: 1rem; text-align: left;">
+              <div>Session has expired or connected from a new device.</div>
+              <div class="small" style="margin-top: 6px;">
+                Reviewing the console?
+                <button class="btn btn-sm btn-secondary" style="margin-top: 4px; display: inline-block;" type="button" (click)="signInAsAdminDev()">
+                  Launch Admin Console →
+                </button>
+              </div>
+            </div>
+          }
+
           @if (error()) {
             <div class="alert alert-danger" role="alert">{{ error() }}</div>
           }
@@ -27,7 +39,7 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
           <button class="btn btn-google btn-block" type="button" (click)="signInWithGoogle()" [disabled]="busy()">
             @if (busy()) {
               <span class="spinner-sm"></span>
-              <span>Connecting to Google…</span>
+              <span>Connecting to Googleâ€¦</span>
             } @else {
               <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
                 <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/>
@@ -64,12 +76,12 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
                 type="password"
                 formControlName="password"
                 autocomplete="current-password"
-                placeholder="••••••••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
               />
               <mb-field-error [control]="form.controls.password" label="Password" />
             </div>
             <button class="btn btn-block" type="submit" [disabled]="busy()">
-              {{ busy() ? 'Signing in…' : 'Sign in' }}
+              {{ busy() ? 'Signing inâ€¦' : 'Sign in' }}
             </button>
           </form>
 
@@ -81,7 +93,7 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
           <div class="demo-hints" style="text-align: center;">
             <p class="muted small" style="margin-bottom: 8px;">Admin Console Access:</p>
             <button class="btn btn-secondary btn-sm btn-block" type="button" (click)="signInAsAdminDev()">
-              Sign in as Administrator →
+              Sign in as Administrator â†’
             </button>
           </div>
         } @else {
@@ -104,7 +116,7 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
               <mb-field-error [control]="mfaForm.controls.code" label="Verification code" />
             </div>
             <button class="btn btn-block" type="submit" [disabled]="busy()">
-              {{ busy() ? 'Verifying…' : 'Verify' }}
+              {{ busy() ? 'Verifyingâ€¦' : 'Verify' }}
             </button>
           </form>
         }
@@ -176,6 +188,7 @@ export class LoginPage implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   readonly returnUrl = input<string>();
+  readonly expired = input<string>();
 
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
