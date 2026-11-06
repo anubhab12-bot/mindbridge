@@ -60,7 +60,15 @@ jobs:
 
       - name: Build Angular Web App for GitHub Pages
         working-directory: apps/web
-        run: npm run build -- --configuration production --base-href /mindbridge/
+        run: |
+          npm run build -- --configuration production --base-href /mindbridge/ > build.log 2>&1 || {
+            cat build.log
+            echo "## Build Failure Log" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -n 100 build.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            exit 1
+          }
 
       - name: Configure SPA 404 Routing & NoJekyll for GitHub Pages
         run: |
