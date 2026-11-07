@@ -90,6 +90,27 @@ export class DoctorProfile {
   @Prop({ type: Types.ObjectId, ref: 'User' })
   verifiedBy?: Types.ObjectId;
 
+  @Prop({ type: Boolean, default: false })
+  externalRegisterChecked?: boolean;
+
+  @Prop({ type: Date })
+  externalRegisterCheckedAt?: Date;
+
+  @Prop({ type: String, maxlength: 300 })
+  externalRegisterReference?: string;
+
+  @Prop({ type: String, maxlength: 2000 })
+  verificationEvidenceNote?: string;
+
+  @Prop({ type: Date })
+  verificationExpiresAt?: Date;
+
+  @Prop({ type: String, maxlength: 100 })
+  rejectionReasonCode?: string;
+
+  @Prop({ type: String, maxlength: 1000 })
+  rejectionNote?: string;
+
   @Prop({ default: 0 })
   ratingSum!: number;
 

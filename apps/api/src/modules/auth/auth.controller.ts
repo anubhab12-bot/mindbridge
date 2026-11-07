@@ -150,8 +150,7 @@ export class AuthController {
     const user = await this.auth.findOrCreateUserByEmail(emailParam, requestMeta(req));
     const tokens = await this.auth.issueTokens(user, requestMeta(req));
     this.setRefreshCookie(res, tokens);
-    const isSuperAdmin = user.role === Role.ADMIN;
-    const destination = (isSuperAdmin ? '/portal-select' : '/patient/dashboard') + `?token=${encodeURIComponent(tokens.accessToken)}`;
+    const destination = '/patient/dashboard' + `?token=${encodeURIComponent(tokens.accessToken)}`;
     return res.redirect(`${webAppUrl}${destination}`);
   }
 
@@ -257,8 +256,7 @@ export class AuthController {
     const user = await this.auth.findOrCreateUserByEmail(email, requestMeta(req), displayName);
     const tokens = await this.auth.issueTokens(user, requestMeta(req));
     this.setRefreshCookie(res, tokens);
-    const isSuperAdmin = user.role === Role.ADMIN;
-    const destination = (isSuperAdmin ? '/portal-select' : '/patient/dashboard') + `?token=${encodeURIComponent(tokens.accessToken)}`;
+    const destination = '/patient/dashboard' + `?token=${encodeURIComponent(tokens.accessToken)}`;
     return res.redirect(`${webAppUrl}${destination}`);
   }
 

@@ -28,9 +28,23 @@ export const DoctorVerificationStatus = {
   APPROVED: 'APPROVED',
   REJECTED: 'REJECTED',
   SUSPENDED: 'SUSPENDED',
+  EXPIRED: 'EXPIRED',
 } as const;
 export type DoctorVerificationStatus =
   (typeof DoctorVerificationStatus)[keyof typeof DoctorVerificationStatus];
+
+/** Reason codes for rejecting clinician verification applications */
+export const DoctorRejectionReason = {
+  INVALID_REGISTRATION_NUMBER: 'INVALID_REGISTRATION_NUMBER',
+  UNVERIFIED_COUNCIL: 'UNVERIFIED_COUNCIL',
+  DOCUMENT_ILLEGIBLE: 'DOCUMENT_ILLEGIBLE',
+  EXPIRED_CREDENTIALS: 'EXPIRED_CREDENTIALS',
+  SPECIALTY_MISMATCH: 'SPECIALTY_MISMATCH',
+  FRAUD_SUSPECTED: 'FRAUD_SUSPECTED',
+  OTHER: 'OTHER',
+} as const;
+export type DoctorRejectionReason =
+  (typeof DoctorRejectionReason)[keyof typeof DoctorRejectionReason];
 
 /** Professional categories with distinct scopes of practice (India-focused v1). */
 export const ProfessionalCategory = {

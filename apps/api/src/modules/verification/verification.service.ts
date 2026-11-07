@@ -1,6 +1,6 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { AccountStatus, AdminPermission, DoctorVerificationStatus, Role } from '@mindbridge/shared-types';
+import { AccountStatus, AdminPermission, DoctorRejectionReason, DoctorVerificationStatus, Role } from '@mindbridge/shared-types';
 import { type Model, Types } from 'mongoose';
 import type { AuthenticatedUser } from '../../common/auth/authenticated-user.js';
 import { AuditService } from '../audit/audit.service.js';
@@ -9,6 +9,9 @@ import { StorageService } from '../files/storage.service.js';
 import { MailService } from '../mail/mail.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { User } from '../users/schemas/user.schema.js';
+import { FieldEncryptionService } from '../../common/crypto/field-encryption.service.js';
+import { verifyTotp } from '../auth/totp.js';
+import type { ApproveDoctorVerificationDto, RejectDoctorVerificationDto } from './dto/verification.dto.js';
 import {
   ProfessionalVerification,
   type VerificationDocumentType,
@@ -22,7 +25,7 @@ const TRANSITIONS: Record<string, DoctorVerificationStatus[]> = {
   reject: [DoctorVerificationStatus.PENDING_VERIFICATION, DoctorVerificationStatus.INFO_REQUESTED],
   requestInfo: [DoctorVerificationStatus.PENDING_VERIFICATION],
   suspend: [DoctorVerificationStatus.APPROVED],
-  reactivate: [DoctorVerificationStatus.SUSPENDED],
+  reactivate: [DoctorVerificationStatus.SUSPENDED, DoctorVerificationStatus.EXPIRED],
 };
 
 const STATUS_LABEL: Record<DoctorVerificationStatus, string> = {
@@ -31,6 +34,7 @@ const STATUS_LABEL: Record<DoctorVerificationStatus, string> = {
   APPROVED: 'Approved',
   REJECTED: 'Not approved',
   SUSPENDED: 'Suspended',
+  EXPIRED: 'Credentials expired',
 };
 
 @Injectable()
@@ -43,6 +47,7 @@ export class VerificationService {
     private readonly audit: AuditService,
     private readonly mail: MailService,
     private readonly notifications: NotificationsService,
+    private readonly crypto?: FieldEncryptionService,
   ) {}
 
   async openApplication(doctorProfileId: string, userId: string) {
@@ -109,27 +114,319 @@ export class VerificationService {
   // --------------------------------------------------------------- admin side
 
   async listForReview(status: DoctorVerificationStatus | undefined, skip: number, limit: number) {
+    // Automatically sweep expired credentials
+    await this.checkAndExpireCredentials().catch(() => 0);
+
     const filter = status
       ? { status }
       : { status: { $in: [DoctorVerificationStatus.PENDING_VERIFICATION, DoctorVerificationStatus.INFO_REQUESTED] } };
+
     const [apps, total] = await Promise.all([
       this.model.find(filter).sort({ createdAt: 1 }).skip(skip).limit(limit).lean(),
       this.model.countDocuments(filter),
     ]);
     const profiles = await this.doctors
       .find({ _id: { $in: apps.map((a) => a.doctorProfileId) } })
-      .select('displayName professionalCategory registrationCouncil registrationNumber yearsExperience')
+      .select('displayName professionalCategory registrationCouncil registrationNumber yearsExperience specialties verificationExpiresAt')
       .lean();
     const byId = new Map(profiles.map((p) => [p._id.toString(), p]));
-    return {
-      total,
-      items: apps.map((a) => ({
+
+    const now = Date.now();
+    const items = apps.map((a) => {
+      const submitted = a.submittedAt ? new Date(a.submittedAt).getTime() : new Date(a.createdAt).getTime();
+      const ageHours = Math.max(0, Math.floor((now - submitted) / 3600_000));
+      const slaBreached = ageHours > 48; // 48h SLA
+      const doc = byId.get(a.doctorProfileId.toString());
+
+      let riskScore = 10;
+      if (a.documents.length === 0) riskScore += 40;
+      if (!doc?.registrationCouncil || !doc?.registrationNumber) riskScore += 30;
+      if (slaBreached) riskScore += 20;
+
+      return {
         id: a._id.toString(),
         status: a.status,
-        submittedAt: a.submittedAt,
+        submittedAt: a.submittedAt ?? a.createdAt,
+        ageHours,
+        slaBreached,
+        riskScore,
         documentCount: a.documents.length,
-        doctor: byId.get(a.doctorProfileId.toString()),
-      })),
+        doctor: doc,
+      };
+    });
+
+    // Sort: SLA breached & highest risk first, then oldest
+    items.sort((x, y) => {
+      if (x.slaBreached !== y.slaBreached) return x.slaBreached ? -1 : 1;
+      if (y.riskScore !== x.riskScore) return y.riskScore - x.riskScore;
+      return y.ageHours - x.ageHours;
+    });
+
+    return { total, items };
+  }
+
+  async verifyReviewerTotp(adminId: string, code?: string): Promise<void> {
+    const totpCode = (code || '').trim();
+    if (!totpCode) {
+      throw new UnauthorizedException({
+        code: 'STEP_UP_TOTP_REQUIRED',
+        message: 'Doctor approval requires a fresh 6-digit TOTP code for step-up verification.',
+      });
+    }
+    const admin = await this.users.findById(adminId).select('+mfaSecretEnc mfaEnabled').lean();
+    if (!admin || !admin.mfaEnabled || !admin.mfaSecretEnc) {
+      throw new ForbiddenException({
+        code: 'MFA_NOT_ENROLLED',
+        message: 'Step-up verification requires two-factor authentication (TOTP) to be enabled on your account.',
+      });
+    }
+    const secret = this.crypto ? this.crypto.decrypt(admin.mfaSecretEnc) : admin.mfaSecretEnc;
+    if (!verifyTotp(secret, totpCode)) {
+      throw new UnauthorizedException({
+        code: 'STEP_UP_TOTP_INVALID',
+        message: 'The TOTP verification code is invalid or expired.',
+      });
+    }
+  }
+
+  async checkAndExpireCredentials(): Promise<number> {
+    const now = new Date();
+    const expiredDoctors = await this.doctors.find({
+      verificationStatus: DoctorVerificationStatus.APPROVED,
+      verificationExpiresAt: { $lte: now },
+    });
+
+    for (const doc of expiredDoctors) {
+      doc.verificationStatus = DoctorVerificationStatus.EXPIRED;
+      await doc.save();
+
+      await this.model.updateOne(
+        { doctorProfileId: doc._id },
+        {
+          $set: { status: DoctorVerificationStatus.EXPIRED },
+          $push: {
+            history: {
+              status: DoctorVerificationStatus.EXPIRED,
+              reason: 'Credential validity period (12 months) has elapsed. Re-verification required.',
+              at: now,
+            },
+          },
+        },
+      );
+
+      await this.audit.record({
+        actorId: 'system',
+        actorRole: 'SYSTEM' as any,
+        action: 'doctor.verification_expired',
+        resourceType: 'DoctorProfile',
+        resourceId: doc._id.toString(),
+        metadata: {
+          expiredAt: now,
+          previousExpiryDate: doc.verificationExpiresAt,
+        },
+      });
+
+      await this.notifications.notify(doc.userId, {
+        type: 'verification.expired',
+        title: 'Credentials Expired · Re-verification Required',
+        body: 'Your verified clinician credentials have passed their validity cycle. Please submit updated registration documents for review.',
+        link: '/doctor/verification-pending',
+      });
+    }
+
+    return expiredDoctors.length;
+  }
+
+  async approveDoctor(
+    id: string,
+    admin: AuthenticatedUser,
+    dto: ApproveDoctorVerificationDto,
+    headerTotp?: string,
+  ) {
+    if (admin.role !== Role.ADMIN || !admin.adminPermissions.includes(AdminPermission.DOCTORS_VERIFY)) {
+      throw new ForbiddenException({ code: 'FORBIDDEN', message: 'You do not have permission to verify doctors.' });
+    }
+
+    if (!dto.externalRegisterChecked) {
+      throw new BadRequestException({
+        code: 'EXTERNAL_REGISTER_REQUIRED',
+        message: 'You must confirm that the external registration authority was verified.',
+      });
+    }
+
+    if (!dto.externalRegisterReference?.trim() || dto.externalRegisterReference.trim().length < 5) {
+      throw new BadRequestException({
+        code: 'REFERENCE_REQUIRED',
+        message: 'The external register URL or council lookup reference consulted is mandatory.',
+      });
+    }
+
+    if (!dto.evidenceNote?.trim() || dto.evidenceNote.trim().length < 5) {
+      throw new BadRequestException({
+        code: 'EVIDENCE_NOTE_REQUIRED',
+        message: 'A free-text evidence note detailing your verification findings is mandatory.',
+      });
+    }
+
+    const totp = headerTotp || dto.totpCode;
+    await this.verifyReviewerTotp(admin.id, totp);
+
+    const app = await this.model.findById(id);
+    if (!app) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Verification application not found.' });
+
+    if (app.status === DoctorVerificationStatus.APPROVED) {
+      throw new ConflictException({ code: 'ALREADY_APPROVED', message: 'This professional is already verified.' });
+    }
+
+    if (app.documents.length === 0) {
+      throw new ConflictException({ code: 'NO_DOCUMENTS', message: 'An application needs at least one document before approval.' });
+    }
+
+    const now = new Date();
+    // 12-month re-verification cycle
+    const verificationExpiresAt = new Date(now.getTime() + 365 * 86_400_000);
+    const adminObjectId = new Types.ObjectId(admin.id);
+
+    app.status = DoctorVerificationStatus.APPROVED;
+    app.decidedAt = now;
+    app.decidedBy = adminObjectId;
+    app.externalRegisterChecked = true;
+    app.externalRegisterCheckedAt = now;
+    app.externalRegisterReference = dto.externalRegisterReference.trim();
+    app.evidenceNote = dto.evidenceNote.trim();
+    app.verificationExpiresAt = verificationExpiresAt;
+    app.history.push({
+      status: DoctorVerificationStatus.APPROVED,
+      reason: `Verified via ${dto.externalRegisterReference.trim()}: ${dto.evidenceNote.trim()}`,
+      actorId: adminObjectId,
+      at: now,
+    });
+    await app.save();
+
+    const doctorProfile = await this.doctors.findByIdAndUpdate(
+      app.doctorProfileId,
+      {
+        $set: {
+          verificationStatus: DoctorVerificationStatus.APPROVED,
+          verifiedAt: now,
+          verifiedBy: adminObjectId,
+          externalRegisterChecked: true,
+          externalRegisterCheckedAt: now,
+          externalRegisterReference: dto.externalRegisterReference.trim(),
+          verificationEvidenceNote: dto.evidenceNote.trim(),
+          verificationExpiresAt,
+          rejectionReasonCode: null,
+          rejectionNote: null,
+        },
+      },
+      { new: true },
+    );
+
+    await this.audit.record({
+      actorId: admin.id,
+      actorRole: admin.role,
+      action: 'doctor.verification_approved',
+      resourceType: 'ProfessionalVerification',
+      resourceId: id,
+      metadata: {
+        doctorId: app.doctorProfileId.toString(),
+        registrationCouncil: doctorProfile?.registrationCouncil,
+        registrationNumber: doctorProfile?.registrationNumber,
+        reference: dto.externalRegisterReference.trim(),
+        evidenceNote: dto.evidenceNote.trim(),
+        verificationExpiresAt,
+      },
+    });
+
+    await this.notifications.notify(app.userId, {
+      type: 'verification.approved',
+      title: 'Verification Approved',
+      body: 'Your professional credentials have been verified. You can now accept appointments.',
+      link: '/doctor/dashboard',
+    });
+
+    return {
+      success: true,
+      id,
+      status: DoctorVerificationStatus.APPROVED,
+      verifiedAt: now,
+      verificationExpiresAt,
+    };
+  }
+
+  async rejectDoctor(
+    id: string,
+    admin: AuthenticatedUser,
+    dto: RejectDoctorVerificationDto,
+  ) {
+    if (admin.role !== Role.ADMIN || !admin.adminPermissions.includes(AdminPermission.DOCTORS_VERIFY)) {
+      throw new ForbiddenException({ code: 'FORBIDDEN', message: 'You do not have permission to verify doctors.' });
+    }
+
+    if (!dto.reasonCode || !Object.values(DoctorRejectionReason).includes(dto.reasonCode)) {
+      throw new BadRequestException({ code: 'INVALID_REASON_CODE', message: 'Please select a valid rejection reason code.' });
+    }
+
+    if (!dto.rejectionNote?.trim() || dto.rejectionNote.trim().length < 5) {
+      throw new BadRequestException({ code: 'REJECTION_NOTE_REQUIRED', message: 'A rejection explanation for the applicant is required.' });
+    }
+
+    const app = await this.model.findById(id);
+    if (!app) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Verification application not found.' });
+
+    const now = new Date();
+    const adminObjectId = new Types.ObjectId(admin.id);
+
+    app.status = DoctorVerificationStatus.REJECTED;
+    app.decidedAt = now;
+    app.decidedBy = adminObjectId;
+    app.rejectionReasonCode = dto.reasonCode;
+    app.rejectionNote = dto.rejectionNote.trim();
+    app.history.push({
+      status: DoctorVerificationStatus.REJECTED,
+      reason: `[${dto.reasonCode}] ${dto.rejectionNote.trim()}`,
+      actorId: adminObjectId,
+      at: now,
+    });
+    await app.save();
+
+    await this.doctors.updateOne(
+      { _id: app.doctorProfileId },
+      {
+        $set: {
+          verificationStatus: DoctorVerificationStatus.REJECTED,
+          rejectionReasonCode: dto.reasonCode,
+          rejectionNote: dto.rejectionNote.trim(),
+        },
+      },
+    );
+
+    await this.audit.record({
+      actorId: admin.id,
+      actorRole: admin.role,
+      action: 'doctor.verification_rejected',
+      resourceType: 'ProfessionalVerification',
+      resourceId: id,
+      metadata: {
+        doctorId: app.doctorProfileId.toString(),
+        reasonCode: dto.reasonCode,
+        rejectionNote: dto.rejectionNote.trim(),
+      },
+    });
+
+    await this.notifications.notify(app.userId, {
+      type: 'verification.rejected',
+      title: 'Verification Update',
+      body: `Your verification was not approved: ${dto.rejectionNote.trim()}`,
+      link: '/doctor/verification-pending',
+    });
+
+    return {
+      success: true,
+      id,
+      status: DoctorVerificationStatus.REJECTED,
+      reasonCode: dto.reasonCode,
+      rejectionNote: dto.rejectionNote.trim(),
     };
   }
 

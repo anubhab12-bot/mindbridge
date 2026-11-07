@@ -21,13 +21,7 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
 
           @if (expired()) {
             <div class="alert alert-warning" role="alert" style="margin-bottom: 1rem; text-align: left;">
-              <div>Session has expired or connected from a new device.</div>
-              <div class="small" style="margin-top: 6px;">
-                Reviewing the console?
-                <button class="btn btn-sm btn-secondary" style="margin-top: 4px; display: inline-block;" type="button" (click)="signInAsAdminDev()">
-                  Launch Admin Console →
-                </button>
-              </div>
+              <div>Session has expired or connected from a new device. Please sign in again.</div>
             </div>
           }
 
@@ -90,12 +84,7 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
             <a routerLink="/register">Create an account</a>
           </p>
 
-          <div class="demo-hints" style="text-align: center;">
-            <p class="muted small" style="margin-bottom: 8px;">Admin Console Access:</p>
-            <button class="btn btn-secondary btn-sm btn-block" type="button" (click)="signInAsAdminDev()">
-              Sign in as Administrator â†’
-            </button>
-          </div>
+          
         } @else {
           <h1>Two-step verification</h1>
           <p class="muted">Enter the 6-digit code from your authenticator app.</p>
@@ -271,12 +260,7 @@ export class LoginPage implements OnInit {
     }
   }
 
-  signInAsAdminDev() {
-    this.auth.loginAsDevAdmin();
-    const target = this.returnUrl();
-    const dest = target && target.startsWith('/') && !target.startsWith('//') ? target : '/admin';
-    return this.router.navigateByUrl(dest);
-  }
+  
 
   private done() {
     const target = this.returnUrl();
@@ -284,7 +268,7 @@ export class LoginPage implements OnInit {
       target &&
       target.startsWith('/') &&
       !target.startsWith('//') &&
-      !target.includes('portal-select')
+      !target.includes('admin') && !target.includes('admin') && !target.includes('portal-select')
         ? target
         : this.auth.homeFor();
     return this.router.navigateByUrl(safe);

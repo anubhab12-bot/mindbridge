@@ -10,11 +10,7 @@ import { AuthService } from './auth.service';
 export const authGuard: CanActivateFn = (_route, state) => {
   const auth = inject(AuthService);
   if (auth.isAuthenticated()) return true;
-  // If navigating directly to the Admin console in evaluation / live demo mode, auto-activate admin session
-  if (state.url.includes('/admin')) {
-    auth.loginAsDevAdmin();
-    return true;
-  }
+  
   return inject(Router).createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
 };
 
@@ -44,5 +40,5 @@ export const adminPermissionGuard =
   () => {
     const auth = inject(AuthService);
     if (auth.user()?.adminPermissions?.includes(permission)) return true;
-    return inject(Router).parseUrl('/admin');
+    return inject(Router).parseUrl('/');
   };

@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Headers,
   Delete,
   Get,
   HttpCode,
@@ -23,6 +24,7 @@ import { ParseObjectIdPipe } from '../../common/pipes/parse-object-id.pipe.js';
 import { MAX_DOCUMENT_BYTES } from '../files/storage.service.js';
 import { VerificationDocumentType } from './schemas/professional-verification.schema.js';
 import { VerificationService } from './verification.service.js';
+import { ApproveDoctorVerificationDto, RejectDoctorVerificationDto, RequestInfoDoctorVerificationDto } from './dto/verification.dto.js';
 
 class UploadDocumentDto {
   @IsIn(Object.values(VerificationDocumentType))
@@ -102,18 +104,36 @@ export class VerificationController {
   @RequireAdminPermissions(AdminPermission.DOCTORS_VERIFY)
   @Post('admin/verifications/:id/approve')
   @HttpCode(200)
-  @ApiOperation({ summary: 'Approve a professional (ADMIN + doctors:verify).' })
-  approve(@CurrentUser() admin: AuthenticatedUser, @Param('id', ParseObjectIdPipe) id: string, @Body() dto: DecisionDto) {
-    return this.verification.decide(id, 'approve', admin, dto.reason);
+  @ApiOperation({ summary: 'Approve a professional with external register check & TOTP confirmation (ADMIN + doctors:verify).' })
+  approve(
+    @CurrentUser() admin: AuthenticatedUser,
+    @Param('id', ParseObjectIdPipe) id: string,
+    @Body() dto: ApproveDoctorVerificationDto,
+    @Headers('x-totp-code') headerTotp?: string,
+  ) {
+    return this.verification.approveDoctor(id, admin, dto, headerTotp);
   }
 
   @Roles(Role.ADMIN)
   @RequireAdminPermissions(AdminPermission.DOCTORS_VERIFY)
   @Post('admin/verifications/:id/reject')
   @HttpCode(200)
-  @ApiOperation({ summary: 'Reject with a recorded reason (ADMIN + doctors:verify).' })
-  reject(@CurrentUser() admin: AuthenticatedUser, @Param('id', ParseObjectIdPipe) id: string, @Body() dto: DecisionDto) {
-    return this.verification.decide(id, 'reject', admin, dto.reason);
+  @ApiOperation({ summary: 'Reject with a mandatory reason code and applicant note (ADMIN + doctors:verify).' })
+  reject(
+    @CurrentUser() admin: AuthenticatedUser,
+    @Param('id', ParseObjectIdPipe) id: string,
+    @Body() dto: RejectDoctorVerificationDto,
+  ) {
+    return this.verification.rejectDoctor(id, admin, dto);
+  }
+
+  @Roles(Role.ADMIN)
+  @RequireAdminPermissions(AdminPermission.DOCTORS_VERIFY)
+  @Post('admin/verifications/check-expiry')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Sweep and expire doctor credentials past their validity cycle (ADMIN + doctors:verify).' })
+  checkExpiry() {
+    return this.verification.checkAndExpireCredentials();
   }
 
   @Roles(Role.ADMIN)

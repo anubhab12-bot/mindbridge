@@ -58,15 +58,8 @@ export class AuthService {
         const path = window.location?.pathname || '';
         const search = window.location?.search || '';
         const urlParams = new URLSearchParams(search);
-        if (
-          urlParams.get('admin') === '1' ||
-          urlParams.get('dev') === 'admin' ||
-          path.includes('/admin') ||
-          (typeof localStorage !== 'undefined' && localStorage.getItem('mb_dev_admin_active') === '1')
-        ) {
-          this.loginAsDevAdmin();
-          this.initialised.set(true);
-          return;
+        if (typeof localStorage !== 'undefined') {
+          localStorage.removeItem('mb_dev_admin_active');
         }
         const urlToken = urlParams.get('token');
         if (urlToken) {
@@ -223,7 +216,6 @@ export class AuthService {
   /** Where a signed-in user belongs by default. */
   homeFor(user: AuthUser | null = this.user()): string {
     if (!user) return '/login';
-    if (user.role === Role.ADMIN) return '/admin';
     if (user.role === Role.DOCTOR) {
       return user.doctorVerificationStatus === DoctorVerificationStatus.APPROVED ? '/doctor/dashboard' : '/doctor/verification-pending';
     }

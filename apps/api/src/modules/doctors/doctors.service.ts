@@ -62,7 +62,7 @@ export class DoctorsService {
       consultationModes: d.consultationModes,
       slotDurationMinutes: d.slotDurationMinutes,
       timezone: d.timezone,
-      verified: d.verificationStatus === DoctorVerificationStatus.APPROVED,
+      verified: d.verificationStatus === DoctorVerificationStatus.APPROVED && (!d.verificationExpiresAt || new Date(d.verificationExpiresAt).getTime() > Date.now()),
       // Ratings are shown only once there are enough to avoid identifying individual reviewers.
       ratingAverage: d.ratingCount >= 3 ? Math.round((d.ratingSum / d.ratingCount) * 10) / 10 : null,
       ratingCount: d.ratingCount >= 3 ? d.ratingCount : 0,
@@ -82,6 +82,7 @@ export class DoctorsService {
       .find({
         verificationStatus: DoctorVerificationStatus.APPROVED,
         userId: { $in: activeDoctorIds },
+        $or: [{ verificationExpiresAt: null }, { verificationExpiresAt: { $exists: false } }, { verificationExpiresAt: { $gt: new Date() } }],
       })
       .sort({ yearsExperience: -1, ratingCount: -1, _id: 1 })
       .limit(limit)

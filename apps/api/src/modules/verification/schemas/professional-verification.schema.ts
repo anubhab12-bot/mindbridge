@@ -89,6 +89,27 @@ export class ProfessionalVerification {
   @Prop({ type: Types.ObjectId, ref: 'User' })
   decidedBy?: Types.ObjectId;
 
+  @Prop({ type: Boolean, default: false })
+  externalRegisterChecked?: boolean;
+
+  @Prop({ type: Date })
+  externalRegisterCheckedAt?: Date;
+
+  @Prop({ type: String, maxlength: 300 })
+  externalRegisterReference?: string;
+
+  @Prop({ type: String, maxlength: 2000 })
+  evidenceNote?: string;
+
+  @Prop({ type: Date })
+  verificationExpiresAt?: Date;
+
+  @Prop({ type: String, maxlength: 100 })
+  rejectionReasonCode?: string;
+
+  @Prop({ type: String, maxlength: 1000 })
+  rejectionNote?: string;
+
   createdAt!: Date;
   updatedAt!: Date;
 }

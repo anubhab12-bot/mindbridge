@@ -58,33 +58,7 @@ const PENDING_DOCTOR_NAV: NavItem[] = [
   { label: 'Settings', link: '/settings' },
 ];
 
-const ADMIN_NAV: NavItem[] = [
-  { label: 'Today', link: '/admin/today' },
-  {
-    label: 'Safety Triage',
-    link: '/admin/safety-triage',
-    permission: AdminPermission.SAFETY_TRIAGE,
-  },
-  { label: 'Analytics', link: '/admin/overview' },
-  {
-    label: 'Verifications',
-    link: '/admin/verifications',
-    permission: AdminPermission.DOCTORS_VERIFY,
-  },
-  { label: 'Users', link: '/admin/users', permission: AdminPermission.USERS_MANAGE },
-  {
-    label: 'Crisis resources',
-    link: '/admin/crisis-resources',
-    permission: AdminPermission.CRISIS_MANAGE,
-  },
-  { label: 'Content', link: '/admin/content', permission: AdminPermission.CONTENT_MANAGE },
-  { label: 'Feedback', link: '/admin/feedback', permission: AdminPermission.CONTENT_MANAGE },
-  { label: 'Support', link: '/admin/support', permission: AdminPermission.SUPPORT_MANAGE },
-  { label: 'Audit log', link: '/admin/audit', permission: AdminPermission.AUDIT_READ },
-  { label: 'Security', link: '/admin/security', permission: AdminPermission.SECURITY_MANAGE },
-  { label: 'AI & settings', link: '/admin/settings', permission: AdminPermission.SETTINGS_MANAGE },
-  { label: 'Settings', link: '/settings' },
-];
+
 
 @Component({
   selector: 'mb-app-shell',
@@ -118,7 +92,7 @@ const ADMIN_NAV: NavItem[] = [
                 <a
                   [routerLink]="item.link"
                   routerLinkActive="active"
-                  [routerLinkActiveOptions]="{ exact: item.link === '/admin' }"
+                  [routerLinkActiveOptions]="{ exact: false }"
                   >{{ item.label }}</a
                 >
               </li>
@@ -721,11 +695,6 @@ export class AppShellComponent implements OnInit {
   }
   protected readonly verifying = signal(false);
   protected readonly isPatient = computed(() => this.auth.role() === Role.PATIENT);
-  protected readonly isSuperAdmin = computed(() => {
-    const u = this.auth.user();
-    return u?.role === Role.ADMIN;
-  });
-
   /**
    * UX only: Nav renders from the session's permission set.
    * Client guards and sidebar navigation filters are purely user experience affordances;
@@ -734,8 +703,6 @@ export class AppShellComponent implements OnInit {
   protected readonly nav = computed<NavItem[]>(() => {
     const u = this.auth.user();
     if (!u) return [];
-    if (u.role === Role.ADMIN)
-      return ADMIN_NAV.filter((i) => !i.permission || u.adminPermissions?.includes(i.permission));
     if (u.role === Role.DOCTOR)
       return u.doctorVerificationStatus === DoctorVerificationStatus.APPROVED
         ? DOCTOR_NAV
