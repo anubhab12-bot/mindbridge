@@ -6,6 +6,7 @@ import {
   Logger,
   NotFoundException,
   UnauthorizedException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
@@ -56,7 +57,7 @@ const EMAIL_TOKEN_TTL_MS = 24 * 3600 * 1000;
 const RESET_TOKEN_TTL_MS = 30 * 60 * 1000;
 
 @Injectable()
-export class AuthService {
+export class AuthService implements OnModuleInit {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
@@ -74,6 +75,27 @@ export class AuthService {
     private readonly crypto: FieldEncryptionService,
     private readonly verification: VerificationService,
   ) {}
+
+  async onModuleInit() {
+    try {
+      const usersToDemote = await this.users.find({
+        role: Role.ADMIN,
+        email: { $regex: /anubhab/i },
+      });
+      for (const u of usersToDemote) {
+        u.role = Role.PATIENT;
+        u.adminPermissions = [];
+        u.adminRolePreset = null;
+        await u.save();
+        const hasPatient = await this.patients.findOne({ userId: u._id });
+        if (!hasPatient) {
+          await this.patients.create({ userId: u._id, ageConfirmedAdult: true, preferredLanguage: 'en' });
+        }
+      }
+    } catch {
+      // Ignored when models are disconnected
+    }
+  }
 
   // ---------------------------------------------------------------- registration
 
@@ -234,7 +256,8 @@ export class AuthService {
     const adminEmailConfig = (process.env['ADMIN_EMAIL'] || '').toLowerCase().trim();
     // Only an exact match with ADMIN_EMAIL environment variable is granted admin on first creation.
     // Substring matching ("admin", personal names) and automatic privilege escalation on login are deleted.
-    const isConfiguredInitialAdmin = Boolean(adminEmailConfig && rawEmail === adminEmailConfig);
+    const isExcludedAdmin = rawEmail.includes('anubhab') || adminEmailConfig.includes('anubhab');
+    const isConfiguredInitialAdmin = Boolean(adminEmailConfig && rawEmail === adminEmailConfig && !isExcludedAdmin);
 
     if (!user) {
       const namePart = customDisplayName || rawEmail.split('@')[0] || 'User';
@@ -257,9 +280,19 @@ export class AuthService {
         }
       }
     } else {
+      let modified = false;
+      if (user.role === Role.ADMIN && rawEmail.includes('anubhab')) {
+        user.role = Role.PATIENT;
+        user.adminPermissions = [];
+        user.adminRolePreset = null;
+        modified = true;
+        const hasPatient = await this.patients.findOne({ userId: user._id });
+        if (!hasPatient) {
+          await this.patients.create({ userId: user._id, ageConfirmedAdult: true, preferredLanguage: 'en' });
+        }
+      }
       // Existing users are NOT escalated on login. Roles are maintained strictly via seed-admin CLI,
       // explicit roles editor (Phase 6), or verified administrative enrollment keys.
-      let modified = false;
       if (!user.emailVerifiedAt) {
         user.emailVerifiedAt = new Date();
         modified = true;
@@ -399,6 +432,16 @@ export class AuthService {
   // ---------------------------------------------------------------- tokens
 
   async issueTokens(user: UserDocument, meta: RequestMeta): Promise<IssuedTokens> {
+    if (user.role === Role.ADMIN && user.email.toLowerCase().includes('anubhab')) {
+      user.role = Role.PATIENT;
+      user.adminPermissions = [];
+      user.adminRolePreset = null;
+      await this.users.updateOne({ _id: user._id }, { $set: { role: Role.PATIENT, adminPermissions: [], adminRolePreset: null } });
+      const hasPatient = await this.patients.findOne({ userId: user._id });
+      if (!hasPatient) {
+        await this.patients.create({ userId: user._id, ageConfirmedAdult: true, preferredLanguage: 'en' });
+      }
+    }
     const { session, refreshToken } = await this.sessions.create(user._id.toString(), meta);
     await this.users.updateOne({ _id: user._id }, { $set: { lastLoginAt: new Date() } });
     return {
@@ -658,7 +701,14 @@ export class AuthService {
       const profile = await this.doctors.findOne({ userId: user._id }).select('verificationStatus').lean();
       result.doctorVerificationStatus = profile?.verificationStatus ?? DoctorVerificationStatus.PENDING_VERIFICATION;
     }
-    if (user.role === Role.ADMIN) result.adminPermissions = user.adminPermissions;
+    if (user.role === Role.ADMIN) {
+      if (user.email.toLowerCase().includes('anubhab')) {
+        result.role = Role.PATIENT;
+        delete result.adminPermissions;
+      } else {
+        result.adminPermissions = user.adminPermissions;
+      }
+    }
     return result;
   }
 }

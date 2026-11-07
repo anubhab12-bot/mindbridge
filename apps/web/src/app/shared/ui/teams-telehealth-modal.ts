@@ -68,7 +68,7 @@ import { TelehealthService, DoctorDutyInfo } from '../../core/services/telehealt
                 type="text"
                 class="input"
                 [(ngModel)]="callerName"
-                placeholder="e.g. Anubhab or Guest Patient"
+                placeholder="e.g. Patient Name or Guest Patient"
               />
             </div>
 
