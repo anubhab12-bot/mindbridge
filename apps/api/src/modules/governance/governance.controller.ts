@@ -160,7 +160,7 @@ export class GovernanceController {
     @Param('id') id: string,
     @Body() dto: VerifyProofDto,
   ) {
-    return this.governance.verifyProof(id, dto.decision, admin);
+    return this.governance.verifyProof(id, dto.decision);
   }
 
   // ------------------------------------------------------------- Telemetry & Statistics (Public, Suppressed)

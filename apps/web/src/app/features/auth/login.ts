@@ -70,7 +70,7 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
                 type="password"
                 formControlName="password"
                 autocomplete="current-password"
-                placeholder="••••••••••••"
+                placeholder="Enter your password"
               />
               <mb-field-error [control]="form.controls.password" label="Password" />
             </div>

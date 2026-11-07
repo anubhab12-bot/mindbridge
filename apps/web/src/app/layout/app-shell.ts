@@ -187,7 +187,7 @@ const PENDING_DOCTOR_NAV: NavItem[] = [
               <span class="badge badge-primary">{{ notifications.unread() }}</span>
             }
           </a>
-          <span class="small muted who">{{ auth.user()?.displayName }}</span>
+          <span class="small muted who">{{ userDisplayName() }}</span>
           <button class="btn btn-secondary btn-sm" type="button" (click)="signOut()">
             Sign out
           </button>
@@ -695,6 +695,17 @@ export class AppShellComponent implements OnInit {
   }
   protected readonly verifying = signal(false);
   protected readonly isPatient = computed(() => this.auth.role() === Role.PATIENT);
+  protected readonly userDisplayName = computed(() => {
+    const raw = this.auth.user()?.displayName || '';
+    const clean = raw
+      .replace(/[._-]admin\b/gi, '')
+      .replace(/\badmin[._-]/gi, '')
+      .replace(/\badmin\b/gi, '')
+      .replace(/^[._-]+|[._-]+$/g, '')
+      .trim();
+    return clean || 'User';
+  });
+
   /**
    * UX only: Nav renders from the session's permission set.
    * Client guards and sidebar navigation filters are purely user experience affordances;

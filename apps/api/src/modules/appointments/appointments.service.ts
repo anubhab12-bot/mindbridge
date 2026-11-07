@@ -143,7 +143,7 @@ export class AppointmentsService implements OnModuleInit {
 
     if (appt.mode === ConsultationMode.ONLINE) {
       try {
-        const webAppUrl = this.config.get('WEB_APP_URL') || 'https://mindbridge-web.onrender.com';
+        const webAppUrl = this.config.get('WEB_APP_URL') || 'https://anubhab12-bot.github.io/mindbridge';
         const [patientUser, doctorUser] = await Promise.all([
           this.users.findById(patient.id).select('email displayName timezone').lean(),
           this.users.findById(doctor.userId).select('email displayName timezone').lean(),
@@ -381,7 +381,7 @@ export class AppointmentsService implements OnModuleInit {
         // Fall back to MindBridge direct telehealth room
       }
     }
-    const webAppUrl = this.config.get('WEB_APP_URL') || 'https://mindbridge-web.onrender.com';
+    const webAppUrl = this.config.get('WEB_APP_URL') || 'https://anubhab12-bot.github.io/mindbridge';
     const doctorProfile = await this.doctorProfiles.findById(appt.doctorProfileId).select('displayName').lean();
     return {
       provider: 'mindbridge-live',
@@ -433,7 +433,7 @@ export class AppointmentsService implements OnModuleInit {
       this.users.findById(doctor.userId).select('email displayName timezone').lean(),
     ]);
 
-    const webAppUrl = this.config.get('WEB_APP_URL') || 'https://mindbridge-web.onrender.com';
+    const webAppUrl = this.config.get('WEB_APP_URL') || 'https://anubhab12-bot.github.io/mindbridge';
     const docName = doctor.displayName;
     const patName = patientUser?.displayName || 'Patient';
     const videoUrl = `${webAppUrl}/telehealth/room?session=${appt._id.toString()}&doc=${encodeURIComponent(docName)}&pat=${encodeURIComponent(patName)}`;
@@ -475,7 +475,7 @@ export class AppointmentsService implements OnModuleInit {
       this.users.findById(appt.doctorUserId).select('email displayName timezone').lean(),
     ]);
 
-    const webAppUrl = this.config.get('WEB_APP_URL') || 'https://mindbridge-web.onrender.com';
+    const webAppUrl = this.config.get('WEB_APP_URL') || 'https://anubhab12-bot.github.io/mindbridge';
     const docName = doctorProfile?.displayName || 'Doctor';
     const patName = patientUser?.displayName || 'Patient';
     const videoUrl = `${webAppUrl}/telehealth/room?session=${appt._id.toString()}&doc=${encodeURIComponent(docName)}&pat=${encodeURIComponent(patName)}`;

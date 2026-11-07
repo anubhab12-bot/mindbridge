@@ -51,14 +51,17 @@ server {
     try_files $uri =404;
   }
 
-  # Clean URL routing for the Admin Portal
-  location = /admin {
-    return 302 /admin-portal/;
+  # Legacy redirects: portal-select and removed admin
+  location = /portal-select {
+    return 302 /patient/dashboard$is_args$args;
+  }
+
+  location /admin {
+    return 302 /;
   }
 
   location /admin-portal {
-    add_header Cache-Control "no-store";
-    try_files $uri $uri/ /admin-portal/index.html;
+    return 302 /;
   }
 
   location / {

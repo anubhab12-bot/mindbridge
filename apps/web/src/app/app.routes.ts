@@ -26,7 +26,9 @@ export const routes: Routes = [
       { path: 'impact', title: 'Community Impact & Healthcare Metrics · MindBridge', loadComponent: () => import('./features/public/impact').then((m) => m.ImpactPage) },
       { path: 'telehealth/room', title: '1-on-1 Video Consultation · MindBridge', loadComponent: () => import('./features/shared/video-room').then((m) => m.VideoRoomPage) },
       { path: 'consultation/video', redirectTo: 'telehealth/room', pathMatch: 'full' },
-      { path: 'portal-select', redirectTo: 'patient/dashboard', pathMatch: 'full' },
+      { path: 'portal-select', loadComponent: () => import('./features/public/portal-redirect').then((m) => m.PortalRedirectComponent) },
+      { path: 'admin-portal', loadComponent: () => import('./features/public/portal-redirect').then((m) => m.PortalRedirectComponent) },
+      { path: 'admin-portal/**', loadComponent: () => import('./features/public/portal-redirect').then((m) => m.PortalRedirectComponent) },
     ],
   },
   {
@@ -61,14 +63,15 @@ export const routes: Routes = [
       },
       {
         path: 'portal-select',
-        redirectTo: 'patient/dashboard',
-        pathMatch: 'full',
+        loadComponent: () => import('./features/public/portal-redirect').then((m) => m.PortalRedirectComponent),
       },
       {
         path: 'admin',
-        children: [
-          { path: '**', redirectTo: '/', pathMatch: 'full' },
-        ],
+        loadComponent: () => import('./features/public/portal-redirect').then((m) => m.PortalRedirectComponent),
+      },
+      {
+        path: 'admin/**',
+        loadComponent: () => import('./features/public/portal-redirect').then((m) => m.PortalRedirectComponent),
       },
     ],
   },

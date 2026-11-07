@@ -133,13 +133,15 @@ export class AuthController {
     }
   }
 
-    private resolveClientAppUrl(req: Request): string {
+      private resolveClientAppUrl(req: Request): string {
     const clientParam = (req.query?.['client_url'] as string) || (req.query?.['redirect_uri'] as string);
     if (clientParam && (clientParam.startsWith('http://') || clientParam.startsWith('https://'))) {
-      return clientParam.replace(/\/+$/, '');
+      if (!clientParam.includes('mindbridge-web.onrender.com')) {
+        return clientParam.replace(/\/+$/, '');
+      }
     }
     const referer = req.headers['referer'] as string | undefined;
-    if (referer) {
+    if (referer && !referer.includes('mindbridge-web.onrender.com')) {
       try {
         const u = new URL(referer);
         const hasMindbridge = u.pathname.startsWith('/mindbridge');
@@ -147,7 +149,7 @@ export class AuthController {
       } catch {}
     }
     const envUrl = process.env['WEB_APP_URL'];
-    if (envUrl) {
+    if (envUrl && !envUrl.includes('mindbridge-web.onrender.com')) {
       return envUrl.replace(/\/+$/, '');
     }
     return 'https://anubhab12-bot.github.io/mindbridge';

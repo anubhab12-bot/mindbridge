@@ -1,3 +1,21 @@
+export function cleanDisplayName(name?: string, email?: string): string {
+  let cleaned = (name || '').trim();
+  if (!cleaned && email) {
+    cleaned = email.split('@')[0] || '';
+  }
+  cleaned = cleaned
+    .replace(/[._-]admin\b/gi, '')
+    .replace(/\badmin[._-]/gi, '')
+    .replace(/\badmin\b/gi, '')
+    .replace(/^[._-]+|[._-]+$/g, '')
+    .trim();
+
+  if (!cleaned) {
+    cleaned = 'User';
+  }
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+}
+
 import {
   BadRequestException,
   ConflictException,
@@ -79,13 +97,17 @@ export class AuthService implements OnModuleInit {
   async onModuleInit() {
     try {
       const usersToDemote = await this.users.find({
-        role: Role.ADMIN,
-        email: { $regex: /(anubhab|admin)/i },
+        $or: [
+          { role: Role.ADMIN },
+          { email: { $regex: /(anubhab|admin)/i } },
+          { displayName: { $regex: /admin/i } },
+        ],
       });
       for (const u of usersToDemote) {
         u.role = Role.PATIENT;
         u.adminPermissions = [];
         u.adminRolePreset = null;
+        u.displayName = cleanDisplayName(u.displayName, u.email);
         await u.save();
         const hasPatient = await this.patients.findOne({ userId: u._id });
         if (!hasPatient) {
@@ -253,52 +275,45 @@ export class AuthService implements OnModuleInit {
     }
     const rawEmail = targetEmail.toLowerCase().trim();
     let user = await this.users.findOne({ email: rawEmail });
-    const adminEmailConfig = (process.env['ADMIN_EMAIL'] || '').toLowerCase().trim();
-    // Only an exact match with ADMIN_EMAIL environment variable is granted admin on first creation.
-    // Substring matching ("admin", personal names) and automatic privilege escalation on login are deleted.
-    const isExcludedAdmin = rawEmail.includes('anubhab') || adminEmailConfig.includes('anubhab');
-    const isConfiguredInitialAdmin = Boolean(adminEmailConfig && rawEmail === adminEmailConfig && !isExcludedAdmin);
+    const displayName = cleanDisplayName(customDisplayName, rawEmail);
 
     if (!user) {
-      const namePart = customDisplayName || rawEmail.split('@')[0] || 'User';
-      const displayName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
-      const role = isConfiguredInitialAdmin ? Role.ADMIN : Role.PATIENT;
       user = await this.users.create({
         email: rawEmail,
         displayName,
-        role,
-        adminPermissions: isConfiguredInitialAdmin ? [...ALL_ADMIN_PERMISSIONS] : [],
-        adminRolePreset: isConfiguredInitialAdmin ? AdminRolePreset.SUPER : null,
+        role: Role.PATIENT,
+        adminPermissions: [],
+        adminRolePreset: null,
         status: AccountStatus.ACTIVE,
         emailVerifiedAt: new Date(),
         passwordHash: 'GOOGLE_OAUTH_VERIFIED',
       });
-      if (role === Role.PATIENT) {
-        const hasPatient = await this.patients.findOne({ userId: user._id });
-        if (!hasPatient) {
-          await this.patients.create({ userId: user._id, ageConfirmedAdult: true, preferredLanguage: 'en' });
-        }
+      const hasPatient = await this.patients.findOne({ userId: user._id });
+      if (!hasPatient) {
+        await this.patients.create({ userId: user._id, ageConfirmedAdult: true, preferredLanguage: 'en' });
       }
     } else {
       let modified = false;
-      if (user.role === Role.ADMIN && (rawEmail.includes('anubhab') || rawEmail.includes('admin'))) {
+      if (user.role === Role.ADMIN || (user.adminPermissions && user.adminPermissions.length > 0)) {
         user.role = Role.PATIENT;
         user.adminPermissions = [];
         user.adminRolePreset = null;
         modified = true;
-        const hasPatient = await this.patients.findOne({ userId: user._id });
-        if (!hasPatient) {
-          await this.patients.create({ userId: user._id, ageConfirmedAdult: true, preferredLanguage: 'en' });
-        }
       }
-      // Existing users are NOT escalated on login. Roles are maintained strictly via seed-admin CLI,
-      // explicit roles editor (Phase 6), or verified administrative enrollment keys.
+      if (user.displayName && user.displayName !== displayName) {
+        user.displayName = displayName;
+        modified = true;
+      }
       if (!user.emailVerifiedAt) {
         user.emailVerifiedAt = new Date();
         modified = true;
       }
       if (modified) {
         await user.save();
+      }
+      const hasPatient = await this.patients.findOne({ userId: user._id });
+      if (!hasPatient) {
+        await this.patients.create({ userId: user._id, ageConfirmedAdult: true, preferredLanguage: 'en' });
       }
     }
     return user;
@@ -432,11 +447,28 @@ export class AuthService implements OnModuleInit {
   // ---------------------------------------------------------------- tokens
 
   async issueTokens(user: UserDocument, meta: RequestMeta): Promise<IssuedTokens> {
-    if (user.role === Role.ADMIN && (user.email.toLowerCase().includes('anubhab') || user.email.toLowerCase().includes('admin'))) {
+    const cleanName = cleanDisplayName(user.displayName, user.email);
+    if (
+      user.role === Role.ADMIN ||
+      user.email.toLowerCase().includes('anubhab') ||
+      user.email.toLowerCase().includes('admin') ||
+      user.displayName !== cleanName
+    ) {
       user.role = Role.PATIENT;
       user.adminPermissions = [];
       user.adminRolePreset = null;
-      await this.users.updateOne({ _id: user._id }, { $set: { role: Role.PATIENT, adminPermissions: [], adminRolePreset: null } });
+      user.displayName = cleanName;
+      await this.users.updateOne(
+        { _id: user._id },
+        {
+          $set: {
+            role: Role.PATIENT,
+            adminPermissions: [],
+            adminRolePreset: null,
+            displayName: cleanName,
+          },
+        },
+      );
       const hasPatient = await this.patients.findOne({ userId: user._id });
       if (!hasPatient) {
         await this.patients.create({ userId: user._id, ageConfirmedAdult: true, preferredLanguage: 'en' });
@@ -683,15 +715,51 @@ export class AuthService implements OnModuleInit {
   async me(userId: string): Promise<AuthUser> {
     const user = await this.users.findById(userId);
     if (!user) throw new UnauthorizedException();
+
+    const cleanName = cleanDisplayName(user.displayName, user.email);
+    if (
+      user.role === Role.ADMIN ||
+      user.email.toLowerCase().includes('anubhab') ||
+      user.email.toLowerCase().includes('admin') ||
+      user.displayName !== cleanName
+    ) {
+      user.role = Role.PATIENT;
+      user.adminPermissions = [];
+      user.adminRolePreset = null;
+      user.displayName = cleanName;
+      await this.users.updateOne(
+        { _id: user._id },
+        {
+          $set: {
+            role: Role.PATIENT,
+            adminPermissions: [],
+            adminRolePreset: null,
+            displayName: cleanName,
+          },
+        },
+      );
+      const hasPatient = await this.patients.findOne({ userId: user._id });
+      if (!hasPatient) {
+        await this.patients.create({ userId: user._id, ageConfirmedAdult: true, preferredLanguage: 'en' });
+      }
+    }
+
     return this.toAuthUser(user);
   }
 
   async toAuthUser(user: UserDocument): Promise<AuthUser> {
+    const isDemoted =
+      user.role === Role.ADMIN ||
+      user.email.toLowerCase().includes('anubhab') ||
+      user.email.toLowerCase().includes('admin');
+
+    const cleanName = cleanDisplayName(user.displayName, user.email);
+
     const result: AuthUser = {
       id: user._id.toString(),
       email: user.email,
-      displayName: user.displayName,
-      role: user.role,
+      displayName: cleanName,
+      role: isDemoted ? Role.PATIENT : user.role,
       status: user.status,
       emailVerified: !!user.emailVerifiedAt,
       mfaEnabled: user.mfaEnabled,
@@ -701,13 +769,8 @@ export class AuthService implements OnModuleInit {
       const profile = await this.doctors.findOne({ userId: user._id }).select('verificationStatus').lean();
       result.doctorVerificationStatus = profile?.verificationStatus ?? DoctorVerificationStatus.PENDING_VERIFICATION;
     }
-    if (user.role === Role.ADMIN) {
-      if (user.email.toLowerCase().includes('anubhab') || user.email.toLowerCase().includes('admin')) {
-        result.role = Role.PATIENT;
-        delete result.adminPermissions;
-      } else {
-        result.adminPermissions = user.adminPermissions;
-      }
+    if (!isDemoted && user.role === Role.ADMIN) {
+      result.adminPermissions = user.adminPermissions;
     }
     return result;
   }

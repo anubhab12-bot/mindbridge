@@ -72,7 +72,7 @@ import { PwaService } from '../../core/services/pwa.service';
                   <span class="step-num">1</span>
                   <div class="step-text">
                     <strong>Open in Chrome or Edge</strong>
-                    <p>Visit <code>mindbridge-web.onrender.com</code> on your Android device.</p>
+                    <p>Visit <code>anubhab12-bot.github.io/mindbridge</code> on your Android device.</p>
                   </div>
                 </div>
                 <div class="step-item">
@@ -96,7 +96,7 @@ import { PwaService } from '../../core/services/pwa.service';
                   <span class="step-num">1</span>
                   <div class="step-text">
                     <strong>Open Safari on iPhone or iPad</strong>
-                    <p>Navigate to <code>mindbridge-web.onrender.com</code>.</p>
+                    <p>Navigate to <code>anubhab12-bot.github.io/mindbridge</code>.</p>
                   </div>
                 </div>
                 <div class="step-item">

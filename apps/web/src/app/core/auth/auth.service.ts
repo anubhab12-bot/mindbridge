@@ -1,3 +1,19 @@
+function sanitizeAuthUser(u: AuthUser): AuthUser {
+  if (u.displayName) {
+    u.displayName = u.displayName
+      .replace(/[._-]admin\b/gi, '')
+      .replace(/\badmin[._-]/gi, '')
+      .replace(/\badmin\b/gi, '')
+      .replace(/^[._-]+|[._-]+$/g, '')
+      .trim() || 'User';
+  }
+  if (u.role === Role.ADMIN || u.email?.toLowerCase().includes('anubhab') || u.email?.toLowerCase().includes('admin')) {
+    u.role = Role.PATIENT;
+    delete u.adminPermissions;
+  }
+  return u;
+}
+
 import { HttpBackend, HttpClient, HttpHeaders } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
@@ -44,6 +60,7 @@ export class AuthService {
 
   private accept(res: AuthTokenResponse) {
     this.accessToken = res.accessToken;
+    if (res.user) sanitizeAuthUser(res.user);
     this.user.set(res.user);
     return res.user;
   }
@@ -67,7 +84,8 @@ export class AuthService {
           );
           if (res?.data) {
             this.accessToken = urlToken;
-            this.user.set(res.data);
+            const sanitized = sanitizeAuthUser(res.data);
+            this.user.set(sanitized);
             urlParams.delete('token');
             const newSearch = urlParams.toString();
             const cleanUrl =
