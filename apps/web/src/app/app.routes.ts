@@ -23,7 +23,7 @@ export const routes: Routes = [
       { path: 'verify-email', title: 'Confirm your email · MindBridge', loadComponent: () => import('./features/auth/account-recovery').then((m) => m.VerifyEmailPage) },
       { path: 'forgot-password', title: 'Reset your password · MindBridge', loadComponent: () => import('./features/auth/account-recovery').then((m) => m.ForgotPasswordPage) },
       { path: 'reset-password', title: 'Choose a new password · MindBridge', loadComponent: () => import('./features/auth/account-recovery').then((m) => m.ResetPasswordPage) },
-      { path: 'impact', title: 'Community Impact & Healthcare Metrics · MindBridge', loadComponent: () => import('./features/admin/overview').then((m) => m.AdminOverviewPage) },
+      { path: 'impact', title: 'Community Impact & Healthcare Metrics · MindBridge', loadComponent: () => import('./features/public/impact').then((m) => m.ImpactPage) },
       { path: 'telehealth/room', title: '1-on-1 Video Consultation · MindBridge', loadComponent: () => import('./features/shared/video-room').then((m) => m.VideoRoomPage) },
       { path: 'consultation/video', redirectTo: 'telehealth/room', pathMatch: 'full' },
     ],

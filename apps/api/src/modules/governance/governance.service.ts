@@ -24,7 +24,7 @@ import { AiScreenerService } from './ai-screener.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { FieldEncryptionService } from '../../common/crypto/field-encryption.service.js';
 import { verifyTotp } from '../auth/totp.js';
-import { suppressOne } from '../admin/suppression.js';
+import { suppressOne } from '../../common/utils/suppression.js';
 import type { AuthenticatedUser } from '../../common/auth/authenticated-user.js';
 import type {
   ApproveDoctorDto,

@@ -5,7 +5,6 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { AppModule } from './app.module.js';
 import { REDIS } from './common/redis/redis.module.js';
 import { AiChatService } from './modules/ai/ai-chat.service.js';
-import { AdminService } from './modules/admin/admin.service.js';
 import { PrivacyService } from './modules/privacy/privacy.service.js';
 
 /**
@@ -27,7 +26,6 @@ describe('AppModule wiring', () => {
       .useValue({ quit: async () => 'OK', incr: async () => 1, expire: async () => 1, eval: async () => [1, 0, 0] })
       .compile();
     expect(moduleRef.get(AiChatService)).toBeDefined();
-    expect(moduleRef.get(AdminService)).toBeDefined();
     expect(moduleRef.get(PrivacyService)).toBeDefined();
     await moduleRef.close();
   }, 30_000);

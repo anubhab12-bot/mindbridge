@@ -24,7 +24,6 @@ import { MoodModule } from './modules/mood/mood.module.js';
 import { AiModule } from './modules/ai/ai.module.js';
 import { ClinicalModule } from './modules/clinical-notes/clinical.module.js';
 import { MessagingModule } from './modules/messaging/messaging.module.js';
-import { AdminModule } from './modules/admin/admin.module.js';
 import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module.js';
 import { PrivacyModule } from './modules/privacy/privacy.module.js';
 import { SupportModule } from './modules/support/support.module.js';
@@ -75,7 +74,6 @@ import { GovernanceModule } from './modules/governance/governance.module.js';
     WellnessModule,
     SupportModule,
     PrivacyModule,
-    AdminModule,
     UsersModule,
     GovernanceModule,
   ],
