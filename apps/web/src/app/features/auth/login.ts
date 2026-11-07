@@ -227,7 +227,10 @@ export class LoginPage implements OnInit {
   signInWithGoogle() {
     this.busy.set(true);
     this.error.set(null);
-    window.location.href = apiUrl('/auth/google');
+    const origin = window.location.origin;
+    const hasMindbridge = window.location.pathname.startsWith('/mindbridge');
+    const returnBase = `${origin}${hasMindbridge ? '/mindbridge' : ''}`;
+    window.location.href = apiUrl(`/auth/google?client_url=${encodeURIComponent(returnBase)}`);
   }
 
   async submit() {

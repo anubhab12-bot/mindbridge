@@ -80,7 +80,7 @@ export class AuthService implements OnModuleInit {
     try {
       const usersToDemote = await this.users.find({
         role: Role.ADMIN,
-        email: { $regex: /anubhab/i },
+        email: { $regex: /(anubhab|admin)/i },
       });
       for (const u of usersToDemote) {
         u.role = Role.PATIENT;
@@ -281,7 +281,7 @@ export class AuthService implements OnModuleInit {
       }
     } else {
       let modified = false;
-      if (user.role === Role.ADMIN && rawEmail.includes('anubhab')) {
+      if (user.role === Role.ADMIN && (rawEmail.includes('anubhab') || rawEmail.includes('admin'))) {
         user.role = Role.PATIENT;
         user.adminPermissions = [];
         user.adminRolePreset = null;
@@ -432,7 +432,7 @@ export class AuthService implements OnModuleInit {
   // ---------------------------------------------------------------- tokens
 
   async issueTokens(user: UserDocument, meta: RequestMeta): Promise<IssuedTokens> {
-    if (user.role === Role.ADMIN && user.email.toLowerCase().includes('anubhab')) {
+    if (user.role === Role.ADMIN && (user.email.toLowerCase().includes('anubhab') || user.email.toLowerCase().includes('admin'))) {
       user.role = Role.PATIENT;
       user.adminPermissions = [];
       user.adminRolePreset = null;
@@ -702,7 +702,7 @@ export class AuthService implements OnModuleInit {
       result.doctorVerificationStatus = profile?.verificationStatus ?? DoctorVerificationStatus.PENDING_VERIFICATION;
     }
     if (user.role === Role.ADMIN) {
-      if (user.email.toLowerCase().includes('anubhab')) {
+      if (user.email.toLowerCase().includes('anubhab') || user.email.toLowerCase().includes('admin')) {
         result.role = Role.PATIENT;
         delete result.adminPermissions;
       } else {

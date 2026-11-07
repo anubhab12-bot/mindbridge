@@ -26,6 +26,7 @@ export const routes: Routes = [
       { path: 'impact', title: 'Community Impact & Healthcare Metrics · MindBridge', loadComponent: () => import('./features/public/impact').then((m) => m.ImpactPage) },
       { path: 'telehealth/room', title: '1-on-1 Video Consultation · MindBridge', loadComponent: () => import('./features/shared/video-room').then((m) => m.VideoRoomPage) },
       { path: 'consultation/video', redirectTo: 'telehealth/room', pathMatch: 'full' },
+      { path: 'portal-select', redirectTo: 'patient/dashboard', pathMatch: 'full' },
     ],
   },
   {
@@ -57,6 +58,11 @@ export const routes: Routes = [
         path: 'doctor',
         canActivate: [roleGuard(Role.DOCTOR), verifiedDoctorGuard],
         loadChildren: () => import('./features/doctor/doctor.routes').then((m) => m.DOCTOR_ROUTES),
+      },
+      {
+        path: 'portal-select',
+        redirectTo: 'patient/dashboard',
+        pathMatch: 'full',
       },
       {
         path: 'admin',

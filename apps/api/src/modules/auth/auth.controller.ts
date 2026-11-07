@@ -133,11 +133,31 @@ export class AuthController {
     }
   }
 
+    private resolveClientAppUrl(req: Request): string {
+    const clientParam = (req.query?.['client_url'] as string) || (req.query?.['redirect_uri'] as string);
+    if (clientParam && (clientParam.startsWith('http://') || clientParam.startsWith('https://'))) {
+      return clientParam.replace(/\/+$/, '');
+    }
+    const referer = req.headers['referer'] as string | undefined;
+    if (referer) {
+      try {
+        const u = new URL(referer);
+        const hasMindbridge = u.pathname.startsWith('/mindbridge');
+        return `${u.origin}${hasMindbridge ? '/mindbridge' : ''}`;
+      } catch {}
+    }
+    const envUrl = process.env['WEB_APP_URL'];
+    if (envUrl) {
+      return envUrl.replace(/\/+$/, '');
+    }
+    return 'https://anubhab12-bot.github.io/mindbridge';
+  }
+
   @Public()
   @Get('google')
   @ApiOperation({ summary: 'Initiate Google OAuth or Direct Gmail Sign-In' })
   async googleAuth(@Req() req: Request, @Res() res: Response) {
-    const webAppUrl = process.env['WEB_APP_URL'] || 'https://mindbridge-web.onrender.com';
+    const webAppUrl = this.resolveClientAppUrl(req);
     const googleClientId = process.env['GOOGLE_CLIENT_ID'];
 
     if (googleClientId) {
@@ -216,7 +236,7 @@ export class AuthController {
   @Get('google/callback')
   @ApiOperation({ summary: 'Google OAuth callback handler' })
   async googleCallback(@Req() req: Request, @Res() res: Response) {
-    const webAppUrl = process.env['WEB_APP_URL'] || 'https://mindbridge-web.onrender.com';
+    const webAppUrl = this.resolveClientAppUrl(req);
     const code = req.query?.['code'] as string;
     const googleClientId = process.env['GOOGLE_CLIENT_ID'];
     const googleClientSecret = process.env['GOOGLE_CLIENT_SECRET'];
