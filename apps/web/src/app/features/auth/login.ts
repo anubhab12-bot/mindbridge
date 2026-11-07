@@ -33,7 +33,7 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
           <button class="btn btn-google btn-block" type="button" (click)="signInWithGoogle()" [disabled]="busy()">
             @if (busy()) {
               <span class="spinner-sm"></span>
-              <span>Connecting to Googleâ€¦</span>
+              <span>Connecting to Google...</span>
             } @else {
               <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
                 <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/>
@@ -70,12 +70,12 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
                 type="password"
                 formControlName="password"
                 autocomplete="current-password"
-                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                placeholder="••••••••••••"
               />
               <mb-field-error [control]="form.controls.password" label="Password" />
             </div>
             <button class="btn btn-block" type="submit" [disabled]="busy()">
-              {{ busy() ? 'Signing inâ€¦' : 'Sign in' }}
+              {{ busy() ? 'Signing in...' : 'Sign in' }}
             </button>
           </form>
 
@@ -105,7 +105,7 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
               <mb-field-error [control]="mfaForm.controls.code" label="Verification code" />
             </div>
             <button class="btn btn-block" type="submit" [disabled]="busy()">
-              {{ busy() ? 'Verifyingâ€¦' : 'Verify' }}
+              {{ busy() ? 'Verifying...' : 'Verify' }}
             </button>
           </form>
         }

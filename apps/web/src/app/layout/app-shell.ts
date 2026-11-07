@@ -212,7 +212,7 @@ const PENDING_DOCTOR_NAV: NavItem[] = [
                   (click)="quickVerify()"
                   [disabled]="verifying()"
                 >
-                  {{ verifying() ? 'Verifyingâ€¦' : 'Verify Email Address' }}
+                  {{ verifying() ? 'Verifying...' : 'Verify Email Address' }}
                 </button>
                 <a class="btn btn-sm btn-secondary" routerLink="/verify-email">Options</a>
               </div>

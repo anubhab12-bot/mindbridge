@@ -378,7 +378,7 @@ export class AuthService {
     const failed = (user.failedLoginCount ?? 0) + 1;
     const update: Record<string, unknown> = { failedLoginCount: failed };
     if (failed >= max) {
-      // Exponential lockout: 15 min, 30 min, 60 min â€¦ capped at 24 h.
+      // Exponential lockout: 15 min, 30 min, 60 min ... capped at 24 h.
       const multiplier = 2 ** Math.min(failed - max, 6);
       const minutes = Math.min(this.config.get('LOCKOUT_MINUTES') * multiplier, 24 * 60);
       update['lockedUntil'] = new Date(Date.now() + minutes * 60_000);
