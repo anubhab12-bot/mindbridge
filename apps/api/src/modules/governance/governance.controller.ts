@@ -276,4 +276,29 @@ export class GovernanceController {
   async resetAllData() {
     return this.governance.resetAllData();
   }
+
+  // ------------------------------------------------------------- QA Bug Tickets
+  @Public()
+  @Get('bugs')
+  @ApiOperation({ summary: 'List all QA bug tickets' })
+  async getBugTickets() {
+    return this.governance.getBugTickets();
+  }
+
+  @Public()
+  @Post('bugs')
+  @ApiOperation({ summary: 'Register a bug ticket from in-app QA tool' })
+  async createBugTicket(@Body() body: any) {
+    return this.governance.createBugTicket(body);
+  }
+
+  @Public()
+  @Patch('bugs/:id')
+  @ApiOperation({ summary: 'Update bug ticket status and resolution' })
+  async updateBugStatus(
+    @Param('id') id: string,
+    @Body() body: { status: string; resolutionNotes?: string }
+  ) {
+    return this.governance.updateBugTicketStatus(id, body.status, body.resolutionNotes);
+  }
 }

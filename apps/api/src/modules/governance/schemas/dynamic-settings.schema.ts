@@ -139,6 +139,9 @@ export class DynamicSettings {
     ],
   })
   dynamicFeatures!: Array<any>;
+
+  @Prop({ type: Array, default: [] })
+  bugTickets!: Array<any>;
 }
 
 export const DynamicSettingsSchema = SchemaFactory.createForClass(DynamicSettings);

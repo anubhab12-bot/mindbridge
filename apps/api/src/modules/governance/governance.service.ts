@@ -826,4 +826,53 @@ Every interaction is monitored by a local, deterministic safety screener that in
       deletedUsers: deletedUsers.deletedCount,
     };
   }
+
+  async getBugTickets() {
+    const doc = await this.settingsModel.findOne();
+    return (doc as any)?.bugTickets || [];
+  }
+
+  async createBugTicket(ticket: any) {
+    let doc = await this.settingsModel.findOne();
+    if (!doc) doc = new this.settingsModel();
+    const existing: any[] = (doc as any).bugTickets || [];
+    const newTicket = {
+      id: ticket.id || 'MB-BUG-' + Math.floor(100 + Math.random() * 900),
+      title: ticket.title || 'Untitled Issue',
+      component: ticket.component || 'General Platform',
+      severity: ticket.severity || 'high',
+      status: 'open',
+      device: ticket.device || 'Web Browser',
+      stepsToReproduce: ticket.stepsToReproduce || '',
+      expectedBehavior: ticket.expectedBehavior || '',
+      actualBehavior: ticket.actualBehavior || '',
+      reportedBy: ticket.reportedBy || 'Tester User',
+      testerEmail: ticket.testerEmail || 'tester@mindbridge.health',
+      screenshotData: ticket.screenshotData || ticket.screenshotUrl || null,
+      videoData: ticket.videoData || ticket.videoUrl || null,
+      videoDuration: ticket.videoDuration || null,
+      comments: ticket.comments || [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    (doc as any).bugTickets = [newTicket, ...existing];
+    await doc.save();
+    return newTicket;
+  }
+
+  async updateBugTicketStatus(id: string, status: string, resolutionNotes?: string) {
+    const doc = await this.settingsModel.findOne();
+    if (!doc) throw new NotFoundException('Settings not found');
+    const existing: any[] = (doc as any).bugTickets || [];
+    const index = existing.findIndex((t: any) => t.id === id);
+    if (index === -1) throw new NotFoundException('Bug ticket not found');
+    existing[index].status = status;
+    existing[index].updatedAt = new Date().toISOString();
+    if (resolutionNotes) {
+      existing[index].resolutionNotes = resolutionNotes;
+    }
+    (doc as any).bugTickets = existing;
+    await doc.save();
+    return existing[index];
+  }
 }
