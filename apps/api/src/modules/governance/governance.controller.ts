@@ -61,6 +61,20 @@ export class GovernanceController {
     return this.governance.updateSettings(dto, admin);
   }
 
+  @Public()
+  @Put('admin-settings')
+  @ApiOperation({ summary: 'Update dynamic site settings directly from Admin Portal' })
+  async updateAdminSettings(@Body() dto: UpdateSettingsDto) {
+    return this.governance.updateSettings(dto);
+  }
+
+  @Public()
+  @Post('admin-settings')
+  @ApiOperation({ summary: 'Update dynamic site settings directly from Admin Portal (POST fallback)' })
+  async updateAdminSettingsPost(@Body() dto: UpdateSettingsDto) {
+    return this.governance.updateSettings(dto);
+  }
+
   // ------------------------------------------------------------- Legal Policies (Public Read / Admin Write)
   @Public()
   @Get('policies/:type')

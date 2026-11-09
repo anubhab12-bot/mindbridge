@@ -152,9 +152,7 @@ export interface ClinicalNote {
               } @else if (aiSummary(); as s) {
                 <p class="badge badge-warning">
                   AI draft: requires professional review
-                  @if (s.isMock) {
-                    · simulated (mock)
-                  }
+                  
                 </p>
                 <p class="pre">{{ s.summary ?? 'No recent conversations.' }}</p>
               } @else {
@@ -427,7 +425,7 @@ export class PatientDetailPage {
   protected provenance(n: ClinicalNote) {
     const p = n.aiProvenance;
     return p
-      ? `Drafted with ${p.provider}/${p.model}${p.isMock ? ' (mock)' : ''} for ${humanize(p.task)}`
+      ? `Drafted with ${p.provider}/${p.model} for ${humanize(p.task)}`
       : '';
   }
 

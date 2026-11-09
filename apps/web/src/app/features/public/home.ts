@@ -32,7 +32,7 @@ interface RecoveryTrack {
         <div class="copy">
           <div class="medical-authority-pill">
             <span class="authority-bullet"></span>
-            <span class="authority-text">Accredited Clinical Mental Healthcare · 124+ Medical Partners</span>
+            <span class="authority-text">Accredited Clinical Mental Healthcare · {{ statTotalNgos() }}+ Medical Partners</span>
           </div>
           <h1 class="medical-hero-title">
             Compassionate, Clinical Mental Healthcare & <span class="medical-gradient-text">Psychiatrist Telehealth</span>
@@ -283,7 +283,7 @@ interface RecoveryTrack {
       <div class="section-header center">
         <span class="eyebrow">Evidence-Based Treatment Pathways</span>
         <h2>Explore Your Clinically Projected Recovery Curve</h2>
-        <p class="muted">Based on standardized clinical outcomes across 14,850+ structured care interventions.</p>
+        <p class="muted">Based on standardized clinical outcomes across {{ statTotalUsers() }} structured care interventions.</p>
       </div>
 
       <div class="recovery-track-container card">
@@ -614,7 +614,7 @@ interface RecoveryTrack {
           @if (activeVideoChapter() === 4) {
             <div class="screen-content animated-fade">
               <div class="screen-preview-card">
-                <div class="screen-badge rose">Step 4: Rapid Crisis Response (< 42s)</div>
+                <div class="screen-badge rose">Step 4: Rapid Crisis Response ({{ statAvgResponseTime() }})</div>
                 <h3>National Helplines Direct-Connect & Emergency Triage</h3>
                 <p class="muted">If acute distress is detected, instant emergency dialing to Tele-MANAS (14416) and local hospitals triggers immediately.</p>
                 <div class="screen-demo-ui crisis-mode">
@@ -863,8 +863,8 @@ interface RecoveryTrack {
               <div class="mockup-specialist-call">
                 <div class="spec-avatar-initials">SS</div>
                 <div class="spec-info">
-                  <strong>Dr. Sunita Sen</strong>
-                  <span>11 yrs exp · Video Telehealth</span>
+                  <strong>{{ featuredDoctorName() }}</strong>
+                  <span>{{ featuredDoctorExp() }}</span>
                 </div>
                 <button type="button" class="btn-mockup-call" (click)="telehealth.openLauncher()">Consult</button>
               </div>
@@ -2770,6 +2770,8 @@ export class HomePage implements OnInit {
   protected readonly statTotalNgos = signal('124');
   protected readonly statRecoveryRate = signal('94.6%');
   protected readonly statAvgResponseTime = signal('< 42s');
+  protected readonly featuredDoctorName = signal('MindBridge Clinical Specialist');
+  protected readonly featuredDoctorExp = signal('Verified Clinician · Telehealth Active');
 
   protected readonly selectedMoodIndex = signal(1); // Default to Anxious
   protected readonly selectedTrackIndex = signal(0); // Default to Anxiety track

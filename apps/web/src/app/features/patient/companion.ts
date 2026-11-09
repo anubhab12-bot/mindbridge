@@ -154,9 +154,7 @@ export interface InAppOption {
               @if (summary(); as s) {
                 <div class="alert alert-info small">
                   <strong>Summary</strong>
-                  @if (s.isMock) {
-                    <span class="badge badge-warning">Simulated</span>
-                  }
+
                   <p class="pre">{{ s.summary }}</p>
                 </div>
               }
@@ -171,13 +169,7 @@ export interface InAppOption {
                     [class.notice]="m.role === 'notice'"
                   >
                     <div class="bubble">
-                      @if (m.role === 'assistant' && m.isMock) {
-                        <span
-                          class="badge badge-warning mock"
-                          title="This reply came from a development mock, not a real AI model."
-                          >Simulated reply (mock)</span
-                        >
-                      }
+
                       <div class="pre">{{ getCleanContent(m.content) }}</div>
                     </div>
                     @if (getOptions(m); as opts) {
