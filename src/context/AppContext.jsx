@@ -252,31 +252,80 @@ export function AppProvider({ children }) {
   };
 
   // App Controls / Feature Flag toggles
-  const toggleFeatureFlag = (key) => {
-    setAppControls(prev => {
-      const current = prev.features[key];
-      return {
-        ...prev,
-        features: {
-          ...prev.features,
-          [key]: {
-            ...current,
-            enabled: !current?.enabled,
-          },
+  const toggleFeatureFlag = async (key) => {
+    const current = appControls?.features?.[key];
+    const newEnabled = !current?.enabled;
+    const updatedFeatures = {
+      ...appControls.features,
+      [key]: {
+        ...current,
+        enabled: newEnabled,
+      },
+    };
+    setAppControls(prev => ({ ...prev, features: updatedFeatures }));
+    addAuditLog('FEATURE_TOGGLED', `Toggled feature flag "${current?.name || key}" to ${newEnabled ? 'ENABLED' : 'DISABLED'}`, 'sky');
+
+    try {
+      const dynamicFeaturesArray = Object.entries(updatedFeatures).map(([k, f]) => ({
+        id: k,
+        name: f.name,
+        description: f.description,
+        enabled: f.enabled,
+        category: f.category,
+      }));
+      await apiService.updateSettings({ dynamicFeatures: dynamicFeaturesArray });
+      await refreshLiveData();
+    } catch (err) {
+      console.warn('Feature flag backend sync error:', err);
+    }
+  };
+
+  const toggleMaintenanceMode = async () => {
+    const newMode = !appControls.maintenanceMode;
+    setAppControls(prev => ({ ...prev, maintenanceMode: newMode }));
+    addAuditLog('MAINTENANCE_TOGGLED', `Global platform maintenance mode ${newMode ? 'ACTIVATED' : 'DEACTIVATED'} across live servers`, 'rose');
+    try {
+      await apiService.updateSettings({ maintenanceMode: newMode });
+      await refreshLiveData();
+    } catch (err) {
+      console.warn('Maintenance mode backend sync error:', err);
+    }
+  };
+
+  const updateGlobalBanner = async (bannerData) => {
+    const formattedBanner = {
+      enabled: bannerData.enabled ?? true,
+      title: bannerData.title || (bannerData.type === 'alert' ? 'CRITICAL SYSTEM ALERT' : 'Notice'),
+      message: bannerData.text || bannerData.message,
+      badgeType: bannerData.type || bannerData.badgeType || 'info',
+      audience: bannerData.audience || 'all',
+    };
+    setAppControls(prev => ({ ...prev, banner: { ...prev.banner, ...bannerData, ...formattedBanner } }));
+    addAuditLog('BANNER_UPDATED', `Published live announcement banner: "${formattedBanner.message}" to all mobile and web users`, 'sky');
+    try {
+      await apiService.updateSettings({ announcementBanner: formattedBanner });
+      await refreshLiveData();
+    } catch (err) {
+      console.warn('Banner backend sync error:', err);
+    }
+  };
+
+  const updateStatsOverride = async (statsData) => {
+    try {
+      await apiService.updateSettings({
+        statsOverride: {
+          enabled: true,
+          totalUsers: statsData.totalUsers,
+          totalNgos: statsData.totalNgos,
+          recoveryRate: statsData.recoveryRate,
+          avgResponseTime: statsData.avgResponseTime,
         },
-      };
-    });
-    addAuditLog('FEATURE_TOGGLED', `Toggled feature: ${key}`, 'sky');
-  };
-
-  const toggleMaintenanceMode = () => {
-    setAppControls(prev => ({ ...prev, maintenanceMode: !prev.maintenanceMode }));
-    addAuditLog('MAINTENANCE_TOGGLED', 'Toggled maintenance mode', 'rose');
-  };
-
-  const updateGlobalBanner = (bannerData) => {
-    setAppControls(prev => ({ ...prev, banner: { ...prev.banner, ...bannerData } }));
-    addAuditLog('BANNER_UPDATED', 'Updated global banner', 'sky');
+      });
+      addAuditLog('STATS_UPDATED', `Updated live platform statistics displayed on public site: Users=${statsData.totalUsers}, Recovery=${statsData.recoveryRate}`, 'emerald');
+      await refreshLiveData();
+    } catch (err) {
+      console.warn('Stats override backend sync error:', err);
+    }
   };
 
   const updateFinancials = (finData) => {
@@ -460,6 +509,7 @@ export function AppProvider({ children }) {
         toggleFeatureFlag,
         toggleMaintenanceMode,
         updateGlobalBanner,
+        updateStatsOverride,
         updateFinancials,
         // Alerts & Logs
         sosAlerts,

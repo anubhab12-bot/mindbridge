@@ -45,6 +45,36 @@ export const apiService = {
     }
   },
 
+  // Update dynamic site settings in live MongoDB backend (reflects immediately on main app)
+  async updateSettings(settingsData) {
+    try {
+      let res = await fetch(`${API_BASE}/governance/admin-settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settingsData),
+      });
+      if (!res.ok) {
+        res = await fetch(`${API_BASE}/governance/admin-settings`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(settingsData),
+        });
+      }
+      if (!res.ok) {
+        // Fallback to legacy PUT /governance/settings
+        res = await fetch(`${API_BASE}/governance/settings`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(settingsData),
+        });
+      }
+      return await res.json();
+    } catch (err) {
+      console.error('Failed updating live settings:', err);
+      throw err;
+    }
+  },
+
   // Fetch real telemetry statistics (registered users, active patients, verified doctors)
   async getStats() {
     try {
