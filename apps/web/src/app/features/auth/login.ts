@@ -1,6 +1,6 @@
 import { Component, inject, input, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Role } from '@mindbridge/shared-types';
 import { errorMessage } from '../../core/api/api-error';
 import { apiUrl } from '../../core/api/api.service';
@@ -110,10 +110,79 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
           </form>
         }
       </div>
-    </div>
+    @if (googlePromptOpen()) {
+      <div class="google-modal-backdrop" (click)="googlePromptOpen.set(false)">
+        <div class="google-modal-card" (click)="$event.stopPropagation()">
+          <div class="google-modal-header">
+            <svg width="26" height="26" viewBox="0 0 18 18" aria-hidden="true">
+              <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/>
+              <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
+              <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.347 2.825.957 4.039l3.007-2.332z"/>
+              <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/>
+            </svg>
+            <h2 style="margin: 0; font-size: 1.25rem;">Sign in with Google</h2>
+          </div>
+          <p class="muted small" style="margin: 6px 0 16px 0;">
+            Enter your Google / Gmail account to connect to MindBridge:
+          </p>
+          <div class="field" style="text-align: left;">
+            <label for="google-direct-email">Google / Gmail Address</label>
+            <input
+              id="google-direct-email"
+              class="input"
+              type="email"
+              [value]="googleInputEmail()"
+              (input)="googleInputEmail.set($any($event.target).value)"
+              placeholder="you@gmail.com"
+              autocomplete="email"
+            />
+          </div>
+          <div class="row" style="margin-top: 18px; justify-content: flex-end; gap: 8px;">
+            <button class="btn btn-secondary btn-sm" type="button" (click)="googlePromptOpen.set(false)" [disabled]="busy()">
+              Cancel
+            </button>
+            <button class="btn btn-primary btn-sm" type="button" (click)="submitGoogleDirect()" [disabled]="busy() || !googleInputEmail().includes('@')">
+              {{ busy() ? 'Connecting...' : 'Continue with Google' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
+    .google-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      padding: 16px;
+    }
+    .google-modal-card {
+      background: var(--mb-surface);
+      border: 1px solid var(--mb-border);
+      border-radius: var(--mb-radius);
+      max-width: 400px;
+      width: 100%;
+      padding: 24px;
+      box-shadow: var(--mb-shadow-lg);
+      animation: popIn 0.2s ease-out;
+    }
+    .google-modal-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
     .auth {
       max-width: 460px;
       margin: 0 auto;
@@ -173,15 +242,19 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
   `,
 })
 export class LoginPage implements OnInit {
-  private readonly fb = inject(FormBuilder).nonNullable;
+    private readonly fb = inject(FormBuilder).nonNullable;
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   readonly returnUrl = input<string>();
   readonly expired = input<string>();
 
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly mfaToken = signal<string | null>(null);
+  protected readonly googlePromptOpen = signal(false);
+  protected readonly googleInputEmail = signal('');
+  protected readonly googleConfig = signal<{ clientId: string; enabled: boolean } | null>(null);
 
   protected readonly form = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -191,17 +264,27 @@ export class LoginPage implements OnInit {
     code: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
   });
 
-  ngOnInit() {
+    ngOnInit() {
+    const qp = this.route.snapshot.queryParams;
+    if (qp?.['google_auth'] === 'prompt') {
+      this.googlePromptOpen.set(true);
+    }
+    const qpEmail = qp?.['email'] || qp?.['user'];
+    if (qpEmail) {
+      this.googleInputEmail.set(qpEmail);
+    }
     this.initGoogleIdentity();
   }
 
   private async initGoogleIdentity() {
     if (typeof window === 'undefined') return;
     try {
-      const res = await fetch(apiUrl('/auth/google/config')).then(r => r.json());
-      if (res?.clientId && (window as any).google?.accounts?.id) {
+      const res = await fetch(apiUrl('/auth/google/config')).then((r) => r.json());
+      const conf = res?.data || res;
+      this.googleConfig.set(conf);
+      if (conf?.enabled && conf?.clientId && (window as any).google?.accounts?.id) {
         (window as any).google.accounts.id.initialize({
-          client_id: res.clientId,
+          client_id: conf.clientId,
           callback: async (response: any) => {
             if (response?.credential) {
               this.busy.set(true);
@@ -225,12 +308,43 @@ export class LoginPage implements OnInit {
   }
 
   signInWithGoogle() {
+    const conf = this.googleConfig();
+    if (conf?.enabled && conf?.clientId) {
+      this.busy.set(true);
+      this.error.set(null);
+      const origin = window.location.origin;
+      const hasMindbridge = window.location.pathname.startsWith('/mindbridge');
+      const returnBase = `${origin}${hasMindbridge ? '/mindbridge' : ''}`;
+      window.location.href = apiUrl(`/auth/google?client_url=${encodeURIComponent(returnBase)}`);
+      return;
+    }
+
+    const formEmail = this.form.getRawValue().email?.trim();
+    if (formEmail && formEmail.includes('@')) {
+      void this.submitGoogleDirect(formEmail);
+      return;
+    }
+
+    this.googlePromptOpen.set(true);
+  }
+
+  async submitGoogleDirect(emailToUse?: string) {
+    const email = (emailToUse || this.googleInputEmail()).trim();
+    if (!email || !email.includes('@')) {
+      this.error.set('Please enter a valid Google / Gmail address.');
+      return;
+    }
     this.busy.set(true);
     this.error.set(null);
-    const origin = window.location.origin;
-    const hasMindbridge = window.location.pathname.startsWith('/mindbridge');
-    const returnBase = `${origin}${hasMindbridge ? '/mindbridge' : ''}`;
-    window.location.href = apiUrl(`/auth/google?client_url=${encodeURIComponent(returnBase)}`);
+    try {
+      await this.auth.loginWithGoogleEmail(email);
+      this.googlePromptOpen.set(false);
+      await this.done();
+    } catch (err) {
+      this.error.set(errorMessage(err));
+    } finally {
+      this.busy.set(false);
+    }
   }
 
   async submit() {

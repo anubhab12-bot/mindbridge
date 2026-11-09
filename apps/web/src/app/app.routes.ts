@@ -5,6 +5,37 @@ import { AppShellComponent } from './layout/app-shell';
 import { PublicLayoutComponent } from './layout/public-layout';
 
 export const routes: Routes = [
+  // Top-level legacy redirects for admin or portal-select
+  {
+    path: 'portal-select',
+    loadComponent: () => import('./features/public/portal-redirect').then((m) => m.PortalRedirectComponent),
+    children: [
+      {
+        path: '**',
+        loadComponent: () => import('./features/public/portal-redirect').then((m) => m.PortalRedirectComponent),
+      },
+    ],
+  },
+  {
+    path: 'admin',
+    loadComponent: () => import('./features/public/portal-redirect').then((m) => m.PortalRedirectComponent),
+    children: [
+      {
+        path: '**',
+        loadComponent: () => import('./features/public/portal-redirect').then((m) => m.PortalRedirectComponent),
+      },
+    ],
+  },
+  {
+    path: 'admin-portal',
+    loadComponent: () => import('./features/public/portal-redirect').then((m) => m.PortalRedirectComponent),
+    children: [
+      {
+        path: '**',
+        loadComponent: () => import('./features/public/portal-redirect').then((m) => m.PortalRedirectComponent),
+      },
+    ],
+  },
   {
     path: '',
     component: PublicLayoutComponent,
@@ -26,9 +57,6 @@ export const routes: Routes = [
       { path: 'impact', title: 'Community Impact & Healthcare Metrics · MindBridge', loadComponent: () => import('./features/public/impact').then((m) => m.ImpactPage) },
       { path: 'telehealth/room', title: '1-on-1 Video Consultation · MindBridge', loadComponent: () => import('./features/shared/video-room').then((m) => m.VideoRoomPage) },
       { path: 'consultation/video', redirectTo: 'telehealth/room', pathMatch: 'full' },
-      { path: 'portal-select', loadComponent: () => import('./features/public/portal-redirect').then((m) => m.PortalRedirectComponent) },
-      { path: 'admin-portal', loadComponent: () => import('./features/public/portal-redirect').then((m) => m.PortalRedirectComponent) },
-      { path: 'admin-portal/**', loadComponent: () => import('./features/public/portal-redirect').then((m) => m.PortalRedirectComponent) },
     ],
   },
   {
@@ -60,18 +88,6 @@ export const routes: Routes = [
         path: 'doctor',
         canActivate: [roleGuard(Role.DOCTOR), verifiedDoctorGuard],
         loadChildren: () => import('./features/doctor/doctor.routes').then((m) => m.DOCTOR_ROUTES),
-      },
-      {
-        path: 'portal-select',
-        loadComponent: () => import('./features/public/portal-redirect').then((m) => m.PortalRedirectComponent),
-      },
-      {
-        path: 'admin',
-        loadComponent: () => import('./features/public/portal-redirect').then((m) => m.PortalRedirectComponent),
-      },
-      {
-        path: 'admin/**',
-        loadComponent: () => import('./features/public/portal-redirect').then((m) => m.PortalRedirectComponent),
       },
     ],
   },

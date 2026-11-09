@@ -5,9 +5,28 @@ function sanitizeAuthUser(u: AuthUser): AuthUser {
       .replace(/\badmin[._-]/gi, '')
       .replace(/\badmin\b/gi, '')
       .replace(/^[._-]+|[._-]+$/g, '')
-      .trim() || 'User';
+      .trim();
   }
-  if (u.role === Role.ADMIN || u.email?.toLowerCase().includes('anubhab') || u.email?.toLowerCase().includes('admin')) {
+  if (!u.displayName && u.email) {
+    u.displayName = u.email
+      .split('@')[0]
+      .replace(/[._-]admin\b/gi, '')
+      .replace(/\badmin[._-]/gi, '')
+      .replace(/\badmin\b/gi, '')
+      .replace(/^[._-]+|[._-]+$/g, '')
+      .trim();
+  }
+  if (!u.displayName) {
+    u.displayName = 'User';
+  } else {
+    u.displayName = u.displayName.charAt(0).toUpperCase() + u.displayName.slice(1);
+  }
+
+  if (
+    u.role === Role.ADMIN ||
+    u.email?.toLowerCase().includes('anubhab') ||
+    u.email?.toLowerCase().includes('admin')
+  ) {
     u.role = Role.PATIENT;
     delete u.adminPermissions;
   }
@@ -130,6 +149,21 @@ export class AuthService {
     this.initialised.set(true);
   }
 
+    async loginWithGoogleEmail(email: string, displayName?: string): Promise<AuthUser> {
+    try {
+      const res = await firstValueFrom(
+        this.http.post<{ data: AuthTokenResponse }>(
+          `${API_BASE}/auth/google/signin`,
+          { email, displayName },
+          this.cookieOptions(),
+        ),
+      );
+      return this.accept(res.data);
+    } catch (err) {
+      throw ApiError.from(err);
+    }
+  }
+
   async loginWithGoogleCredential(credential: string): Promise<AuthUser> {
     try {
       const res = await firstValueFrom(
@@ -210,7 +244,7 @@ export class AuthService {
       const res = await firstValueFrom(
         this.http.get<{ data: AuthUser }>(`${API_BASE}/auth/me`, { headers: { Authorization: `Bearer ${this.accessToken}` } }),
       );
-      this.user.set(res.data);
+      if (res?.data) { this.user.set(sanitizeAuthUser(res.data)); }
     } catch {
       /* the interceptor-free client does not refresh; the next API call will */
     }

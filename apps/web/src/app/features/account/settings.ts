@@ -221,7 +221,7 @@ interface PatientProfileView {
               } @else {
                 <p class="muted">
                   Add a second step to sign-in using an authenticator app. Strongly recommended for
-                  professional and admin accounts.
+                  professional accounts.
                 </p>
                 <button class="btn" type="button" (click)="startMfa()" [disabled]="busy()">
                   Set up
@@ -309,7 +309,7 @@ export class SettingsPage implements OnInit {
   ];
   protected readonly isPatient = () => this.auth.role() === Role.PATIENT;
   protected readonly canUseMfa = () =>
-    this.auth.role() === Role.DOCTOR || this.auth.role() === Role.ADMIN;
+    this.auth.role() === Role.DOCTOR;
 
   protected readonly account = this.fb.group({
     displayName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
