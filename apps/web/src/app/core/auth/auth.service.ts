@@ -51,7 +51,7 @@ import { ApiError } from '../api/api-error';
 import { API_BASE, apiUrl } from '../api/api.service';
 
 export const GOOGLE_CLIENT_ID =
-  '554396504563-8u0c5un3or43fgnbr3kkb9mtntg3m3eq.apps.googleusercontent.com';
+  '881519533012-cvjl7g673bc5mj5145l74nkkdkmr7qku.apps.googleusercontent.com';
 
 export const CSRF_HEADER = 'x-mindbridge-csrf';
 

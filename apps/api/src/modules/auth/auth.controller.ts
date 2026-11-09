@@ -47,6 +47,9 @@ const AUTH_LIMIT = { default: { limit: () => Number(process.env['AUTH_THROTTLE_L
 
 const ALL_ROLES = [Role.PATIENT, Role.DOCTOR, Role.ADMIN];
 
+export const DEFAULT_GOOGLE_CLIENT_ID =
+  '881519533012-cvjl7g673bc5mj5145l74nkkdkmr7qku.apps.googleusercontent.com';
+
 export function requestMeta(req: Request & { id?: string }): RequestMeta {
   return { ip: req.ip, userAgent: req.headers['user-agent'], requestId: req.id };
 }
@@ -170,7 +173,7 @@ export class AuthController {
       } catch {}
     }
     const googleClientId =
-      process.env['GOOGLE_CLIENT_ID'] || '554396504563-8u0c5un3or43fgnbr3kkb9mtntg3m3eq.apps.googleusercontent.com';
+      process.env['GOOGLE_CLIENT_ID'] || DEFAULT_GOOGLE_CLIENT_ID;
 
     const host = req.get('host') || 'mindbridge-api-x99i.onrender.com';
     const proto = host.includes('localhost') ? (req.protocol || 'http') : 'https';
@@ -189,7 +192,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Get Google OAuth client configuration' })
   async googleConfig() {
     const clientId =
-      process.env['GOOGLE_CLIENT_ID'] || '554396504563-8u0c5un3or43fgnbr3kkb9mtntg3m3eq.apps.googleusercontent.com';
+      process.env['GOOGLE_CLIENT_ID'] || DEFAULT_GOOGLE_CLIENT_ID;
     return {
       clientId,
       enabled: true,
@@ -251,7 +254,7 @@ export class AuthController {
     const webAppUrl = this.resolveClientAppUrl(req);
     const code = req.query?.['code'] as string;
     const googleClientId =
-      process.env['GOOGLE_CLIENT_ID'] || '554396504563-8u0c5un3or43fgnbr3kkb9mtntg3m3eq.apps.googleusercontent.com';
+      process.env['GOOGLE_CLIENT_ID'] || DEFAULT_GOOGLE_CLIENT_ID;
     const googleClientSecret = process.env['GOOGLE_CLIENT_SECRET'];
 
     let email = (req.query?.['email'] as string) || (req.query?.['user'] as string);
