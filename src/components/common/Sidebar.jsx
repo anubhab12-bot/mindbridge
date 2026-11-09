@@ -10,7 +10,8 @@ import {
   Activity, 
   FileText, 
   Lock,
-  ChevronRight
+  ChevronRight,
+  Bug
 } from 'lucide-react';
 import Badge from './Badge';
 
@@ -21,6 +22,14 @@ const NAVIGATION_ITEMS = [
     icon: LayoutDashboard,
     desc: 'Live metrics & real-time summary',
     permission: null,
+  },
+  {
+    id: 'bugs',
+    label: 'QA Bug Desk & Task Bar',
+    icon: Bug,
+    desc: 'Raise tickets, update task bar & retest',
+    permission: 'bugs.view',
+    badgeKey: 'bugCount',
   },
   {
     id: 'doctors',
@@ -86,6 +95,7 @@ export default function Sidebar() {
     liveDoctors = [], 
     doctorApplications = [],
     sosAlerts = [], 
+    bugTickets = [],
     isSuperAdmin,
     liveHealth 
   } = useApp();
@@ -93,6 +103,7 @@ export default function Sidebar() {
   const allDocs = (liveDoctors && liveDoctors.length > 0) ? liveDoctors : (doctorApplications || []);
   const pendingDocsCount = allDocs.filter(d => !d.verified || d.status === 'pending').length;
   const activeSosCount = (sosAlerts || []).filter(a => a.status !== 'resolved').length;
+  const activeBugsCount = (bugTickets || []).filter(t => t.status === 'open' || t.status === 'in_progress').length;
 
   return (
     <aside className="w-64 lg:w-72 bg-slate-950 border-r border-slate-800/80 flex flex-col flex-shrink-0 h-[calc(100vh-4rem)] sticky top-16 select-none">
@@ -161,6 +172,13 @@ export default function Sidebar() {
 
               {/* Dynamic Counters / Indicators */}
               <div className="flex items-center gap-1 ml-2">
+                {item.badgeKey === 'bugCount' && activeBugsCount > 0 && (
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                    isActive ? 'bg-white text-teal-700' : 'bg-teal-500/20 text-teal-300 border border-teal-500/30'
+                  }`}>
+                    {activeBugsCount}
+                  </span>
+                )}
                 {item.badgeKey === 'pendingDocs' && pendingDocsCount > 0 && (
                   <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
                     isActive ? 'bg-white text-indigo-700' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
@@ -198,7 +216,7 @@ export default function Sidebar() {
         </div>
         <div className="mt-2 text-[10px] text-slate-400 flex items-center justify-between">
           <span>MongoDB Atlas Connected</span>
-          <span>HIPAA Safe</span>
+          <span>QA Desk Online</span>
         </div>
       </div>
     </aside>

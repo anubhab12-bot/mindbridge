@@ -12,10 +12,15 @@ import {
   Lock,
   Layers,
   Sparkles,
-  Users
+  Users,
+  Mail,
+  Send,
+  Copy,
+  ExternalLink
 } from 'lucide-react';
 import Badge from '../common/Badge';
 import Modal from '../common/Modal';
+import { emailService, SUPER_CREATOR_EMAIL, SUPER_CREATOR_NAME } from '../../services/emailService';
 
 export default function RBACManagement() {
   const { 
@@ -32,6 +37,8 @@ export default function RBACManagement() {
 
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+  const [sentInvitationInfo, setSentInvitationInfo] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
 
   // New Admin Form State
   const [newAdmin, setNewAdmin] = useState({
@@ -39,6 +46,8 @@ export default function RBACManagement() {
     email: '',
     title: '',
     roleId: roles[0]?.id || 'specialist_doctor_verifier',
+    sendEmail: true,
+    customNote: '',
   });
 
   // New Role Form State
@@ -50,17 +59,42 @@ export default function RBACManagement() {
     permissions: ['monitoring.view'],
   });
 
-  // Handle Admin submit
+  // Handle Admin submit & send invitation email
   const handleAddAdminSubmit = (e) => {
     e.preventDefault();
     if (!newAdmin.name || !newAdmin.email) return;
-    addAdmin(newAdmin);
+
+    const assignedRole = roles.find(r => r.id === newAdmin.roleId) || { name: newAdmin.roleId, permissions: [] };
+    
+    // Add admin
+    addAdmin({
+      name: newAdmin.name,
+      email: newAdmin.email,
+      title: newAdmin.title || 'Platform Administrator',
+      roleId: newAdmin.roleId,
+    });
+
+    // Generate & dispatch invitation email from anubhabnandi12@gmail.com
+    const invitationPayload = emailService.generateAdminInvitation({
+      toEmail: newAdmin.email,
+      recipientName: newAdmin.name,
+      roleName: assignedRole.name,
+      title: newAdmin.title,
+      permissions: assignedRole.permissions || [],
+      customNote: newAdmin.customNote,
+    });
+
     setIsAdminModalOpen(false);
+    setSentInvitationInfo(invitationPayload);
+
+    // Reset form
     setNewAdmin({
       name: '',
       email: '',
       title: '',
       roleId: roles[0]?.id || 'specialist_doctor_verifier',
+      sendEmail: true,
+      customNote: '',
     });
   };
 
@@ -91,6 +125,12 @@ export default function RBACManagement() {
     });
   };
 
+  const copyToClipboard = (text, id) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Banner */}
@@ -98,14 +138,14 @@ export default function RBACManagement() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-bold text-rose-400 uppercase tracking-wider">Superadmin Governance</span>
-            <Badge color="rose">Full Authority</Badge>
+            <Badge color="rose">Super Creator Authority</Badge>
           </div>
           <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
             <ShieldCheck className="w-6 h-6 text-indigo-400" />
             <span>Role-Based Access Control (RBAC) & Admin Accounts</span>
           </h1>
           <p className="text-xs text-slate-400 mt-1 max-w-2xl">
-            Provision platform administrators, define custom dynamic operational roles, and enforce granular clinical privilege safeguards.
+            Provision platform administrators, assign roles (Superadmin, Specialist Doctors, Testers), and automatically dispatch permission onboarding emails from <strong>{SUPER_CREATOR_EMAIL}</strong>.
           </p>
         </div>
 
@@ -252,7 +292,7 @@ export default function RBACManagement() {
               <span>Configured System & Custom Roles</span>
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Roles define what capabilities an admin has across credentialing, hiring, marketing, and telemetry.
+              Roles define what capabilities an admin has across credentialing, QA bug tracking, hiring, marketing, and telemetry.
             </p>
           </div>
         </div>
@@ -318,7 +358,7 @@ export default function RBACManagement() {
 
                 <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
                   <span>{adminCount} assigned admin{adminCount !== 1 ? 's' : ''}</span>
-                  <span className="text-indigo-400 font-medium">Role ID: {role.id.substring(0, 15)}...</span>
+                  <span className="text-indigo-400 font-medium font-mono text-[10px]">{role.id}</span>
                 </div>
               </div>
             );
@@ -331,11 +371,22 @@ export default function RBACManagement() {
         isOpen={isAdminModalOpen}
         onClose={() => setIsAdminModalOpen(false)}
         title="Add New MindBridge Administrator"
-        subtitle="Provision privileged access with an assigned RBAC role"
+        subtitle="Provision privileged access and dispatch official email invitation"
       >
         <form onSubmit={handleAddAdminSubmit} className="space-y-4">
+          {/* Super Creator Dispatch Notice */}
+          <div className="p-3.5 rounded-xl bg-indigo-950/40 border border-indigo-500/30 flex items-start gap-3">
+            <Mail className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-0.5" />
+            <div className="text-xs space-y-1">
+              <p className="font-semibold text-white">Official Creator Email Dispatch</p>
+              <p className="text-slate-300 text-[11px]">
+                An invitation email will be prepared from <strong>{SUPER_CREATOR_NAME} ({SUPER_CREATOR_EMAIL})</strong> notifying the recipient of their role, access link, and assigned permissions.
+              </p>
+            </div>
+          </div>
+
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Full Legal / Professional Name</label>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Full Name</label>
             <input
               type="text"
               required
@@ -347,7 +398,7 @@ export default function RBACManagement() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Work Email Address</label>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Recipient Email Address</label>
             <input
               type="email"
               required
@@ -359,7 +410,7 @@ export default function RBACManagement() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Operational Title / Clinical Department</label>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Operational Title / Department</label>
             <input
               type="text"
               required
@@ -385,6 +436,19 @@ export default function RBACManagement() {
             </select>
           </div>
 
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">
+              Personal Welcome Message from Anubhab Nandi (Optional)
+            </label>
+            <textarea
+              rows={2}
+              placeholder="Add personal guidance, team objectives, or access instructions..."
+              value={newAdmin.customNote}
+              onChange={e => setNewAdmin({ ...newAdmin, customNote: e.target.value })}
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+
           <div className="pt-4 flex justify-end gap-2 border-t border-slate-800">
             <button
               type="button"
@@ -395,12 +459,84 @@ export default function RBACManagement() {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/20 transition-all"
+              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/20 transition-all flex items-center gap-1.5"
             >
-              Create Administrator
+              <Send className="w-3.5 h-3.5" />
+              <span>Provision & Dispatch Email</span>
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Modal: Invitation Email Dispatched Confirmation */}
+      <Modal
+        isOpen={!!sentInvitationInfo}
+        onClose={() => setSentInvitationInfo(null)}
+        title="Admin Invitation Email Dispatched"
+        subtitle={`Sent on behalf of ${SUPER_CREATOR_EMAIL}`}
+        maxWidth="max-w-2xl"
+      >
+        {sentInvitationInfo && (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-400" />
+              <span>Administrator provisioned. Email invitation formatted from {SUPER_CREATOR_EMAIL}.</span>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-xs space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Recipient:</span>
+                <span className="text-white font-mono">{sentInvitationInfo.to}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">From Super Creator:</span>
+                <span className="text-emerald-400 font-bold">{SUPER_CREATOR_EMAIL}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Subject:</span>
+                <span className="text-slate-200 font-medium">{sentInvitationInfo.subject}</span>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-semibold text-slate-300">Generated Email Content:</span>
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(sentInvitationInfo.body, 'invite-body')}
+                  className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
+                >
+                  {copiedId === 'invite-body' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>Copy Invitation Text</span>
+                </button>
+              </div>
+              <pre className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-slate-300 font-mono whitespace-pre-wrap max-h-56 overflow-y-auto leading-relaxed">
+                {sentInvitationInfo.body}
+              </pre>
+            </div>
+
+            <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+              <a
+                href={sentInvitationInfo.mailtoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                title="Open in your default email client"
+              >
+                <Mail className="w-4 h-4 text-indigo-400" />
+                <span>Open in Gmail / Email App</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={() => setSentInvitationInfo(null)}
+                className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
 
       {/* Modal: Create Dynamic Custom Role */}
@@ -418,7 +554,7 @@ export default function RBACManagement() {
               <input
                 type="text"
                 required
-                placeholder="e.g. Influencer Growth Lead"
+                placeholder="e.g. Lead QA Engineer"
                 value={newRole.name}
                 onChange={e => setNewRole({ ...newRole, name: e.target.value })}
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
@@ -428,7 +564,7 @@ export default function RBACManagement() {
               <label className="block text-xs font-semibold text-slate-300 mb-1">Badge Tag</label>
               <input
                 type="text"
-                placeholder="e.g. Growth Lead"
+                placeholder="e.g. QA Tester"
                 value={newRole.badge}
                 onChange={e => setNewRole({ ...newRole, badge: e.target.value })}
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
@@ -437,26 +573,10 @@ export default function RBACManagement() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Color Theme</label>
-            <div className="flex gap-2">
-              {['indigo', 'emerald', 'purple', 'rose', 'amber', 'sky', 'teal'].map(c => (
-                <button
-                  type="button"
-                  key={c}
-                  onClick={() => setNewRole({ ...newRole, color: c })}
-                  className={`w-7 h-7 rounded-lg border-2 capitalize text-[10px] ${
-                    newRole.color === c ? 'border-white ring-2 ring-purple-500' : 'border-transparent'
-                  } bg-${c === 'indigo' ? 'indigo-500' : c === 'emerald' ? 'emerald-500' : c === 'purple' ? 'purple-500' : c === 'rose' ? 'rose-500' : c === 'amber' ? 'amber-500' : c === 'sky' ? 'sky-500' : 'teal-500'}`}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div>
             <label className="block text-xs font-semibold text-slate-300 mb-1">Role Mandate & Scope</label>
             <textarea
               rows={2}
-              placeholder="Describe the clinical or business purpose of this position..."
+              placeholder="Describe the clinical, quality assurance, or business purpose of this position..."
               value={newRole.description}
               onChange={e => setNewRole({ ...newRole, description: e.target.value })}
               className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"

@@ -51,11 +51,12 @@ export default function DoctorVerification() {
 
   const canVerify = hasPermission('doctors.verify');
 
-  const filteredDoctors = liveDoctors.filter(doc => {
+  const filteredDoctors = (liveDoctors || []).filter(doc => {
+    if (!doc) return false;
     const matchesCategory = filterCategory === 'all' || doc.professionalCategory === filterCategory;
     const matchesSearch = 
-      (doc.displayName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (doc.specialties || []).some(s => s.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (doc.displayName || doc.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (doc.specialties || []).some(s => (s || '').toLowerCase().includes(searchQuery.toLowerCase())) ||
       (doc.id || '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });

@@ -3,6 +3,7 @@ import { useApp } from './context/AppContext';
 import Header from './components/common/Header';
 import Sidebar from './components/common/Sidebar';
 import OverviewDashboard from './components/dashboard/OverviewDashboard';
+import BugTicketDesk from './components/bugs/BugTicketDesk';
 import DoctorVerification from './components/doctors/DoctorVerification';
 import RBACManagement from './components/rbac/RBACManagement';
 import HiringPositions from './components/hiring/HiringPositions';
@@ -10,9 +11,9 @@ import InfluencerHub from './components/influencers/InfluencerHub';
 import AppControlCenter from './components/appControl/AppControlCenter';
 import AppMonitoring from './components/monitoring/AppMonitoring';
 import AuditLogs from './components/audit/AuditLogs';
-import { AlertCircle, Info, AlertTriangle, RotateCcw } from 'lucide-react';
+import { AlertCircle, Info, RotateCcw } from 'lucide-react';
 
-class ErrorBoundary extends React.Component {
+export class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -21,7 +22,7 @@ class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
   componentDidCatch(error, errorInfo) {
-    console.error('MindBridge Admin Error:', error, errorInfo);
+    console.error('MindBridge Admin Portal Error:', error, errorInfo);
   }
   render() {
     if (this.state.hasError) {
@@ -31,16 +32,19 @@ class ErrorBoundary extends React.Component {
             <div className="w-12 h-12 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto">
               <AlertCircle className="w-6 h-6" />
             </div>
-            <h2 className="text-lg font-bold">Portal Recovery Mode</h2>
+            <h2 className="text-lg font-bold">MindBridge Portal Recovery</h2>
             <p className="text-xs text-slate-400">
-              {this.state.error?.message || 'An unexpected UI state occurred. Local cache reset recommended.'}
+              {this.state.error?.message || 'An unexpected UI state occurred. Resetting local cache will restore portal connectivity.'}
             </p>
             <button
               onClick={() => {
                 localStorage.clear();
+                if ('serviceWorker' in navigator) {
+                  navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+                }
                 window.location.reload();
               }}
-              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5 mx-auto"
+              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5 mx-auto transition-colors"
             >
               <RotateCcw className="w-4 h-4" />
               <span>Reset & Reload App</span>
@@ -86,6 +90,7 @@ function MainContent() {
       {/* Dynamic Content Views */}
       <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto">
         {activeTab === 'dashboard' && <OverviewDashboard />}
+        {activeTab === 'bugs' && <BugTicketDesk />}
         {activeTab === 'doctors' && <DoctorVerification />}
         {activeTab === 'rbac' && <RBACManagement />}
         {activeTab === 'hiring' && <HiringPositions />}

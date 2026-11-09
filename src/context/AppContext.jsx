@@ -9,11 +9,12 @@ import {
   INITIAL_APP_CONTROLS,
   INITIAL_SOS_ALERTS,
   INITIAL_AUDIT_LOGS,
+  INITIAL_BUG_TICKETS,
 } from '../data/mockData';
 
 const AppContext = createContext();
 
-const STORAGE_PREFIX = 'mindbridge_live_admin_v2_';
+const STORAGE_PREFIX = 'mindbridge_live_admin_v3_';
 
 function loadStorage(key, fallback) {
   try {
@@ -36,7 +37,7 @@ export function AppProvider({ children }) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [currentAdminId, setCurrentAdminId] = useState(() => loadStorage('currentAdminId', 'adm-01'));
 
-  // Live Backend Data States (NO FAKE DEMO DATA)
+  // Live Backend Data States
   const [liveDoctors, setLiveDoctors] = useState([]);
   const [liveSettings, setLiveSettings] = useState(null);
   const [liveStats, setLiveStats] = useState(null);
@@ -54,7 +55,10 @@ export function AppProvider({ children }) {
   const [sosAlerts, setSosAlerts] = useState(() => loadStorage('sosAlerts', INITIAL_SOS_ALERTS));
   const [auditLogs, setAuditLogs] = useState(() => loadStorage('auditLogs', INITIAL_AUDIT_LOGS));
 
-  // Sync admin state
+  // QA Bug Desk & Task Bar State
+  const [bugTickets, setBugTickets] = useState(() => loadStorage('bugTickets', INITIAL_BUG_TICKETS));
+
+  // Sync state to local storage
   useEffect(() => saveStorage('currentAdminId', currentAdminId), [currentAdminId]);
   useEffect(() => saveStorage('roles', roles), [roles]);
   useEffect(() => saveStorage('admins', admins), [admins]);
@@ -64,33 +68,48 @@ export function AppProvider({ children }) {
   useEffect(() => saveStorage('appControls', appControls), [appControls]);
   useEffect(() => saveStorage('sosAlerts', sosAlerts), [sosAlerts]);
   useEffect(() => saveStorage('auditLogs', auditLogs), [auditLogs]);
+  useEffect(() => saveStorage('bugTickets', bugTickets), [bugTickets]);
 
-  // Current session admin and role
-  const currentAdmin = admins.find(a => a.id === currentAdminId) || admins[0];
-  const currentRole = roles.find(r => r.id === currentAdmin?.roleId) || roles[0];
+  // Current session admin and role with absolute fail-safes
+  const fallbackRole = INITIAL_ROLES[0] || {
+    id: 'super_admin',
+    name: 'Superadmin (Platform Owner)',
+    badge: 'Superadmin',
+    color: 'rose',
+    permissions: ['system.full_access'],
+  };
+  const fallbackAdmin = INITIAL_ADMINS[0] || {
+    id: 'adm-01',
+    name: 'Anubhab Nandi',
+    roleId: 'super_admin',
+    email: 'anubhabnandi12@gmail.com',
+  };
+
+  const currentAdmin = (admins || []).find(a => a.id === currentAdminId) || admins?.[0] || fallbackAdmin;
+  const currentRole = (roles || []).find(r => r.id === currentAdmin?.roleId) || roles?.[0] || fallbackRole;
 
   // RBAC Permission check
   const hasPermission = (permissionId) => {
-    if (!currentRole) return false;
+    if (!currentRole || !Array.isArray(currentRole.permissions)) return false;
     if (currentRole.permissions.includes('system.full_access')) return true;
     return currentRole.permissions.includes(permissionId);
   };
 
-  const isSuperAdmin = currentRole?.id === 'super_admin' || currentRole?.permissions.includes('system.full_access');
+  const isSuperAdmin = currentRole?.id === 'super_admin' || (Array.isArray(currentRole?.permissions) && currentRole.permissions.includes('system.full_access'));
 
   // Audit logger
   const addAuditLog = (action, details, badge = 'rose') => {
     const newLog = {
       id: 'aud-' + Date.now(),
       timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
-      adminName: currentAdmin.name,
-      adminRole: currentRole.name,
+      adminName: currentAdmin?.name || 'Administrator',
+      adminRole: currentRole?.name || 'Platform Admin',
       action,
       details,
       ip: '192.168.1.' + Math.floor(Math.random() * 200 + 10),
       badge,
     };
-    setAuditLogs(prev => [newLog, ...prev]);
+    setAuditLogs(prev => [newLog, ...(prev || [])]);
   };
 
   // Switch persona for RBAC preview
@@ -129,7 +148,7 @@ export function AppProvider({ children }) {
   // Initial load from backend
   useEffect(() => {
     refreshLiveData();
-    const interval = setInterval(refreshLiveData, 30000); // Poll every 30s for live telemetry
+    const interval = setInterval(refreshLiveData, 30000);
     return () => clearInterval(interval);
   }, [refreshLiveData]);
 
@@ -198,6 +217,40 @@ export function AppProvider({ children }) {
     addAuditLog('DOCTOR_VERIFIED', `Doctor ID ${docId} verified status set to ${status}`, 'emerald');
   };
 
+  // Bug Ticket Actions
+  const addBugTicket = (data) => {
+    const nextTicketId = 'MB-BUG-' + Math.floor(100 + Math.random() * 900);
+    const newTicket = {
+      id: nextTicketId,
+      status: 'open',
+      createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      updatedAt: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      resolutionNotes: '',
+      ...data,
+    };
+    setBugTickets(prev => [newTicket, ...prev]);
+    addAuditLog('BUG_REPORTED', `QA Ticket ${nextTicketId} raised: "${data.title}" by ${data.reportedBy}`, 'teal');
+    return newTicket;
+  };
+
+  const updateBugStatus = (ticketId, newStatus, resolutionNotes = '') => {
+    setBugTickets(prev => prev.map(t => {
+      if (t.id === ticketId) {
+        return {
+          ...t,
+          status: newStatus,
+          resolutionNotes: resolutionNotes || t.resolutionNotes,
+          updatedAt: new Date().toISOString().replace('T', ' ').substring(0, 16),
+        };
+      }
+      return t;
+    }));
+
+    const ticket = bugTickets.find(t => t.id === ticketId);
+    const badgeColor = newStatus === 'fixed' ? 'emerald' : newStatus === 'cant_fix' ? 'rose' : newStatus === 'verified' ? 'teal' : 'sky';
+    addAuditLog('BUG_STATUS_UPDATED', `QA Ticket ${ticketId} status changed to ${newStatus.toUpperCase()}. Notification queued for ${ticket?.testerEmail || 'tester'}`, badgeColor);
+  };
+
   // App Controls / Feature Flag toggles
   const toggleFeatureFlag = (key) => {
     setAppControls(prev => {
@@ -243,7 +296,7 @@ export function AppProvider({ children }) {
       ...data,
     };
     setAdmins(prev => [newAdmin, ...prev]);
-    addAuditLog('ADMIN_CREATED', `Superadmin created admin account for ${data.name} with role ${data.roleId}`, 'rose');
+    addAuditLog('ADMIN_CREATED', `Superadmin created admin account for ${data.name} with role ${data.roleId}. Invitation email formatted from anubhabnandi12@gmail.com`, 'rose');
     return newAdmin;
   };
 
@@ -352,6 +405,7 @@ export function AppProvider({ children }) {
     setAppControls(INITIAL_APP_CONTROLS);
     setSosAlerts(INITIAL_SOS_ALERTS);
     setAuditLogs(INITIAL_AUDIT_LOGS);
+    setBugTickets(INITIAL_BUG_TICKETS);
     setCurrentAdminId('adm-01');
     setActiveTab('dashboard');
     refreshLiveData();
@@ -397,6 +451,10 @@ export function AppProvider({ children }) {
         campaigns,
         createCampaign,
         updateCampaign,
+        // QA Bug Desk & Task Bar
+        bugTickets,
+        addBugTicket,
+        updateBugStatus,
         // App Controls
         appControls,
         toggleFeatureFlag,

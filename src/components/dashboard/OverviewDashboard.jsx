@@ -77,7 +77,7 @@ export default function OverviewDashboard() {
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">MindBridge Production API</span>
             <Badge color="emerald">Connected</Badge>
-            <Badge color={currentRole.color}>{currentRole.name}</Badge>
+            <Badge color={currentRole?.color || 'rose'}>{currentRole?.name || 'Superadmin'}</Badge>
           </div>
           <h1 className="text-2xl font-extrabold text-white tracking-tight">
             Live Healthcare Operations Center
@@ -95,7 +95,7 @@ export default function OverviewDashboard() {
               className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-lg shadow-emerald-600/20 transition-all"
             >
               <Stethoscope className="w-4 h-4" />
-              <span>Doctors ({liveDoctors.length})</span>
+              <span>Doctors ({(liveDoctors || []).length})</span>
             </button>
           )}
 
