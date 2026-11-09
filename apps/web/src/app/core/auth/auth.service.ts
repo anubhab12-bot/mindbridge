@@ -208,7 +208,7 @@ export class AuthService {
                     const u = await this.loginWithGoogleEmail(userInfo.email, userInfo.name);
                     resolve(u);
                   } else {
-                    this.redirectToGoogleOAuth();
+                    reject(new Error('Google did not return an email address.'));
                   }
                 } catch (err) {
                   reject(err);
@@ -216,13 +216,17 @@ export class AuthService {
               }
             },
             error_callback: () => {
-              this.redirectToGoogleOAuth();
+              reject(
+                new Error(
+                  "Google blocked this request (origin_mismatch): Please add 'https://anubhab12-bot.github.io' to Authorized JavaScript origins in Google Cloud Console, or enter your email below to sign in directly.",
+                ),
+              );
             },
           });
           client.requestAccessToken({ prompt: 'select_account' });
         });
-      } catch {
-        // Fallback to direct redirect
+      } catch (err) {
+        throw err;
       }
     }
 

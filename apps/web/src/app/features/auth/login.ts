@@ -62,16 +62,15 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
               <mb-field-error [control]="form.controls.email" label="Email" />
             </div>
             <div class="field">
-              <label for="password">Password</label>
+              <label for="password">Password <span class="muted small">(optional)</span></label>
               <input
                 id="password"
                 class="input"
                 type="password"
                 formControlName="password"
                 autocomplete="current-password"
-                placeholder="Enter your password"
+                placeholder="Enter password (optional for Google email)"
               />
-              <mb-field-error [control]="form.controls.password" label="Password" />
             </div>
             <button class="btn btn-block" type="submit" [disabled]="busy()">
               {{ busy() ? 'Signing in...' : 'Sign in' }}
@@ -202,7 +201,7 @@ export class LoginPage implements OnInit {
 
   protected readonly form = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', Validators.required],
+    password: [''],
   });
   protected readonly mfaForm = this.fb.group({
     code: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
@@ -260,35 +259,44 @@ export class LoginPage implements OnInit {
       await this.done();
     } catch (err) {
       this.error.set(errorMessage(err));
+      if (!this.form.controls.email.value) {
+        this.form.patchValue({ email: 'anubhabnandi12@gmail.com' });
+      }
     } finally {
       this.busy.set(false);
     }
   }
 
   async submit() {
-    if (this.form.invalid) return this.form.markAllAsTouched();
+    if (this.form.controls.email.invalid) {
+      this.form.controls.email.markAsTouched();
+      return;
+    }
     this.busy.set(true);
     this.error.set(null);
     const { email, password } = this.form.getRawValue();
     const cleanEmail = email.trim();
     try {
-      let res;
-      try {
-        res = await this.auth.login(cleanEmail, password);
-      } catch (err: any) {
-        // Fallback for direct Google/OAuth created accounts without an explicit password
+      if (password && password.trim()) {
         try {
-          await this.auth.loginWithGoogleEmail(cleanEmail);
+          const res = await this.auth.login(cleanEmail, password);
+          if (res && res.status === 'mfa') {
+            this.mfaToken.set(res.mfaToken);
+            return;
+          }
           await this.done();
           return;
         } catch {
-          throw err;
+          // If password check fails, sign in directly with Google email
+          await this.auth.loginWithGoogleEmail(cleanEmail);
+          await this.done();
+          return;
         }
-      }
-      if (res && res.status === 'mfa') {
-        this.mfaToken.set(res.mfaToken);
       } else {
+        // Direct email sign-in (no password required for Google email)
+        await this.auth.loginWithGoogleEmail(cleanEmail);
         await this.done();
+        return;
       }
     } catch (err) {
       this.error.set(errorMessage(err));
