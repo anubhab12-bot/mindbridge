@@ -159,18 +159,34 @@ export class AuthController {
   @Get('google')
   @ApiOperation({ summary: 'Initiate Google OAuth or Direct Gmail Sign-In' })
   async googleAuth(@Req() req: Request, @Res() res: Response) {
-    const webAppUrl = this.resolveClientAppUrl(req);
+    let webAppUrl = this.resolveClientAppUrl(req);
+    const stateParam = req.query?.['state'] as string | undefined;
+    if (stateParam) {
+      try {
+        const parsed = JSON.parse(decodeURIComponent(stateParam));
+        if (parsed?.clientUrl) {
+          webAppUrl = parsed.clientUrl;
+        }
+      } catch {}
+    }
     const googleClientId = process.env['GOOGLE_CLIENT_ID'];
 
+    const callbackUrl = `${req.protocol}://${req.get('host')}/api/v1/auth/google/callback`;
+    const redirectUri = encodeURIComponent(callbackUrl);
+    const scope = encodeURIComponent('openid email profile');
+    const state = encodeURIComponent(JSON.stringify({ clientUrl: webAppUrl }));
+
     if (googleClientId) {
-      const redirectUri = encodeURIComponent(`${webAppUrl}/api/v1/auth/google/callback`);
-      const scope = encodeURIComponent('openid email profile');
-      return res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`);
+      return res.redirect(
+        `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&access_type=offline&prompt=select_account&state=${state}`,
+      );
     }
 
     const emailParam = (req.query?.['email'] as string) || (req.query?.['user'] as string);
     if (!emailParam || !emailParam.includes('@')) {
-      return res.redirect(`${webAppUrl}/login`);
+      return res.redirect(
+        `${webAppUrl}/login?error=${encodeURIComponent('Google OAuth requires GOOGLE_CLIENT_ID to be configured in Render.')}`,
+      );
     }
     const user = await this.auth.findOrCreateUserByEmail(emailParam, requestMeta(req));
     const tokens = await this.auth.issueTokens(user, requestMeta(req));
@@ -258,7 +274,7 @@ export class AuthController {
             code,
             client_id: googleClientId,
             client_secret: googleClientSecret,
-            redirect_uri: `${webAppUrl}/api/v1/auth/google/callback`,
+            redirect_uri: `${req.protocol}://${req.get('host')}/api/v1/auth/google/callback`,
             grant_type: 'authorization_code',
           }),
         });

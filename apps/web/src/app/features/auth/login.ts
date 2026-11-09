@@ -249,33 +249,12 @@ export class LoginPage implements OnInit {
   }
 
   signInWithGoogle() {
-    const conf = this.googleConfig();
-    if (conf?.enabled && conf?.clientId) {
-      this.busy.set(true);
-      this.error.set(null);
-      const origin = window.location.origin;
-      const hasMindbridge = window.location.pathname.startsWith('/mindbridge');
-      const returnBase = `${origin}${hasMindbridge ? '/mindbridge' : ''}`;
-      window.location.href = apiUrl(`/auth/google?client_url=${encodeURIComponent(returnBase)}`);
-      return;
-    }
-
-    const email = this.form.getRawValue().email?.trim();
-    if (email && email.includes('@')) {
-      this.busy.set(true);
-      this.error.set(null);
-      this.auth.loginWithGoogleEmail(email)
-        .then(() => this.done())
-        .catch((err) => this.error.set(errorMessage(err)))
-        .finally(() => this.busy.set(false));
-      return;
-    }
-
-    const emailInput = document.getElementById('email');
-    if (emailInput) {
-      emailInput.focus();
-    }
-    this.error.set('Please enter your email in the Email field below to sign in directly.');
+    this.busy.set(true);
+    this.error.set(null);
+    const origin = window.location.origin;
+    const hasMindbridge = window.location.pathname.startsWith('/mindbridge');
+    const returnBase = `${origin}${hasMindbridge ? '/mindbridge' : ''}`;
+    window.location.href = apiUrl(`/auth/google?client_url=${encodeURIComponent(returnBase)}`);
   }
 
   async submit() {
