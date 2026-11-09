@@ -29,6 +29,8 @@ function sanitizeAuthUser(u: AuthUser): AuthUser {
   ) {
     u.role = Role.PATIENT;
     delete u.adminPermissions;
+    delete (u as any).adminRolePreset;
+    u.mfaEnabled = false;
   }
   return u;
 }
@@ -46,7 +48,10 @@ import {
 } from '@mindbridge/shared-types';
 import { firstValueFrom } from 'rxjs';
 import { ApiError } from '../api/api-error';
-import { API_BASE } from '../api/api.service';
+import { API_BASE, apiUrl } from '../api/api.service';
+
+export const GOOGLE_CLIENT_ID =
+  '554396504563-8u0c5un3or43fgnbr3kkb9mtntg3m3eq.apps.googleusercontent.com';
 
 export const CSRF_HEADER = 'x-mindbridge-csrf';
 
@@ -177,6 +182,68 @@ export class AuthService {
     } catch (err) {
       throw ApiError.from(err);
     }
+  }
+
+  async signInWithGoogle(): Promise<AuthUser> {
+    fetch(apiUrl('/health')).catch(() => {});
+
+    if (typeof window !== 'undefined' && (window as any).google?.accounts?.oauth2) {
+      try {
+        return await new Promise<AuthUser>((resolve, reject) => {
+          const client = (window as any).google.accounts.oauth2.initTokenClient({
+            client_id: GOOGLE_CLIENT_ID,
+            scope: 'openid email profile',
+            callback: async (tokenResponse: any) => {
+              if (tokenResponse?.error) {
+                this.redirectToGoogleOAuth();
+                return;
+              }
+              if (tokenResponse?.access_token) {
+                try {
+                  const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                    headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+                  });
+                  const userInfo = (await res.json()) as { email?: string; name?: string };
+                  if (userInfo?.email) {
+                    const u = await this.loginWithGoogleEmail(userInfo.email, userInfo.name);
+                    resolve(u);
+                  } else {
+                    this.redirectToGoogleOAuth();
+                  }
+                } catch (err) {
+                  reject(err);
+                }
+              }
+            },
+            error_callback: () => {
+              this.redirectToGoogleOAuth();
+            },
+          });
+          client.requestAccessToken({ prompt: 'select_account' });
+        });
+      } catch {
+        // Fallback to direct redirect
+      }
+    }
+
+    this.redirectToGoogleOAuth();
+    return new Promise(() => {});
+  }
+
+  redirectToGoogleOAuth() {
+    if (typeof window === 'undefined') return;
+    const origin = window.location.origin;
+    const hasMindbridge = window.location.pathname.startsWith('/mindbridge');
+    const returnBase = `${origin}${hasMindbridge ? '/mindbridge' : ''}`;
+    const googleAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+    googleAuthUrl.searchParams.set('client_id', GOOGLE_CLIENT_ID);
+    googleAuthUrl.searchParams.set('redirect_uri', 'https://mindbridge-api-x99i.onrender.com/api/v1/auth/google/callback');
+    googleAuthUrl.searchParams.set('response_type', 'code');
+    googleAuthUrl.searchParams.set('scope', 'openid email profile');
+    googleAuthUrl.searchParams.set('access_type', 'offline');
+    googleAuthUrl.searchParams.set('prompt', 'select_account');
+    googleAuthUrl.searchParams.set('state', encodeURIComponent(JSON.stringify({ clientUrl: returnBase })));
+    window.location.href = googleAuthUrl.toString();
   }
 
   /** Single-flight refresh. Resolves false (and clears state) when the session has ended. */

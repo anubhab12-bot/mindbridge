@@ -810,10 +810,10 @@ export class AuthService implements OnModuleInit {
       role: isDemoted ? Role.PATIENT : user.role,
       status: user.status,
       emailVerified: !!user.emailVerifiedAt,
-      mfaEnabled: user.mfaEnabled,
+      mfaEnabled: isDemoted ? false : user.mfaEnabled,
       timezone: user.timezone,
     };
-    if (user.role === Role.DOCTOR) {
+    if (user.role === Role.DOCTOR && !isDemoted) {
       const profile = await this.doctors.findOne({ userId: user._id }).select('verificationStatus').lean();
       result.doctorVerificationStatus = profile?.verificationStatus ?? DoctorVerificationStatus.PENDING_VERIFICATION;
     }

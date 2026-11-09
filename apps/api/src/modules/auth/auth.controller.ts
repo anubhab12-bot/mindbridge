@@ -169,39 +169,30 @@ export class AuthController {
         }
       } catch {}
     }
-    const googleClientId = process.env['GOOGLE_CLIENT_ID'];
+    const googleClientId =
+      process.env['GOOGLE_CLIENT_ID'] || '554396504563-8u0c5un3or43fgnbr3kkb9mtntg3m3eq.apps.googleusercontent.com';
 
-    const callbackUrl = `${req.protocol}://${req.get('host')}/api/v1/auth/google/callback`;
+    const host = req.get('host') || 'mindbridge-api-x99i.onrender.com';
+    const proto = host.includes('localhost') ? (req.protocol || 'http') : 'https';
+    const callbackUrl = `${proto}://${host}/api/v1/auth/google/callback`;
     const redirectUri = encodeURIComponent(callbackUrl);
     const scope = encodeURIComponent('openid email profile');
     const state = encodeURIComponent(JSON.stringify({ clientUrl: webAppUrl }));
 
-    if (googleClientId) {
-      return res.redirect(
-        `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&access_type=offline&prompt=select_account&state=${state}`,
-      );
-    }
-
-    const emailParam = (req.query?.['email'] as string) || (req.query?.['user'] as string);
-    if (!emailParam || !emailParam.includes('@')) {
-      return res.redirect(
-        `${webAppUrl}/login?error=${encodeURIComponent('Google OAuth requires GOOGLE_CLIENT_ID to be configured in Render.')}`,
-      );
-    }
-    const user = await this.auth.findOrCreateUserByEmail(emailParam, requestMeta(req));
-    const tokens = await this.auth.issueTokens(user, requestMeta(req));
-    this.setRefreshCookie(res, tokens);
-    const destination = '/patient/dashboard' + `?token=${encodeURIComponent(tokens.accessToken)}`;
-    return res.redirect(`${webAppUrl}${destination}`);
+    return res.redirect(
+      `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&access_type=offline&prompt=select_account&state=${state}`,
+    );
   }
 
   @Public()
   @Get('google/config')
   @ApiOperation({ summary: 'Get Google OAuth client configuration' })
   async googleConfig() {
+    const clientId =
+      process.env['GOOGLE_CLIENT_ID'] || '554396504563-8u0c5un3or43fgnbr3kkb9mtntg3m3eq.apps.googleusercontent.com';
     return {
-      clientId: process.env['GOOGLE_CLIENT_ID'] || '',
-      enabled: Boolean(process.env['GOOGLE_CLIENT_ID']),
+      clientId,
+      enabled: true,
     };
   }
 
@@ -259,11 +250,16 @@ export class AuthController {
   async googleCallback(@Req() req: Request, @Res() res: Response) {
     const webAppUrl = this.resolveClientAppUrl(req);
     const code = req.query?.['code'] as string;
-    const googleClientId = process.env['GOOGLE_CLIENT_ID'];
+    const googleClientId =
+      process.env['GOOGLE_CLIENT_ID'] || '554396504563-8u0c5un3or43fgnbr3kkb9mtntg3m3eq.apps.googleusercontent.com';
     const googleClientSecret = process.env['GOOGLE_CLIENT_SECRET'];
 
     let email = (req.query?.['email'] as string) || (req.query?.['user'] as string);
     let displayName: string | undefined = undefined;
+
+    const host = req.get('host') || 'mindbridge-api-x99i.onrender.com';
+    const proto = host.includes('localhost') ? (req.protocol || 'http') : 'https';
+    const callbackUrl = `${proto}://${host}/api/v1/auth/google/callback`;
 
     if (code && googleClientId && googleClientSecret) {
       try {
@@ -274,7 +270,7 @@ export class AuthController {
             code,
             client_id: googleClientId,
             client_secret: googleClientSecret,
-            redirect_uri: `${req.protocol}://${req.get('host')}/api/v1/auth/google/callback`,
+            redirect_uri: callbackUrl,
             grant_type: 'authorization_code',
           }),
         });
@@ -292,6 +288,10 @@ export class AuthController {
       } catch (err) {
         this.logger.error('Failed to exchange Google OAuth code', err);
       }
+    }
+
+    if (!email) {
+      return res.redirect(`${webAppUrl}/login?error=${encodeURIComponent('Google sign-in completed. Please enter your email to finish.')}`);
     }
 
     const user = await this.auth.findOrCreateUserByEmail(email, requestMeta(req), displayName);

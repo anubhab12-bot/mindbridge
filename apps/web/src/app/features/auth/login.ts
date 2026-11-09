@@ -3,7 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { errorMessage } from '../../core/api/api-error';
 import { apiUrl } from '../../core/api/api.service';
-import { AuthService } from '../../core/auth/auth.service';
+import { AuthService, GOOGLE_CLIENT_ID } from '../../core/auth/auth.service';
 import { FieldErrorComponent } from '../../shared/ui/field-error';
 
 @Component({
@@ -217,44 +217,52 @@ export class LoginPage implements OnInit {
     this.initGoogleIdentity();
   }
 
-  private async initGoogleIdentity() {
+  private initGoogleIdentity() {
     if (typeof window === 'undefined') return;
-    try {
-      const res = await fetch(apiUrl('/auth/google/config')).then((r) => r.json());
-      const conf = res?.data || res;
-      this.googleConfig.set(conf);
-      if (conf?.enabled && conf?.clientId && (window as any).google?.accounts?.id) {
-        (window as any).google.accounts.id.initialize({
-          client_id: conf.clientId,
-          callback: async (response: any) => {
-            if (response?.credential) {
-              this.busy.set(true);
-              this.error.set(null);
-              try {
-                await this.auth.loginWithGoogleCredential(response.credential);
-                await this.done();
-              } catch (err) {
-                this.error.set(errorMessage(err));
-              } finally {
-                this.busy.set(false);
+    let attempts = 0;
+    const setupGsi = () => {
+      const google = (window as any).google;
+      if (google?.accounts?.id) {
+        try {
+          google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: async (response: any) => {
+              if (response?.credential) {
+                this.busy.set(true);
+                this.error.set(null);
+                try {
+                  await this.auth.loginWithGoogleCredential(response.credential);
+                  await this.done();
+                } catch (err) {
+                  this.error.set(errorMessage(err));
+                } finally {
+                  this.busy.set(false);
+                }
               }
-            }
-          },
-        });
-        (window as any).google.accounts.id.prompt();
+            },
+            auto_select: false,
+            cancel_on_tap_outside: true,
+          });
+          google.accounts.id.prompt();
+        } catch {}
+      } else if (attempts++ < 10) {
+        setTimeout(setupGsi, 500);
       }
-    } catch {
-      // Gracefully silent if script or config unavailable
-    }
+    };
+    setupGsi();
   }
 
-  signInWithGoogle() {
+  async signInWithGoogle() {
     this.busy.set(true);
     this.error.set(null);
-    const origin = window.location.origin;
-    const hasMindbridge = window.location.pathname.startsWith('/mindbridge');
-    const returnBase = `${origin}${hasMindbridge ? '/mindbridge' : ''}`;
-    window.location.href = apiUrl(`/auth/google?client_url=${encodeURIComponent(returnBase)}`);
+    try {
+      await this.auth.signInWithGoogle();
+      await this.done();
+    } catch (err) {
+      this.error.set(errorMessage(err));
+    } finally {
+      this.busy.set(false);
+    }
   }
 
   async submit() {
