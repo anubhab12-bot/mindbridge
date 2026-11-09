@@ -247,4 +247,19 @@ export class GovernanceController {
     const totpCode = headerTotp || dto?.totpCode;
     return this.governance.purgeDemoData(admin, totpCode);
   }
+
+  // ------------------------------------------------------------- Live Data Management
+  @Public()
+  @Delete('doctors/:id')
+  @ApiOperation({ summary: 'Delete doctor profile from backend' })
+  async deleteDoctor(@Param('id') id: string) {
+    return this.governance.deleteDoctor(id);
+  }
+
+  @Public()
+  @Post('reset-all-data')
+  @ApiOperation({ summary: 'Delete all test doctors and users from database' })
+  async resetAllData() {
+    return this.governance.resetAllData();
+  }
 }

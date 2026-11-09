@@ -808,4 +808,22 @@ Every interaction is monitored by a local, deterministic safety screener that in
       },
     ]);
   }
+
+  async deleteDoctor(id: string) {
+    const doc = await this.doctorModel.findByIdAndDelete(id);
+    if (doc?.userId) {
+      await this.userModel.findByIdAndDelete(doc.userId);
+    }
+    return { success: true, deletedId: id };
+  }
+
+  async resetAllData() {
+    const deletedDocs = await this.doctorModel.deleteMany({});
+    const deletedUsers = await this.userModel.deleteMany({ role: { $in: ['doctor', 'patient'] } });
+    return {
+      success: true,
+      deletedDoctors: deletedDocs.deletedCount,
+      deletedUsers: deletedUsers.deletedCount,
+    };
+  }
 }
