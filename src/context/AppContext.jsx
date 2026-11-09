@@ -6,13 +6,14 @@ import {
   INITIAL_ADMINS,
   INITIAL_HIRING_POSITIONS,
   INITIAL_INFLUENCER_CAMPAIGNS,
+  INITIAL_APP_CONTROLS,
   INITIAL_SOS_ALERTS,
   INITIAL_AUDIT_LOGS,
 } from '../data/mockData';
 
 const AppContext = createContext();
 
-const STORAGE_PREFIX = 'mindbridge_live_admin_';
+const STORAGE_PREFIX = 'mindbridge_live_admin_v2_';
 
 function loadStorage(key, fallback) {
   try {
@@ -49,6 +50,7 @@ export function AppProvider({ children }) {
   const [hiringPositions, setHiringPositions] = useState(() => loadStorage('hiringPositions', INITIAL_HIRING_POSITIONS));
   const [candidates, setCandidates] = useState(() => loadStorage('candidates', []));
   const [campaigns, setCampaigns] = useState(() => loadStorage('campaigns', INITIAL_INFLUENCER_CAMPAIGNS));
+  const [appControls, setAppControls] = useState(() => loadStorage('appControls', INITIAL_APP_CONTROLS));
   const [sosAlerts, setSosAlerts] = useState(() => loadStorage('sosAlerts', INITIAL_SOS_ALERTS));
   const [auditLogs, setAuditLogs] = useState(() => loadStorage('auditLogs', INITIAL_AUDIT_LOGS));
 
@@ -59,6 +61,7 @@ export function AppProvider({ children }) {
   useEffect(() => saveStorage('hiringPositions', hiringPositions), [hiringPositions]);
   useEffect(() => saveStorage('candidates', candidates), [candidates]);
   useEffect(() => saveStorage('campaigns', campaigns), [campaigns]);
+  useEffect(() => saveStorage('appControls', appControls), [appControls]);
   useEffect(() => saveStorage('sosAlerts', sosAlerts), [sosAlerts]);
   useEffect(() => saveStorage('auditLogs', auditLogs), [auditLogs]);
 
@@ -138,7 +141,6 @@ export function AppProvider({ children }) {
       await refreshLiveData();
       return res;
     } catch (err) {
-      // Fallback: delete doctors one by one if bulk reset endpoint is cold
       for (const doc of liveDoctors) {
         try {
           await apiService.deleteDoctor(doc.id);
@@ -178,6 +180,55 @@ export function AppProvider({ children }) {
     addAuditLog('PATIENT_REGISTERED', `Registered new live patient: ${patientData.name} in MongoDB`, 'sky');
     await refreshLiveData();
     return res;
+  };
+
+  // Doctor verification status update
+  const verifyDoctor = (docId, status, notes) => {
+    setLiveDoctors(prev => prev.map(d => {
+      if (d.id === docId) {
+        return {
+          ...d,
+          verified: status === 'verified',
+          status,
+          verificationNotes: notes,
+        };
+      }
+      return d;
+    }));
+    addAuditLog('DOCTOR_VERIFIED', `Doctor ID ${docId} verified status set to ${status}`, 'emerald');
+  };
+
+  // App Controls / Feature Flag toggles
+  const toggleFeatureFlag = (key) => {
+    setAppControls(prev => {
+      const current = prev.features[key];
+      return {
+        ...prev,
+        features: {
+          ...prev.features,
+          [key]: {
+            ...current,
+            enabled: !current?.enabled,
+          },
+        },
+      };
+    });
+    addAuditLog('FEATURE_TOGGLED', `Toggled feature: ${key}`, 'sky');
+  };
+
+  const toggleMaintenanceMode = () => {
+    setAppControls(prev => ({ ...prev, maintenanceMode: !prev.maintenanceMode }));
+    addAuditLog('MAINTENANCE_TOGGLED', 'Toggled maintenance mode', 'rose');
+  };
+
+  const updateGlobalBanner = (bannerData) => {
+    setAppControls(prev => ({ ...prev, banner: { ...prev.banner, ...bannerData } }));
+    addAuditLog('BANNER_UPDATED', 'Updated global banner', 'sky');
+  };
+
+  const updateFinancials = (finData) => {
+    setAppControls(prev => ({ ...prev, financials: { ...prev.financials, ...finData } }));
+    addAuditLog('FINANCIALS_UPDATED', 'Updated financial matrix', 'amber');
   };
 
   // Admin Management
@@ -292,6 +343,20 @@ export function AppProvider({ children }) {
     addAuditLog('SOS_ALERT_UPDATED', `Emergency alert ${alert?.patientName} changed to status: ${newStatus}`, newStatus === 'resolved' ? 'emerald' : 'rose');
   };
 
+  const resetToDefaults = () => {
+    localStorage.clear();
+    setRoles(INITIAL_ROLES);
+    setAdmins(INITIAL_ADMINS);
+    setHiringPositions(INITIAL_HIRING_POSITIONS);
+    setCampaigns(INITIAL_INFLUENCER_CAMPAIGNS);
+    setAppControls(INITIAL_APP_CONTROLS);
+    setSosAlerts(INITIAL_SOS_ALERTS);
+    setAuditLogs(INITIAL_AUDIT_LOGS);
+    setCurrentAdminId('adm-01');
+    setActiveTab('dashboard');
+    refreshLiveData();
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -316,6 +381,7 @@ export function AppProvider({ children }) {
         deleteLiveDoctor,
         addNewLiveDoctor,
         addNewLivePatient,
+        verifyDoctor,
         // RBAC & Hiring
         roles,
         admins,
@@ -331,9 +397,17 @@ export function AppProvider({ children }) {
         campaigns,
         createCampaign,
         updateCampaign,
+        // App Controls
+        appControls,
+        toggleFeatureFlag,
+        toggleMaintenanceMode,
+        updateGlobalBanner,
+        updateFinancials,
+        // Alerts & Logs
         sosAlerts,
         resolveSosAlert,
         auditLogs,
+        resetToDefaults,
       }}
     >
       {children}

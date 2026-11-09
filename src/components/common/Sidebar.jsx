@@ -10,8 +10,7 @@ import {
   Activity, 
   FileText, 
   Lock,
-  ChevronRight,
-  Sparkles
+  ChevronRight
 } from 'lucide-react';
 import Badge from './Badge';
 
@@ -20,8 +19,8 @@ const NAVIGATION_ITEMS = [
     id: 'dashboard',
     label: 'Overview & Operations',
     icon: LayoutDashboard,
-    desc: 'High-level metrics & real-time summary',
-    permission: null, // open to all
+    desc: 'Live metrics & real-time summary',
+    permission: null,
   },
   {
     id: 'doctors',
@@ -84,13 +83,16 @@ export default function Sidebar() {
     setActiveTab, 
     hasPermission, 
     currentRole, 
-    doctorApplications, 
-    sosAlerts, 
-    isSuperAdmin 
+    liveDoctors = [], 
+    doctorApplications = [],
+    sosAlerts = [], 
+    isSuperAdmin,
+    liveHealth 
   } = useApp();
 
-  const pendingDocsCount = doctorApplications.filter(d => d.status === 'pending').length;
-  const activeSosCount = sosAlerts.filter(a => a.status !== 'resolved').length;
+  const allDocs = (liveDoctors && liveDoctors.length > 0) ? liveDoctors : (doctorApplications || []);
+  const pendingDocsCount = allDocs.filter(d => !d.verified || d.status === 'pending').length;
+  const activeSosCount = (sosAlerts || []).filter(a => a.status !== 'resolved').length;
 
   return (
     <aside className="w-64 lg:w-72 bg-slate-950 border-r border-slate-800/80 flex flex-col flex-shrink-0 h-[calc(100vh-4rem)] sticky top-16 select-none">
@@ -105,12 +107,12 @@ export default function Sidebar() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Badge color={currentRole.color} className="font-semibold px-2 py-1 text-xs" dot>
-            {currentRole.name}
+          <Badge color={currentRole?.color || 'indigo'} className="font-semibold px-2 py-1 text-xs" dot>
+            {currentRole?.name || 'Superadmin'}
           </Badge>
         </div>
         <p className="text-[11px] text-slate-400 mt-2 line-clamp-2 leading-relaxed">
-          {currentRole.description}
+          {currentRole?.description || 'Full platform control'}
         </p>
       </div>
 
@@ -185,18 +187,18 @@ export default function Sidebar() {
       {/* Footer System Status Card */}
       <div className="p-4 border-t border-slate-800/60 bg-slate-900/40">
         <div className="flex items-center justify-between text-xs mb-1.5">
-          <span className="text-slate-400 text-[11px]">Telehealth Cluster</span>
+          <span className="text-slate-400 text-[11px]">Backend API</span>
           <span className="text-emerald-400 text-[11px] font-semibold flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            99.98% Live
+            {liveHealth?.latency || 32}ms Latency
           </span>
         </div>
         <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
           <div className="bg-emerald-500 h-full rounded-full" style={{ width: '99.98%' }} />
         </div>
         <div className="mt-2 text-[10px] text-slate-400 flex items-center justify-between">
-          <span>MindBridge Core v3.4</span>
-          <span>HIPAA Compliant</span>
+          <span>MongoDB Atlas Connected</span>
+          <span>HIPAA Safe</span>
         </div>
       </div>
     </aside>

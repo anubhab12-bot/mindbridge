@@ -128,15 +128,15 @@ export default function Header() {
             className="flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700/80 hover:border-indigo-500/50 hover:bg-slate-800/80 transition-all text-left group"
           >
             <img 
-              src={currentAdmin.avatar} 
-              alt={currentAdmin.name} 
+              src={currentAdmin?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'} 
+              alt={currentAdmin?.name || 'Admin'} 
               className="w-8 h-8 rounded-lg object-cover border border-slate-700" 
             />
             <div className="hidden sm:block">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-bold text-slate-100 leading-none">{currentAdmin.name}</span>
-                <Badge color={currentRole.color} className="text-[10px] px-1.5 py-0">
-                  {currentRole.badge || currentRole.name}
+                <span className="text-xs font-bold text-slate-100 leading-none">{currentAdmin?.name || 'Superadmin'}</span>
+                <Badge color={currentRole?.color || 'rose'} className="text-[10px] px-1.5 py-0">
+                  {currentRole?.badge || currentRole?.name || 'Superadmin'}
                 </Badge>
               </div>
               <span className="text-[10px] text-indigo-400 font-medium">Switch RBAC Persona</span>

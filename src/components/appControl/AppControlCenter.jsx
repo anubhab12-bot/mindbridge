@@ -28,12 +28,16 @@ export default function AppControlCenter() {
     hasPermission 
   } = useApp();
 
-  const [bannerText, setBannerText] = useState(appControls.banner.text);
-  const [bannerType, setBannerType] = useState(appControls.banner.type);
-  const [bannerAudience, setBannerAudience] = useState(appControls.banner.audience);
-  const [bannerEnabled, setBannerEnabled] = useState(appControls.banner.enabled);
+  const [bannerText, setBannerText] = useState(appControls?.banner?.text || 'Scheduled system upgrade on Saturday 02:00 AM UTC.');
+  const [bannerType, setBannerType] = useState(appControls?.banner?.type || 'info');
+  const [bannerAudience, setBannerAudience] = useState(appControls?.banner?.audience || 'all');
+  const [bannerEnabled, setBannerEnabled] = useState(appControls?.banner?.enabled ?? true);
 
-  const [financials, setFinancials] = useState(appControls.financials);
+  const [financials, setFinancials] = useState(appControls?.financials || {
+    baseDoctorConsultFee: 75,
+    platformCommissionPercent: 15,
+    specialistVerifierBounty: 25,
+  });
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   const canManage = hasPermission('app_control.manage');
@@ -126,7 +130,7 @@ export default function AppControlCenter() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Object.entries(appControls.features).map(([key, feat]) => {
+          {Object.entries(appControls?.features || {}).map(([key, feat]) => {
             return (
               <div
                 key={key}
