@@ -66,10 +66,10 @@ export class AuthService {
   }
 
   /** Called once at start-up: restores the session from token handoff or refresh cookie. */
+    /** Called once at start-up: restores the session from token handoff or refresh cookie. */
   async init(): Promise<void> {
     try {
       if (typeof window !== 'undefined') {
-        const path = window.location?.pathname || '';
         const search = window.location?.search || '';
         const urlParams = new URLSearchParams(search);
         if (typeof localStorage !== 'undefined') {
@@ -77,11 +77,13 @@ export class AuthService {
         }
         const urlToken = urlParams.get('token');
         if (urlToken) {
-          const res = await firstValueFrom(
+          const req = firstValueFrom(
             this.http.get<{ data: AuthUser }>(`${API_BASE}/auth/me`, {
               headers: { Authorization: `Bearer ${urlToken}` },
             }),
           );
+          const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000));
+          const res = await Promise.race([req, timeoutPromise]);
           if (res?.data) {
             this.accessToken = urlToken;
             const sanitized = sanitizeAuthUser(res.data);
@@ -95,11 +97,36 @@ export class AuthService {
             return;
           }
         }
+
+        const pathname = window.location?.pathname || '';
+        const isPublicPath =
+          pathname === '' ||
+          pathname === '/' ||
+          pathname === '/mindbridge' ||
+          pathname === '/mindbridge/' ||
+          pathname.includes('/crisis') ||
+          pathname.includes('/how-it-works') ||
+          pathname.includes('/for-professionals') ||
+          pathname.includes('/self-help') ||
+          pathname.includes('/impact') ||
+          pathname.includes('/login') ||
+          pathname.includes('/register') ||
+          pathname.includes('/legal') ||
+          pathname.includes('/verify-email') ||
+          pathname.includes('/forgot-password') ||
+          pathname.includes('/reset-password') ||
+          pathname.includes('/portal-select');
+
+        if (isPublicPath) {
+          this.initialised.set(true);
+          void this.refresh(3500);
+          return;
+        }
       }
     } catch {
       // Fall through to cookie refresh
     }
-    await this.refresh();
+    await this.refresh(2500);
     this.initialised.set(true);
   }
 
@@ -119,12 +146,17 @@ export class AuthService {
   }
 
   /** Single-flight refresh. Resolves false (and clears state) when the session has ended. */
-  refresh(): Promise<boolean> {
+    /** Single-flight refresh. Resolves false (and clears state) when the session has ended. */
+  refresh(timeoutMs = 3000): Promise<boolean> {
     this.refreshing ??= (async () => {
       try {
-        const res = await firstValueFrom(
+        const req = firstValueFrom(
           this.http.post<{ data: AuthTokenResponse }>(`${API_BASE}/auth/refresh`, {}, this.cookieOptions()),
         );
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Refresh timeout')), timeoutMs),
+        );
+        const res = await Promise.race([req, timeoutPromise]);
         this.accept(res.data);
         return true;
       } catch {

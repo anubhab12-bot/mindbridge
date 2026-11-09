@@ -34,8 +34,11 @@ export const appConfig: ApplicationConfig = {
     ),
     // CSRF for cookie routes is handled with a custom header; the default XSRF cookie flow is unused.
     provideHttpClient(withXhr(), withInterceptors([authInterceptor]), withXsrfConfiguration({})),
-    provideAppInitializer(async () => {
-      await Promise.all([inject(AuthService).init(), inject(FeatureFlagsService).load()]);
+        provideAppInitializer(() => {
+      const auth = inject(AuthService);
+      const flags = inject(FeatureFlagsService);
+      void flags.load();
+      return auth.init();
     }),
   ],
 };

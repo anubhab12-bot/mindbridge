@@ -7,9 +7,16 @@ export class FeatureFlagsService {
   private readonly api = inject(ApiService);
   readonly flags = signal<Record<string, boolean>>({});
 
-  async load() {
+    async load() {
     try {
-      this.flags.set(await this.api.get<Record<string, boolean>>('/feature-flags'));
+      const fetchPromise = this.api.get<Record<string, boolean>>('/feature-flags');
+      const timeoutPromise = new Promise<Record<string, boolean>>((_, reject) =>
+        setTimeout(() => reject(new Error('FeatureFlags timeout')), 2000),
+      );
+      const res = await Promise.race([fetchPromise, timeoutPromise]);
+      if (res && typeof res === 'object') {
+        this.flags.set(res);
+      }
     } catch {
       /* default to the server's decision on each call */
     }
