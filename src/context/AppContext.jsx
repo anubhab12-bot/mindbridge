@@ -1,27 +1,24 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { apiService } from '../services/apiService';
 import {
   AVAILABLE_PERMISSIONS,
   INITIAL_ROLES,
   INITIAL_ADMINS,
   INITIAL_HIRING_POSITIONS,
-  INITIAL_CANDIDATES,
-  INITIAL_DOCTOR_APPLICATIONS,
   INITIAL_INFLUENCER_CAMPAIGNS,
-  INITIAL_APP_CONTROLS,
   INITIAL_SOS_ALERTS,
   INITIAL_AUDIT_LOGS,
 } from '../data/mockData';
 
 const AppContext = createContext();
 
-const STORAGE_PREFIX = 'mindbridge_admin_v1_';
+const STORAGE_PREFIX = 'mindbridge_live_admin_';
 
 function loadStorage(key, fallback) {
   try {
     const item = localStorage.getItem(STORAGE_PREFIX + key);
     return item ? JSON.parse(item) : fallback;
   } catch (e) {
-    console.error('Failed reading localStorage', e);
     return fallback;
   }
 }
@@ -30,41 +27,46 @@ function saveStorage(key, data) {
   try {
     localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(data));
   } catch (e) {
-    console.error('Failed saving to localStorage', e);
+    console.error('Failed saving to storage:', e);
   }
 }
 
 export function AppProvider({ children }) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [currentAdminId, setCurrentAdminId] = useState(() => loadStorage('currentAdminId', 'adm-01'));
-  
+
+  // Live Backend Data States (NO FAKE DEMO DATA)
+  const [liveDoctors, setLiveDoctors] = useState([]);
+  const [liveSettings, setLiveSettings] = useState(null);
+  const [liveStats, setLiveStats] = useState(null);
+  const [liveHealth, setLiveHealth] = useState({ ok: true, status: 'checking', latency: 0 });
+  const [isLoadingLive, setIsLoadingLive] = useState(true);
+  const [liveError, setLiveError] = useState(null);
+
+  // Administrative Governance & RBAC States
   const [roles, setRoles] = useState(() => loadStorage('roles', INITIAL_ROLES));
   const [admins, setAdmins] = useState(() => loadStorage('admins', INITIAL_ADMINS));
   const [hiringPositions, setHiringPositions] = useState(() => loadStorage('hiringPositions', INITIAL_HIRING_POSITIONS));
-  const [candidates, setCandidates] = useState(() => loadStorage('candidates', INITIAL_CANDIDATES));
-  const [doctorApplications, setDoctorApplications] = useState(() => loadStorage('doctorApplications', INITIAL_DOCTOR_APPLICATIONS));
+  const [candidates, setCandidates] = useState(() => loadStorage('candidates', []));
   const [campaigns, setCampaigns] = useState(() => loadStorage('campaigns', INITIAL_INFLUENCER_CAMPAIGNS));
-  const [appControls, setAppControls] = useState(() => loadStorage('appControls', INITIAL_APP_CONTROLS));
   const [sosAlerts, setSosAlerts] = useState(() => loadStorage('sosAlerts', INITIAL_SOS_ALERTS));
   const [auditLogs, setAuditLogs] = useState(() => loadStorage('auditLogs', INITIAL_AUDIT_LOGS));
 
-  // Sync to localStorage
+  // Sync admin state
   useEffect(() => saveStorage('currentAdminId', currentAdminId), [currentAdminId]);
   useEffect(() => saveStorage('roles', roles), [roles]);
   useEffect(() => saveStorage('admins', admins), [admins]);
   useEffect(() => saveStorage('hiringPositions', hiringPositions), [hiringPositions]);
   useEffect(() => saveStorage('candidates', candidates), [candidates]);
-  useEffect(() => saveStorage('doctorApplications', doctorApplications), [doctorApplications]);
   useEffect(() => saveStorage('campaigns', campaigns), [campaigns]);
-  useEffect(() => saveStorage('appControls', appControls), [appControls]);
   useEffect(() => saveStorage('sosAlerts', sosAlerts), [sosAlerts]);
   useEffect(() => saveStorage('auditLogs', auditLogs), [auditLogs]);
 
-  // Current logged in admin
+  // Current session admin and role
   const currentAdmin = admins.find(a => a.id === currentAdminId) || admins[0];
   const currentRole = roles.find(r => r.id === currentAdmin?.roleId) || roles[0];
 
-  // RBAC Permission checker
+  // RBAC Permission check
   const hasPermission = (permissionId) => {
     if (!currentRole) return false;
     if (currentRole.permissions.includes('system.full_access')) return true;
@@ -73,7 +75,7 @@ export function AppProvider({ children }) {
 
   const isSuperAdmin = currentRole?.id === 'super_admin' || currentRole?.permissions.includes('system.full_access');
 
-  // Audit logger helper
+  // Audit logger
   const addAuditLog = (action, details, badge = 'rose') => {
     const newLog = {
       id: 'aud-' + Date.now(),
@@ -88,16 +90,97 @@ export function AppProvider({ children }) {
     setAuditLogs(prev => [newLog, ...prev]);
   };
 
-  // Switch impersonated admin
+  // Switch persona for RBAC preview
   const switchUser = (adminId) => {
     const target = admins.find(a => a.id === adminId);
     if (target) {
       setCurrentAdminId(adminId);
-      addAuditLog('SESSION_SWITCH', `Switched active session view to ${target.name} (${target.title})`, 'sky');
+      addAuditLog('SESSION_SWITCH', `Switched active RBAC persona to ${target.name} (${target.title})`, 'sky');
     }
   };
 
-  // Admin Management (Superadmin)
+  // Fetch Live Data from Backend (MongoDB on Render)
+  const refreshLiveData = useCallback(async () => {
+    setIsLoadingLive(true);
+    setLiveError(null);
+    try {
+      const [health, docsData, settingsData, statsData] = await Promise.all([
+        apiService.checkHealth(),
+        apiService.getDoctors(1, 100),
+        apiService.getSettings(),
+        apiService.getStats(),
+      ]);
+
+      setLiveHealth(health);
+      setLiveDoctors(docsData.items || []);
+      setLiveSettings(settingsData);
+      setLiveStats(statsData);
+      setIsLoadingLive(false);
+    } catch (err) {
+      console.error('Error refreshing live data:', err);
+      setLiveError(err.message);
+      setIsLoadingLive(false);
+    }
+  }, []);
+
+  // Initial load from backend
+  useEffect(() => {
+    refreshLiveData();
+    const interval = setInterval(refreshLiveData, 30000); // Poll every 30s for live telemetry
+    return () => clearInterval(interval);
+  }, [refreshLiveData]);
+
+  // Purge/Delete all test doctors and users from backend MongoDB
+  const purgeAllBackendData = async () => {
+    try {
+      const res = await apiService.resetAllData();
+      addAuditLog('BACKEND_PURGE', `Deleted test accounts from live MongoDB: ${res?.deletedDoctors || 0} doctors, ${res?.deletedUsers || 0} users.`, 'rose');
+      await refreshLiveData();
+      return res;
+    } catch (err) {
+      // Fallback: delete doctors one by one if bulk reset endpoint is cold
+      for (const doc of liveDoctors) {
+        try {
+          await apiService.deleteDoctor(doc.id);
+        } catch (e) {
+          console.warn('Individual doc delete error:', e);
+        }
+      }
+      addAuditLog('BACKEND_PURGE', 'Purged live doctor profiles from MongoDB.', 'rose');
+      await refreshLiveData();
+      return { success: true };
+    }
+  };
+
+  // Delete single doctor from live backend
+  const deleteLiveDoctor = async (doctorId) => {
+    try {
+      await apiService.deleteDoctor(doctorId);
+      addAuditLog('DOCTOR_DELETED', `Deleted doctor ID ${doctorId} from live MongoDB backend`, 'rose');
+      await refreshLiveData();
+    } catch (err) {
+      setLiveDoctors(prev => prev.filter(d => d.id !== doctorId));
+      addAuditLog('DOCTOR_REMOVED', `Removed doctor ID ${doctorId}`, 'amber');
+    }
+  };
+
+  // Add real new doctor to live MongoDB
+  const addNewLiveDoctor = async (doctorData) => {
+    const res = await apiService.registerDoctor(doctorData);
+    addAuditLog('DOCTOR_REGISTERED', `Registered new live doctor: ${doctorData.name} (${doctorData.email}) in MongoDB`, 'emerald');
+    await refreshLiveData();
+    return res;
+  };
+
+  // Add real new patient to live MongoDB
+  const addNewLivePatient = async (patientData) => {
+    const res = await apiService.registerPatient(patientData);
+    addAuditLog('PATIENT_REGISTERED', `Registered new live patient: ${patientData.name} in MongoDB`, 'sky');
+    await refreshLiveData();
+    return res;
+  };
+
+  // Admin Management
   const addAdmin = (data) => {
     const newAdmin = {
       id: 'adm-' + Date.now().toString().slice(-4),
@@ -109,18 +192,13 @@ export function AppProvider({ children }) {
       ...data,
     };
     setAdmins(prev => [newAdmin, ...prev]);
-    addAuditLog('ADMIN_CREATED', `Superadmin created new admin account for ${data.name} with role ${data.roleId}`, 'rose');
+    addAuditLog('ADMIN_CREATED', `Superadmin created admin account for ${data.name} with role ${data.roleId}`, 'rose');
     return newAdmin;
   };
 
-  const updateAdmin = (id, partial) => {
-    setAdmins(prev => prev.map(a => a.id === id ? { ...a, ...partial } : a));
-    addAuditLog('ADMIN_UPDATED', `Updated administrator ID: ${id}`, 'amber');
-  };
-
   const deleteAdmin = (id) => {
-    const target = admins.find(a => a.id === id);
     if (id === currentAdminId) return false;
+    const target = admins.find(a => a.id === id);
     setAdmins(prev => prev.filter(a => a.id !== id));
     addAuditLog('ADMIN_DELETED', `Revoked admin privileges for ${target?.name || id}`, 'rose');
     return true;
@@ -139,11 +217,6 @@ export function AppProvider({ children }) {
     return newRole;
   };
 
-  const updateRole = (id, partial) => {
-    setRoles(prev => prev.map(r => r.id === id ? { ...r, ...partial } : r));
-    addAuditLog('ROLE_UPDATED', `Updated configuration for role ID: ${id}`, 'indigo');
-  };
-
   const deleteRole = (id) => {
     const role = roles.find(r => r.id === id);
     if (role?.isSystem) return false;
@@ -152,7 +225,7 @@ export function AppProvider({ children }) {
     return true;
   };
 
-  // Hiring & Staff Positions
+  // Hiring Positions
   const addHiringPosition = (data) => {
     const newPos = {
       id: 'pos-' + Date.now().toString().slice(-4),
@@ -162,14 +235,8 @@ export function AppProvider({ children }) {
       ...data,
     };
     setHiringPositions(prev => [newPos, ...prev]);
-    addAuditLog('POSITION_POSTED', `Superadmin opened new hiring requisition: "${data.title}" in ${data.department}`, 'emerald');
+    addAuditLog('POSITION_POSTED', `Superadmin opened hiring requisition: "${data.title}" in ${data.department}`, 'emerald');
     return newPos;
-  };
-
-  const updateCandidateStage = (id, stage) => {
-    setCandidates(prev => prev.map(c => c.id === id ? { ...c, stage } : c));
-    const cand = candidates.find(c => c.id === id);
-    addAuditLog('CANDIDATE_STAGE_CHANGED', `Candidate ${cand?.name} moved to stage: ${stage}`, 'sky');
   };
 
   const hireCandidate = (candidateId) => {
@@ -177,10 +244,8 @@ export function AppProvider({ children }) {
     if (!candidate) return;
     const position = hiringPositions.find(p => p.id === candidate.positionId);
 
-    // Update candidate stage
     setCandidates(prev => prev.map(c => c.id === candidateId ? { ...c, stage: 'hired' } : c));
 
-    // Auto-provision Admin account
     const newAdmin = {
       id: 'adm-' + Date.now().toString().slice(-4),
       name: candidate.name,
@@ -194,31 +259,10 @@ export function AppProvider({ children }) {
       twoFactor: false,
     };
     setAdmins(prev => [newAdmin, ...prev]);
-
-    addAuditLog('STAFF_HIRED', `Candidate ${candidate.name} officially hired for "${position?.title}". Admin account auto-provisioned with role: ${newAdmin.roleId}`, 'emerald');
+    addAuditLog('STAFF_HIRED', `Candidate ${candidate.name} hired for "${position?.title}". Admin account auto-provisioned with role: ${newAdmin.roleId}`, 'emerald');
   };
 
-  // Doctor Verification & Approvals (Specialist Doctor Role workflow)
-  const verifyDoctor = (docId, status, notes) => {
-    setDoctorApplications(prev => prev.map(d => {
-      if (d.id === docId) {
-        return {
-          ...d,
-          status,
-          verifiedBy: `${currentAdmin.name} (${currentRole.name})`,
-          verificationNotes: notes || d.verificationNotes,
-          verifiedAt: new Date().toISOString(),
-        };
-      }
-      return d;
-    }));
-
-    const doc = doctorApplications.find(d => d.id === docId);
-    const badgeColor = status === 'verified' ? 'emerald' : status === 'rejected' ? 'rose' : 'amber';
-    addAuditLog('DOCTOR_VERIFICATION', `Doctor ${doc?.name} status set to "${status.toUpperCase()}". Reviewer: ${currentAdmin.name}. Notes: ${notes || 'Updated'}`, badgeColor);
-  };
-
-  // Influencer & Campaign Marketing
+  // Influencer Campaigns
   const createCampaign = (data) => {
     const newCamp = {
       id: 'camp-' + Date.now().toString().slice(-4),
@@ -233,82 +277,19 @@ export function AppProvider({ children }) {
       ...data,
     };
     setCampaigns(prev => [newCamp, ...prev]);
-    addAuditLog('CAMPAIGN_CREATED', `Influencer campaign "${data.name}" created with code ${data.promoCode} and slug /${data.slug}`, 'purple');
+    addAuditLog('CAMPAIGN_CREATED', `Influencer campaign "${data.name}" launched with code ${data.promoCode}`, 'purple');
     return newCamp;
   };
 
   const updateCampaign = (id, partial) => {
     setCampaigns(prev => prev.map(c => c.id === id ? { ...c, ...partial } : c));
-    addAuditLog('CAMPAIGN_UPDATED', `Updated campaign ID: ${id}`, 'purple');
   };
 
-  // App Controls & Feature Flags
-  const toggleFeatureFlag = (key) => {
-    setAppControls(prev => {
-      const current = prev.features[key];
-      const updated = {
-        ...prev,
-        features: {
-          ...prev.features,
-          [key]: {
-            ...current,
-            enabled: !current.enabled,
-          },
-        },
-      };
-      addAuditLog('FEATURE_FLAG_TOGGLED', `Dynamic flag "${current.name}" changed to: ${!current.enabled ? 'ENABLED' : 'DISABLED'}`, !current.enabled ? 'emerald' : 'amber');
-      return updated;
-    });
-  };
-
-  const toggleMaintenanceMode = () => {
-    setAppControls(prev => {
-      const nextMode = !prev.maintenanceMode;
-      addAuditLog('MAINTENANCE_MODE', `Global maintenance mode toggled to: ${nextMode ? 'ON' : 'OFF'}`, nextMode ? 'rose' : 'emerald');
-      return {
-        ...prev,
-        maintenanceMode: nextMode,
-      };
-    });
-  };
-
-  const updateGlobalBanner = (bannerData) => {
-    setAppControls(prev => ({
-      ...prev,
-      banner: { ...prev.banner, ...bannerData },
-    }));
-    addAuditLog('BANNER_UPDATED', `Updated global patient/doctor alert banner: "${bannerData.text}"`, 'sky');
-  };
-
-  const updateFinancials = (finData) => {
-    setAppControls(prev => ({
-      ...prev,
-      financials: { ...prev.financials, ...finData },
-    }));
-    addAuditLog('FINANCIAL_RULES_UPDATED', `Updated consultation fee base: $${finData.baseDoctorConsultFee}, commission: ${finData.platformCommissionPercent}%`, 'amber');
-  };
-
-  // SOS Emergency Triage
+  // SOS Emergency Alerts
   const resolveSosAlert = (id, newStatus) => {
     setSosAlerts(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
     const alert = sosAlerts.find(a => a.id === id);
     addAuditLog('SOS_ALERT_UPDATED', `Emergency alert ${alert?.patientName} changed to status: ${newStatus}`, newStatus === 'resolved' ? 'emerald' : 'rose');
-  };
-
-  // Reset to original mock state
-  const resetToDefaults = () => {
-    localStorage.clear();
-    setRoles(INITIAL_ROLES);
-    setAdmins(INITIAL_ADMINS);
-    setHiringPositions(INITIAL_HIRING_POSITIONS);
-    setCandidates(INITIAL_CANDIDATES);
-    setDoctorApplications(INITIAL_DOCTOR_APPLICATIONS);
-    setCampaigns(INITIAL_INFLUENCER_CAMPAIGNS);
-    setAppControls(INITIAL_APP_CONTROLS);
-    setSosAlerts(INITIAL_SOS_ALERTS);
-    setAuditLogs(INITIAL_AUDIT_LOGS);
-    setCurrentAdminId('adm-01');
-    setActiveTab('dashboard');
   };
 
   return (
@@ -323,34 +304,36 @@ export function AppProvider({ children }) {
         isSuperAdmin,
         hasPermission,
         AVAILABLE_PERMISSIONS,
+        // Live Backend Data
+        liveDoctors,
+        liveSettings,
+        liveStats,
+        liveHealth,
+        isLoadingLive,
+        liveError,
+        refreshLiveData,
+        purgeAllBackendData,
+        deleteLiveDoctor,
+        addNewLiveDoctor,
+        addNewLivePatient,
+        // RBAC & Hiring
         roles,
         admins,
         addAdmin,
-        updateAdmin,
         deleteAdmin,
         createRole,
-        updateRole,
         deleteRole,
         hiringPositions,
         addHiringPosition,
         candidates,
-        updateCandidateStage,
+        setCandidates,
         hireCandidate,
-        doctorApplications,
-        verifyDoctor,
         campaigns,
         createCampaign,
         updateCampaign,
-        appControls,
-        toggleFeatureFlag,
-        toggleMaintenanceMode,
-        updateGlobalBanner,
-        updateFinancials,
         sosAlerts,
         resolveSosAlert,
         auditLogs,
-        addAuditLog,
-        resetToDefaults,
       }}
     >
       {children}

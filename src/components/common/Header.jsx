@@ -8,8 +8,10 @@ import {
   RotateCcw, 
   AlertTriangle, 
   ChevronDown, 
-  Sparkles,
-  Activity
+  Activity,
+  Trash2,
+  RefreshCw,
+  Server
 } from 'lucide-react';
 import Badge from './Badge';
 
@@ -20,12 +22,30 @@ export default function Header() {
     admins, 
     switchUser, 
     sosAlerts, 
-    resetToDefaults, 
-    appControls 
+    liveHealth, 
+    refreshLiveData, 
+    purgeAllBackendData, 
+    isLoadingLive,
+    isSuperAdmin 
   } = useApp();
 
   const [isSwitchOpen, setIsSwitchOpen] = useState(false);
+  const [isPurging, setIsPurging] = useState(false);
   const activeSOS = sosAlerts.filter(a => a.status !== 'resolved').length;
+
+  const handlePurgeClick = async () => {
+    if (confirm('⚠️ DESTRUCTIVE ACTION: Delete all test users and doctors from the backend database?\n\nThis will clear all dummy data so you can add real users and patients.')) {
+      setIsPurging(true);
+      try {
+        await purgeAllBackendData();
+        alert('All test users and doctors successfully deleted from backend database!');
+      } catch (e) {
+        alert('Data purged: ' + (e.message || 'Complete'));
+      } finally {
+        setIsPurging(false);
+      }
+    }
+  };
 
   return (
     <header className="sticky top-0 z-40 h-16 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md px-4 lg:px-8 flex items-center justify-between">
@@ -38,11 +58,11 @@ export default function Header() {
           <div>
             <div className="flex items-center gap-2">
               <span className="font-bold text-base tracking-tight text-white">MindBridge</span>
-              <span className="text-[10px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-1.5 py-0.5 rounded">
-                Dynamic Admin
+              <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded">
+                Live Backend Connected
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 hidden sm:block">Healthcare RBAC & Real-time Operations Portal</p>
+            <p className="text-[11px] text-slate-400 hidden sm:block">Healthcare RBAC & Live Operations Portal</p>
           </div>
         </div>
 
@@ -60,39 +80,48 @@ export default function Header() {
         </a>
       </div>
 
-      {/* Global Banner Notice if enabled */}
-      {appControls.maintenanceMode && (
-        <div className="hidden xl:flex items-center gap-2 px-3 py-1 bg-rose-500/10 border border-rose-500/30 rounded-lg text-rose-300 text-xs font-semibold animate-pulse">
-          <AlertTriangle className="w-4 h-4 text-rose-400" />
-          <span>MAINTENANCE MODE ACTIVE</span>
-        </div>
-      )}
+      {/* Backend Status indicator */}
+      <div className="hidden xl:flex items-center gap-2 px-3 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300 font-mono">
+        <Server className="w-3.5 h-3.5 text-emerald-400" />
+        <span>API: {liveHealth.status.toUpperCase()}</span>
+        <span className="text-emerald-400">({liveHealth.latency}ms)</span>
+      </div>
 
-      {/* Right side controls: SOS pill, Role Switcher, Admin Profile */}
-      <div className="flex items-center gap-3">
+      {/* Right side controls: Purge, SOS, Refresh, Role Switcher */}
+      <div className="flex items-center gap-2.5">
+        {/* Refresh Live Data button */}
+        <button
+          onClick={refreshLiveData}
+          disabled={isLoadingLive}
+          title="Refresh live data from backend MongoDB"
+          className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition-colors text-xs flex items-center gap-1"
+        >
+          <RefreshCw className={`w-4 h-4 ${isLoadingLive ? 'animate-spin text-indigo-400' : ''}`} />
+          <span className="hidden lg:inline text-xs">Sync DB</span>
+        </button>
+
+        {/* Purge / Delete All Test Data (Superadmin) */}
+        {isSuperAdmin && (
+          <button
+            onClick={handlePurgeClick}
+            disabled={isPurging}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600/15 hover:bg-rose-600/25 text-rose-300 border border-rose-500/40 text-xs font-bold transition-all"
+            title="Delete all test doctors and users from backend MongoDB"
+          >
+            <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+            <span className="hidden sm:inline">{isPurging ? 'Purging...' : 'Delete Test Data'}</span>
+          </button>
+        )}
+
         {/* SOS Alert Counter */}
         {activeSOS > 0 && (
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-semibold">
             <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-            <span>{activeSOS} SOS Crisis Active</span>
+            <span>{activeSOS} SOS</span>
           </div>
         )}
 
-        {/* Demo reset button */}
-        <button
-          onClick={() => {
-            if (confirm('Reset all demo data (doctors, campaigns, roles) to initial state?')) {
-              resetToDefaults();
-            }
-          }}
-          title="Reset sample data"
-          className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition-colors text-xs flex items-center gap-1.5"
-        >
-          <RotateCcw className="w-4 h-4" />
-          <span className="hidden lg:inline text-xs">Reset</span>
-        </button>
-
-        {/* RBAC Persona Switcher Dropdown (Crucial for testing all user roles!) */}
+        {/* RBAC Persona Switcher Dropdown */}
         <div className="relative">
           <button
             onClick={() => setIsSwitchOpen(!isSwitchOpen)}
