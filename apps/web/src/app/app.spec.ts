@@ -12,11 +12,12 @@ describe('App', () => {
     }).compileComponents();
   });
 
-  it('creates the root with toasts and the confirm dialog', async () => {
+  it('creates the root with toasts, confirm dialog, and companion character', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('mb-toasts')).toBeTruthy();
     expect(el.querySelector('mb-confirm-dialog')).toBeTruthy();
+    expect(el.querySelector('mb-companion-character')).toBeTruthy();
   });
 });

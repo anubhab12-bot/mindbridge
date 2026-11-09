@@ -33,7 +33,7 @@ import { ToastService } from '../../core/services/toast.service';
   styles: `
     .toasts {
       position: fixed;
-      bottom: 24px;
+      bottom: 104px;
       right: 24px;
       display: flex;
       flex-direction: column;

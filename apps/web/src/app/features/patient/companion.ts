@@ -527,6 +527,7 @@ export class CompanionPage {
   private readonly confirm = inject(ConfirmService);
   private readonly router = inject(Router);
   readonly conversationId = input<string>();
+  readonly prompt = input<string>();
   private readonly scroller = viewChild<ElementRef<HTMLElement>>('scroller');
 
   protected readonly conversations = signal<Conversation[]>([]);
@@ -545,6 +546,14 @@ export class CompanionPage {
 
   constructor() {
     void this.loadConversations();
+    effect(() => {
+      const p = this.prompt();
+      if (p) {
+        untracked(() => {
+          this.draft = p;
+        });
+      }
+    });
     effect(() => {
       const id = this.conversationId();
       untracked(() => {
