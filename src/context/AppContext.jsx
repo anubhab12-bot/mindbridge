@@ -126,23 +126,54 @@ export function AppProvider({ children }) {
     setIsLoadingLive(true);
     setLiveError(null);
     try {
-      const [health, docsData, settingsData, statsData] = await Promise.all([
+      const [health, docsData, settingsData, statsData, bugsData] = await Promise.all([
         apiService.checkHealth(),
         apiService.getDoctors(1, 100),
         apiService.getSettings(),
         apiService.getStats(),
+        apiService.getBugTickets(),
       ]);
 
       setLiveHealth(health);
       setLiveDoctors(docsData.items || []);
       setLiveSettings(settingsData);
       setLiveStats(statsData);
+      if (bugsData && Array.isArray(bugsData) && bugsData.length > 0) {
+        setBugTickets(prev => {
+          const apiIds = new Set(bugsData.map(b => b.id));
+          const localOnly = (prev || []).filter(p => !apiIds.has(p.id));
+          return [...bugsData, ...localOnly];
+        });
+      }
       setIsLoadingLive(false);
     } catch (err) {
       console.error('Error refreshing live data:', err);
       setLiveError(err.message);
       setIsLoadingLive(false);
     }
+  }, []);
+
+  // Listen for cross-window / in-app bug submissions
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'mindbridge_live_admin_v3_bugTickets' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          setBugTickets(parsed);
+        } catch {}
+      }
+    };
+    const handleCustomBug = (e) => {
+      if (e.detail) {
+        setBugTickets(prev => [e.detail, ...(prev || []).filter(t => t.id !== e.detail.id)]);
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('mindbridge_bug_created', handleCustomBug);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('mindbridge_bug_created', handleCustomBug);
+    };
   }, []);
 
   // Initial load from backend
@@ -218,8 +249,8 @@ export function AppProvider({ children }) {
   };
 
   // Bug Ticket Actions
-  const addBugTicket = (data) => {
-    const nextTicketId = 'MB-BUG-' + Math.floor(100 + Math.random() * 900);
+  const addBugTicket = async (data) => {
+    const nextTicketId = data.id || ('MB-BUG-' + Math.floor(100 + Math.random() * 900));
     const newTicket = {
       id: nextTicketId,
       status: 'open',
@@ -228,12 +259,17 @@ export function AppProvider({ children }) {
       resolutionNotes: '',
       ...data,
     };
-    setBugTickets(prev => [newTicket, ...prev]);
+    setBugTickets(prev => [newTicket, ...(prev || []).filter(t => t.id !== newTicket.id)]);
     addAuditLog('BUG_REPORTED', `QA Ticket ${nextTicketId} raised: "${data.title}" by ${data.reportedBy}`, 'teal');
+    try {
+      await apiService.createBugTicket(newTicket);
+    } catch (err) {
+      console.warn('API bug save warning:', err);
+    }
     return newTicket;
   };
 
-  const updateBugStatus = (ticketId, newStatus, resolutionNotes = '') => {
+  const updateBugStatus = async (ticketId, newStatus, resolutionNotes = '') => {
     setBugTickets(prev => prev.map(t => {
       if (t.id === ticketId) {
         return {
@@ -246,9 +282,15 @@ export function AppProvider({ children }) {
       return t;
     }));
 
-    const ticket = bugTickets.find(t => t.id === ticketId);
+    const ticket = (bugTickets || []).find(t => t.id === ticketId);
     const badgeColor = newStatus === 'fixed' ? 'emerald' : newStatus === 'cant_fix' ? 'rose' : newStatus === 'verified' ? 'teal' : 'sky';
     addAuditLog('BUG_STATUS_UPDATED', `QA Ticket ${ticketId} status changed to ${newStatus.toUpperCase()}. Notification queued for ${ticket?.testerEmail || 'tester'}`, badgeColor);
+
+    try {
+      await apiService.updateBugTicketStatus(ticketId, newStatus, resolutionNotes);
+    } catch (err) {
+      console.warn('API bug status sync warning:', err);
+    }
   };
 
   // App Controls / Feature Flag toggles

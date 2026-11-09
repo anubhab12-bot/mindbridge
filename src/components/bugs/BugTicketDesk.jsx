@@ -166,11 +166,11 @@ export default function BugTicketDesk() {
 
         <div className="flex items-center gap-2 flex-wrap">
           <a
-            href="https://anubhab12-bot.github.io/mindbridge/"
+            href="https://anubhab12-bot.github.io/mindbridge/?qa=true"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition-all"
-            title="Open live app to test"
+            title="Open live app with in-app QA bug tool (video, screenshot & comments)"
           >
             <ExternalLink className="w-3.5 h-3.5 text-teal-400" />
             <span>Open App for QA</span>
@@ -304,6 +304,47 @@ export default function BugTicketDesk() {
                         <span className="text-slate-300">{ticket.actualBehavior}</span>
                       </div>
                     </div>
+
+                    {/* Media Attachments: Screen Video Recording & Screenshot */}
+                    {(ticket.videoData || ticket.screenshotData) && (
+                      <div className="pt-2 border-t border-slate-800/60 flex flex-wrap gap-3 items-start">
+                        {ticket.videoData && (
+                          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-2.5 max-w-sm w-full">
+                            <span className="text-[10px] font-bold text-sky-400 flex items-center gap-1.5 mb-1.5">
+                              <span>🎥 Screen Video Recording</span>
+                              {ticket.videoDuration && (
+                                <span className="bg-sky-500/10 text-sky-300 border border-sky-500/20 px-1.5 py-0.2 rounded font-mono text-[9px]">
+                                  {ticket.videoDuration}
+                                </span>
+                              )}
+                            </span>
+                            <video src={ticket.videoData} controls className="rounded-lg w-full max-h-48 bg-black shadow-inner" />
+                          </div>
+                        )}
+                        {ticket.screenshotData && (
+                          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-2.5 max-w-xs w-full">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-[10px] font-bold text-teal-400 flex items-center gap-1">
+                                📸 Attached Screenshot
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => window.open(ticket.screenshotData, '_blank')}
+                                className="text-[10px] text-slate-400 hover:text-white underline"
+                              >
+                                Full view ↗
+                              </button>
+                            </div>
+                            <img 
+                              src={ticket.screenshotData} 
+                              alt="Bug Screenshot" 
+                              onClick={() => window.open(ticket.screenshotData, '_blank')}
+                              className="rounded-lg w-full max-h-40 object-cover border border-slate-800 cursor-pointer hover:opacity-90 transition-opacity" 
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {ticket.resolutionNotes && (
                       <div className="pt-1.5 border-t border-slate-800/60 text-[11px]">

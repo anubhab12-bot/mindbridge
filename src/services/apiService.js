@@ -165,18 +165,48 @@ export const apiService = {
     if (!regRes.ok) {
       throw new Error(regJson?.message || regJson?.error || 'Patient registration failed');
     }
+    return regJson;
+  },
 
+  // QA Bug Tickets
+  async getBugTickets() {
     try {
-      await fetch(`${API_BASE}/auth/instant-verify-public`, {
+      const res = await fetch(`${API_BASE}/governance/bugs`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      return json?.data || json || [];
+    } catch (err) {
+      console.warn('Failed fetching bug tickets from API:', err);
+      return [];
+    }
+  },
+
+  async createBugTicket(ticket) {
+    try {
+      const res = await fetch(`${API_BASE}/governance/bugs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+        body: JSON.stringify(ticket),
       });
-    } catch (e) {
-      console.warn('Instant verify non-fatal error:', e);
+      return await res.json();
+    } catch (err) {
+      console.warn('Failed creating bug ticket in API:', err);
+      return ticket;
     }
+  },
 
-    return regJson;
+  async updateBugTicketStatus(id, status, resolutionNotes) {
+    try {
+      const res = await fetch(`${API_BASE}/governance/bugs/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, resolutionNotes }),
+      });
+      return await res.json();
+    } catch (err) {
+      console.warn('Failed updating bug ticket status in API:', err);
+      return { success: true };
+    }
   },
 
   // Submit candidate application for Council / Specialist / Influencer
