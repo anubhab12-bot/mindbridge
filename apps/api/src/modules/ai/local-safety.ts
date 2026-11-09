@@ -110,6 +110,71 @@ export function smartCompanionFallback(text: string): string {
     );
   }
 
+  // In-app service intent: Doctors / Specialists / Therapists / Consultations
+  if (
+    /\b(doctor|doctors|psychiatrist|psychiatrists|therapist|therapists|counselor|counselors|specialist|specialists|professional|professionals)\b/i.test(
+      t,
+    ) ||
+    (/\b(consult|consultation|appointment|book)\b/i.test(t) && /\b(doctor|specialist|therapist|session|call|telehealth)\b/i.test(t))
+  ) {
+    return (
+      "Yes, absolutely! MindBridge has verified mental health professionals and doctors available directly in the app, including psychiatrists, clinical psychologists, and licensed therapists.\n\n" +
+      "You can browse their verified credentials, check their specialties (such as anxiety, depression, stress, relationships), and book a private 1-on-1 video consultation.\n\n" +
+      "Here are the options available for you right now:\n\n" +
+      "{{option:👨‍⚕️ Find a Verified Doctor|/patient/professionals}}\n" +
+      "{{option:📅 Book a 1-on-1 Consultation|/patient/appointments}}\n" +
+      "{{option:🧘 Interactive Stress Relief Tools|/patient/self-help}}\n" +
+      "{{option:💬 Direct Doctor Messages|/patient/messages}}"
+    );
+  }
+
+  // In-app service intent: Stress Relief / Release stress / Tools for stress / Relaxation
+  if (
+    /\b(release stress|relieve stress|reduce stress|stress relief|de-?stress|cope with stress|release tension|unwind|calming techniques|relax.*stress|stress.*help|help.*stress)\b/i.test(
+      t,
+    ) ||
+    (/\b(anything|any thing|tools?|techniques?|exercises?|methods?|options?|ways?)\b/i.test(t) &&
+      /\b(stress|anxiety|panic|tension|calm|relax)\b/i.test(t))
+  ) {
+    return (
+      "MindBridge has several guided, clinical tools built directly into the app to help you release stress and find relief:\n\n" +
+      "1. **Interactive Self-Help & Breathing**: Guided box breathing (4-4-4-4) and 5-4-3-2-1 sensory grounding designed to soothe your nervous system in minutes.\n" +
+      "2. **Mood & Stress Tracker**: Check in with how you feel and monitor your stress patterns over time.\n" +
+      "3. **Private Self-Care Journal**: A secure space to process thoughts and unload heavy feelings.\n" +
+      "4. **Verified Doctors & Therapists**: Connect with a mental health professional for dedicated 1-on-1 care.\n\n" +
+      "Choose any option below to get started immediately:\n\n" +
+      "{{option:🧘 Interactive Stress Relief Tools|/patient/self-help}}\n" +
+      "{{option:📊 Track Your Mood & Stress|/patient/mood}}\n" +
+      "{{option:📝 Open Private Journal|/patient/journal}}\n" +
+      "{{option:👨‍⚕️ Consult a Doctor|/patient/professionals}}"
+    );
+  }
+
+  // In-app service intent: Self-help / Breathing / Grounding / CBT exercises
+  if (/\b(self-?help|breathing exercise|grounding exercise|box breathing|cbt exercise|calm exercise)\b/i.test(t)) {
+    return (
+      "You have access to interactive, evidence-based self-help exercises right here in MindBridge:\n\n" +
+      "• **Box Breathing**: 4-count breathing to regulate heart rate and panic.\n" +
+      "• **5-4-3-2-1 Grounding**: Connect with your senses to anchor yourself in the present.\n" +
+      "• **CBT Thought Records**: Reframe unhelpful thinking patterns.\n" +
+      "• **Progressive Muscle Relaxation**: Release stored physical tension.\n\n" +
+      "{{option:🧘 Open Self-Help Library|/patient/self-help}}\n" +
+      "{{option:📊 Check In Mood|/patient/mood}}"
+    );
+  }
+
+  // In-app service intent: Appointments / Booking
+  if (/\b(book an? appointment|schedule an? appointment|book consultation|schedule consultation|appointments)\b/i.test(t)) {
+    return (
+      "You can easily book and manage appointments with verified doctors and counselors on MindBridge:\n\n" +
+      "1. Choose a verified specialist.\n" +
+      "2. Pick an open time slot that fits your schedule.\n" +
+      "3. Join a secure, private telehealth video consultation.\n\n" +
+      "{{option:📅 Book an Appointment|/patient/appointments}}\n" +
+      "{{option:👨‍⚕️ View Verified Specialists|/patient/professionals}}"
+    );
+  }
+
   // Feelings: Anxiety / Panic / Overthinking
   if (/\b(anxious|anxiety|worried|worry|panic|nervous|overthinking|racing thoughts)\b/i.test(t)) {
     return (

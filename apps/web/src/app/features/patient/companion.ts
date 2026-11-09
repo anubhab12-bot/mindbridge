@@ -46,6 +46,12 @@ interface HumanSupport {
   bookingLink: string;
 }
 
+export interface InAppOption {
+  label: string;
+  route: string;
+  description?: string;
+}
+
 @Component({
   selector: 'mb-companion',
   imports: [FormsModule, DatePipe, RouterLink, CrisisPanelComponent, LoadingComponent],
@@ -172,8 +178,28 @@ interface HumanSupport {
                           >Simulated reply (mock)</span
                         >
                       }
-                      <div class="pre">{{ m.content }}</div>
+                      <div class="pre">{{ getCleanContent(m.content) }}</div>
                     </div>
+                    @if (getOptions(m); as opts) {
+                      @if (opts.length > 0) {
+                        <div class="chat-options-group">
+                          <span class="chat-options-title">Suggested in-app options:</span>
+                          <div class="chat-options-list">
+                            @for (opt of opts; track opt.route) {
+                              <button type="button" class="chat-option-card" (click)="chooseOption(opt)">
+                                <div class="chat-option-left">
+                                  <span class="chat-option-label">{{ opt.label }}</span>
+                                  @if (opt.description) {
+                                    <span class="chat-option-desc">{{ opt.description }}</span>
+                                  }
+                                </div>
+                                <span class="chat-option-badge">Open &rarr;</span>
+                              </button>
+                            }
+                          </div>
+                        </div>
+                      }
+                    }
                     @if (m.safety?.crisisMode && m.safety?.resources) {
                       <mb-crisis-panel [data]="m.safety!.resources" [compact]="true" />
                     }
@@ -195,6 +221,25 @@ interface HumanSupport {
                         }
                       </div>
                     }
+                  </div>
+                }
+                @if (messages().length === 0 && !loadingMessages()) {
+                  <div class="chat-suggestions-box">
+                    <p class="small muted">Common questions you can ask your companion:</p>
+                    <div class="chat-chips">
+                      <button type="button" class="chip-btn" (click)="sendPrompt('Is there any doctor available for this?')">
+                        👨‍⚕️ Is there any doctor available?
+                      </button>
+                      <button type="button" class="chip-btn" (click)="sendPrompt('Is there anything which helps me to release stress?')">
+                        🧘 Anything to help release stress?
+                      </button>
+                      <button type="button" class="chip-btn" (click)="sendPrompt('What self-help tools and breathing exercises do you have?')">
+                        📖 Show self-help tools
+                      </button>
+                      <button type="button" class="chip-btn" (click)="sendPrompt('How can I book an appointment with a specialist?')">
+                        📅 How to book a consultation
+                      </button>
+                    </div>
                   </div>
                 }
                 @if (sending()) {
@@ -364,6 +409,100 @@ interface HumanSupport {
     }
     .link:focus-visible {
       outline: 2px solid var(--mb-focus);
+    }
+    .chat-options-group {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+      max-width: 440px;
+    }
+    .chat-options-title {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--mb-muted);
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .chat-options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .chat-option-card {
+      all: unset;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 14px;
+      background: var(--mb-surface);
+      border: 1px solid var(--mb-border);
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      transition: all 0.15s ease;
+      text-align: left;
+    }
+    .chat-option-card:hover {
+      background: var(--mb-surface-2);
+      border-color: var(--mb-primary);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(13, 148, 136, 0.15);
+    }
+    .chat-option-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .chat-option-label {
+      font-weight: 600;
+      font-size: 0.88rem;
+      color: var(--mb-text);
+    }
+    .chat-option-desc {
+      font-size: 0.76rem;
+      color: var(--mb-muted);
+    }
+    .chat-option-badge {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--mb-primary);
+      white-space: nowrap;
+    }
+    .chat-suggestions-box {
+      margin: auto;
+      text-align: center;
+      padding: var(--mb-space-4);
+      max-width: 520px;
+    }
+    .chat-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 10px;
+    }
+    .chip-btn {
+      all: unset;
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 14px;
+      background: var(--mb-surface);
+      border: 1px solid var(--mb-border);
+      border-radius: 20px;
+      font-size: 0.82rem;
+      color: var(--mb-text);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .chip-btn:hover {
+      background: var(--mb-surface-2);
+      border-color: var(--mb-primary);
+      color: var(--mb-primary);
+      transform: translateY(-1px);
     }
     .composer {
       border-top: 1px solid var(--mb-border);
@@ -603,6 +742,142 @@ export class CompanionPage {
     } finally {
       this.busy.set(false);
     }
+  }
+
+  getCleanContent(content: string): string {
+    if (!content) return '';
+    return content.replace(/\{\{option:[^}]+\}\}/g, '').trim();
+  }
+
+  getOptions(m: AiChatMessage): InAppOption[] {
+    if (m.role !== 'assistant' || !m.content) return [];
+    const text = m.content;
+    const options: InAppOption[] = [];
+    const seen = new Set<string>();
+
+    // 1. Explicit tags: {{option:Label|Route}}
+    const tagMatches = text.matchAll(/\{\{option:([^|]+)\|([^}]+)\}\}/g);
+    for (const match of tagMatches) {
+      const label = match[1].trim();
+      const route = match[2].trim();
+      if (!seen.has(route)) {
+        seen.add(route);
+        options.push({ label, route });
+      }
+    }
+
+    // 2. Intelligent topic matching
+    const lower = text.toLowerCase();
+
+    // Doctors / specialists / consultation
+    if (
+      (lower.includes('doctor') ||
+        lower.includes('specialist') ||
+        lower.includes('psychiatrist') ||
+        lower.includes('therapist') ||
+        lower.includes('counselor') ||
+        lower.includes('professional')) &&
+      !seen.has('/patient/professionals')
+    ) {
+      seen.add('/patient/professionals');
+      options.push({
+        label: '👨‍⚕️ Find a Verified Doctor',
+        route: '/patient/professionals',
+        description: 'Browse licensed psychiatrists & therapists',
+      });
+    }
+
+    // Appointments
+    if (
+      (lower.includes('appointment') ||
+        lower.includes('schedule') ||
+        lower.includes('booking') ||
+        lower.includes('consultation')) &&
+      !seen.has('/patient/appointments')
+    ) {
+      seen.add('/patient/appointments');
+      options.push({
+        label: '📅 Book 1-on-1 Consultation',
+        route: '/patient/appointments',
+        description: 'Schedule a private telehealth video call',
+      });
+    }
+
+    // Stress relief / breathing / self-help
+    if (
+      (lower.includes('stress') ||
+        lower.includes('breath') ||
+        lower.includes('grounding') ||
+        lower.includes('self-help') ||
+        lower.includes('cbt') ||
+        lower.includes('calm') ||
+        lower.includes('relax')) &&
+      !seen.has('/patient/self-help')
+    ) {
+      seen.add('/patient/self-help');
+      options.push({
+        label: '🧘 Interactive Stress Relief Tools',
+        route: '/patient/self-help',
+        description: 'Guided clinical exercises for fast relief',
+      });
+    }
+
+    // Mood tracking
+    if (
+      (lower.includes('mood') ||
+        lower.includes('track') ||
+        lower.includes('pattern') ||
+        lower.includes('feelings')) &&
+      !seen.has('/patient/mood')
+    ) {
+      seen.add('/patient/mood');
+      options.push({
+        label: '📊 Track Your Mood & Stress',
+        route: '/patient/mood',
+        description: 'Log daily emotions & view trends',
+      });
+    }
+
+    // Journal
+    if (
+      (lower.includes('journal') ||
+        lower.includes('diary') ||
+        lower.includes('write')) &&
+      !seen.has('/patient/journal')
+    ) {
+      seen.add('/patient/journal');
+      options.push({
+        label: '📝 Open Private Journal',
+        route: '/patient/journal',
+        description: 'Reflect safely on your feelings',
+      });
+    }
+
+    // Crisis / helpline
+    if (
+      (lower.includes('crisis') ||
+        lower.includes('emergency') ||
+        lower.includes('helpline')) &&
+      !seen.has('/crisis')
+    ) {
+      seen.add('/crisis');
+      options.push({
+        label: '🆘 Crisis & Emergency Support',
+        route: '/crisis',
+        description: '24/7 confidential free helplines',
+      });
+    }
+
+    return options.slice(0, 4);
+  }
+
+  chooseOption(opt: InAppOption) {
+    void this.router.navigateByUrl(opt.route);
+  }
+
+  sendPrompt(prompt: string) {
+    this.draft = prompt;
+    void this.send();
   }
 
   private scrollDown() {

@@ -50,6 +50,17 @@ describe('smartCompanionFallback', () => {
     expect(smartCompanionFallback('I cannot sleep')).toContain('wind-down');
   });
 
+  it('suggests in-app doctor and self-help options for queries about doctors and stress relief', () => {
+    const docReply = smartCompanionFallback('is there any doctor available for this');
+    expect(docReply).toContain('verified mental health professionals');
+    expect(docReply).toContain('{{option:👨‍⚕️ Find a Verified Doctor|/patient/professionals}}');
+
+    const stressReply = smartCompanionFallback('anything which helps me to release stress');
+    expect(docReply).toContain('{{option:');
+    expect(stressReply).toContain('Self-Help & Breathing');
+    expect(stressReply).toContain('{{option:🧘 Interactive Stress Relief Tools|/patient/self-help}}');
+  });
+
   it('falls back to UNAVAILABLE_TEMPLATE for unhandled phrases like rough day', () => {
     expect(smartCompanionFallback('rough day')).toBe(UNAVAILABLE_TEMPLATE);
   });
