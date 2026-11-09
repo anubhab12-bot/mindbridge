@@ -170,7 +170,7 @@ export class AuthController {
 
     const emailParam = (req.query?.['email'] as string) || (req.query?.['user'] as string);
     if (!emailParam || !emailParam.includes('@')) {
-      return res.redirect(`${webAppUrl}/login?google_auth=prompt`);
+      return res.redirect(`${webAppUrl}/login`);
     }
     const user = await this.auth.findOrCreateUserByEmail(emailParam, requestMeta(req));
     const tokens = await this.auth.issueTokens(user, requestMeta(req));

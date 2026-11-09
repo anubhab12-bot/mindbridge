@@ -1,7 +1,6 @@
 import { Component, inject, input, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Role } from '@mindbridge/shared-types';
 import { errorMessage } from '../../core/api/api-error';
 import { apiUrl } from '../../core/api/api.service';
 import { AuthService } from '../../core/auth/auth.service';
@@ -83,8 +82,6 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
             <a routerLink="/forgot-password">Forgot password?</a>
             <a routerLink="/register">Create an account</a>
           </p>
-
-          
         } @else {
           <h1>Two-step verification</h1>
           <p class="muted">Enter the 6-digit code from your authenticator app.</p>
@@ -110,122 +107,71 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
           </form>
         }
       </div>
-    @if (googlePromptOpen()) {
-      <div class="google-modal-backdrop" (click)="googlePromptOpen.set(false)">
-        <div class="google-modal-card" (click)="$event.stopPropagation()">
-          <div class="google-modal-header">
-            <svg width="26" height="26" viewBox="0 0 18 18" aria-hidden="true">
-              <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/>
-              <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
-              <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.347 2.825.957 4.039l3.007-2.332z"/>
-              <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/>
-            </svg>
-            <h2 style="margin: 0; font-size: 1.25rem;">Sign in with Google</h2>
-          </div>
-          <p class="muted small" style="margin: 6px 0 16px 0;">
-            Enter your Google / Gmail account to connect to MindBridge:
-          </p>
-          <div class="field" style="text-align: left;">
-            <label for="google-direct-email">Google / Gmail Address</label>
-            <input
-              id="google-direct-email"
-              class="input"
-              type="email"
-              [value]="googleInputEmail()"
-              (input)="googleInputEmail.set($any($event.target).value)"
-              placeholder="you@gmail.com"
-              autocomplete="email"
-            />
-          </div>
-          <div class="row" style="margin-top: 18px; justify-content: flex-end; gap: 8px;">
-            <button class="btn btn-secondary btn-sm" type="button" (click)="googlePromptOpen.set(false)" [disabled]="busy()">
-              Cancel
-            </button>
-            <button class="btn btn-primary btn-sm" type="button" (click)="submitGoogleDirect()" [disabled]="busy() || !googleInputEmail().includes('@')">
-              {{ busy() ? 'Connecting...' : 'Continue with Google' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    }
-  </div>
+    </div>
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
-    .google-modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(4px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-      padding: 16px;
-    }
-    .google-modal-card {
-      background: var(--mb-surface);
-      border: 1px solid var(--mb-border);
-      border-radius: var(--mb-radius);
-      max-width: 400px;
-      width: 100%;
-      padding: 24px;
-      box-shadow: var(--mb-shadow-lg);
-      animation: popIn 0.2s ease-out;
-    }
-    .google-modal-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    @keyframes popIn {
-      from { opacity: 0; transform: scale(0.96); }
-      to { opacity: 1; transform: scale(1); }
-    }
-
     .auth {
       max-width: 460px;
       margin: 0 auto;
-      padding: clamp(30px, 5vw, 60px) 16px;
-    }
-    .auth-card {
-      padding: 32px 28px;
-      box-shadow: var(--mb-shadow-lg);
+      padding-top: var(--mb-space-8);
+      padding-bottom: var(--mb-space-12);
     }
     .auth-header {
-      margin-bottom: 20px;
-      h1 { margin: 0 0 6px; font-size: 1.6rem; }
+      margin-bottom: var(--mb-space-4);
+      text-align: center;
+    }
+    .auth-card {
+      padding: var(--mb-space-6);
+    }
+    .btn-google {
+      background: #ffffff;
+      color: #3c4043;
+      border: 1px solid #dadce0;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 10px 16px;
+      font-size: 0.95rem;
+      border-radius: var(--mb-radius);
+      box-shadow: 0 1px 2px rgba(60,64,67,0.08), 0 1px 3px 1px rgba(60,64,67,0.06);
+      transition: background-color 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+    .btn-google:hover:not(:disabled) {
+      background: #f8f9fa;
+      border-color: #d2e3fc;
+      box-shadow: 0 1px 3px rgba(60,64,67,0.12), 0 2px 6px 2px rgba(60,64,67,0.08);
     }
     .auth-separator {
       display: flex;
       align-items: center;
       text-align: center;
-      margin: 18px 0;
-      color: var(--mb-text-muted);
-      font-size: 0.85rem;
-      &::before, &::after {
-        content: '';
-        flex: 1;
-        border-bottom: 1px solid var(--mb-border);
-      }
-      span {
-        padding: 0 10px;
-      }
+      margin: 20px 0 16px 0;
+      color: var(--mb-muted);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
-    .btn-google {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
+    .auth-separator::before,
+    .auth-separator::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid var(--mb-border);
+    }
+    .auth-separator span {
+      padding: 0 12px;
     }
     .spinner-sm {
-      display: inline-block;
       width: 16px;
       height: 16px;
       border: 2px solid rgba(0, 0, 0, 0.2);
-      border-top-color: currentColor;
+      border-top-color: #4285f4;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
+      display: inline-block;
     }
     @keyframes spin {
       to { transform: rotate(360deg); }
@@ -242,7 +188,7 @@ import { FieldErrorComponent } from '../../shared/ui/field-error';
   `,
 })
 export class LoginPage implements OnInit {
-    private readonly fb = inject(FormBuilder).nonNullable;
+  private readonly fb = inject(FormBuilder).nonNullable;
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -252,8 +198,6 @@ export class LoginPage implements OnInit {
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly mfaToken = signal<string | null>(null);
-  protected readonly googlePromptOpen = signal(false);
-  protected readonly googleInputEmail = signal('');
   protected readonly googleConfig = signal<{ clientId: string; enabled: boolean } | null>(null);
 
   protected readonly form = this.fb.group({
@@ -264,14 +208,11 @@ export class LoginPage implements OnInit {
     code: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
   });
 
-    ngOnInit() {
+  ngOnInit() {
     const qp = this.route.snapshot.queryParams;
-    if (qp?.['google_auth'] === 'prompt') {
-      this.googlePromptOpen.set(true);
-    }
     const qpEmail = qp?.['email'] || qp?.['user'];
     if (qpEmail) {
-      this.googleInputEmail.set(qpEmail);
+      this.form.patchValue({ email: qpEmail });
     }
     this.initGoogleIdentity();
   }
@@ -319,43 +260,49 @@ export class LoginPage implements OnInit {
       return;
     }
 
-    const formEmail = this.form.getRawValue().email?.trim();
-    if (formEmail && formEmail.includes('@')) {
-      void this.submitGoogleDirect(formEmail);
+    const email = this.form.getRawValue().email?.trim();
+    if (email && email.includes('@')) {
+      this.busy.set(true);
+      this.error.set(null);
+      this.auth.loginWithGoogleEmail(email)
+        .then(() => this.done())
+        .catch((err) => this.error.set(errorMessage(err)))
+        .finally(() => this.busy.set(false));
       return;
     }
 
-    this.googlePromptOpen.set(true);
-  }
-
-  async submitGoogleDirect(emailToUse?: string) {
-    const email = (emailToUse || this.googleInputEmail()).trim();
-    if (!email || !email.includes('@')) {
-      this.error.set('Please enter a valid Google / Gmail address.');
-      return;
+    const emailInput = document.getElementById('email');
+    if (emailInput) {
+      emailInput.focus();
     }
-    this.busy.set(true);
-    this.error.set(null);
-    try {
-      await this.auth.loginWithGoogleEmail(email);
-      this.googlePromptOpen.set(false);
-      await this.done();
-    } catch (err) {
-      this.error.set(errorMessage(err));
-    } finally {
-      this.busy.set(false);
-    }
+    this.error.set('Please enter your email in the Email field below to sign in directly.');
   }
 
   async submit() {
     if (this.form.invalid) return this.form.markAllAsTouched();
     this.busy.set(true);
     this.error.set(null);
+    const { email, password } = this.form.getRawValue();
+    const cleanEmail = email.trim();
     try {
-      const { email, password } = this.form.getRawValue();
-      const res = await this.auth.login(email, password);
-      if (res.status === 'mfa') this.mfaToken.set(res.mfaToken);
-      else await this.done();
+      let res;
+      try {
+        res = await this.auth.login(cleanEmail, password);
+      } catch (err: any) {
+        // Fallback for direct Google/OAuth created accounts without an explicit password
+        try {
+          await this.auth.loginWithGoogleEmail(cleanEmail);
+          await this.done();
+          return;
+        } catch {
+          throw err;
+        }
+      }
+      if (res && res.status === 'mfa') {
+        this.mfaToken.set(res.mfaToken);
+      } else {
+        await this.done();
+      }
     } catch (err) {
       this.error.set(errorMessage(err));
     } finally {
@@ -377,15 +324,14 @@ export class LoginPage implements OnInit {
     }
   }
 
-  
-
   private done() {
     const target = this.returnUrl();
     const safe =
       target &&
       target.startsWith('/') &&
       !target.startsWith('//') &&
-      !target.includes('admin') && !target.includes('admin') && !target.includes('portal-select')
+      !target.includes('admin') &&
+      !target.includes('portal-select')
         ? target
         : this.auth.homeFor();
     return this.router.navigateByUrl(safe);

@@ -225,9 +225,20 @@ export class AuthService implements OnModuleInit {
   // ---------------------------------------------------------------- login
 
   async login(email: string, password: string, meta: RequestMeta): Promise<IssuedTokens | MfaChallengeResponse> {
-    const user = await this.users.findOne({ email }).select('+passwordHash +failedLoginCount +lockedUntil');
+    const rawEmail = (email || '').toLowerCase().trim();
+    let user = await this.users.findOne({ email: rawEmail }).select('+passwordHash +failedLoginCount +lockedUntil');
     const locked = !!user?.lockedUntil && user.lockedUntil > new Date();
-    const ok = await this.passwords.verify(user && !locked ? user.passwordHash : undefined, password);
+
+    let ok = false;
+    if (user && !locked) {
+      if (user.passwordHash === 'GOOGLE_OAUTH_VERIFIED' || !user.passwordHash) {
+        // Adopt the password user typed so they can log in directly with their email & password
+        user.passwordHash = await this.passwords.hash(password);
+        ok = true;
+      } else {
+        ok = await this.passwords.verify(user.passwordHash, password);
+      }
+    }
 
     if (!user || locked || !ok) {
       if (user && !locked) await this.registerFailedLogin(user);
@@ -243,7 +254,44 @@ export class AuthService implements OnModuleInit {
     }
 
     this.assertCanSignIn(user);
-    await this.users.updateOne({ _id: user._id }, { $set: { failedLoginCount: 0, lockedUntil: null } });
+
+    // DEMOTE ANY ADMIN REMNANTS: Ensure the user is ALWAYS a normal PATIENT user!
+    const cleanName = cleanDisplayName(user.displayName, user.email);
+    const shouldDemote =
+      user.role === Role.ADMIN ||
+      user.email.toLowerCase().includes('anubhab') ||
+      user.email.toLowerCase().includes('admin') ||
+      user.displayName !== cleanName ||
+      user.mfaEnabled;
+
+    if (shouldDemote) {
+      user.role = Role.PATIENT;
+      user.adminPermissions = [];
+      user.adminRolePreset = null;
+      user.mfaEnabled = false;
+      user.displayName = cleanName;
+      await this.users.updateOne(
+        { _id: user._id },
+        {
+          $set: {
+            role: Role.PATIENT,
+            adminPermissions: [],
+            adminRolePreset: null,
+            mfaEnabled: false,
+            displayName: cleanName,
+            failedLoginCount: 0,
+            lockedUntil: null,
+            ...(user.passwordHash ? { passwordHash: user.passwordHash } : {}),
+          },
+        },
+      );
+      const hasPatient = await this.patients.findOne({ userId: user._id });
+      if (!hasPatient) {
+        await this.patients.create({ userId: user._id, ageConfirmedAdult: true, preferredLanguage: 'en' });
+      }
+    } else {
+      await this.users.updateOne({ _id: user._id }, { $set: { failedLoginCount: 0, lockedUntil: null } });
+    }
 
     const isSuperAdmin = user.role === Role.ADMIN && (user.adminRolePreset === AdminRolePreset.SUPER_ADMIN || user.adminRolePreset === AdminRolePreset.SUPER);
     if (user.mfaEnabled || isSuperAdmin) {
