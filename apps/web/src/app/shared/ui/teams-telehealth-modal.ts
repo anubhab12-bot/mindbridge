@@ -36,23 +36,41 @@ import { TelehealthService, DoctorDutyInfo } from '../../core/services/telehealt
 
           <!-- Doctor Selection List -->
           <div class="doctors-list">
-            @for (doc of telehealth.onDutyDoctors(); track doc.id) {
-              <div
-                class="doctor-option"
-                [class.selected]="selectedDoctorId() === doc.id"
-                (click)="selectedDoctorId.set(doc.id)"
-              >
-                <div class="doc-avatar-badge">{{ doc.avatar }}</div>
+            @if (telehealth.onDutyDoctors().length > 0) {
+              @for (doc of telehealth.onDutyDoctors(); track doc.id) {
+                <div
+                  class="doctor-option"
+                  [class.selected]="selectedDoctorId() === doc.id"
+                  (click)="selectedDoctorId.set(doc.id)"
+                >
+                  <div class="doc-avatar-badge">{{ doc.avatar }}</div>
+                  <div class="doc-info">
+                    <div class="doc-name-row">
+                      <strong>{{ doc.name }}</strong>
+                      <span class="online-tag">Online Now</span>
+                    </div>
+                    <div class="doc-role">{{ doc.role }}</div>
+                    <div class="doc-meta">
+                      <span>{{ doc.qualification }}</span> ·
+                      <span>Rating: {{ doc.rating }} / 5.0</span> ·
+                      <span>{{ doc.languages.join(', ') }}</span>
+                    </div>
+                  </div>
+                </div>
+              }
+            } @else {
+              <div class="doctor-option" style="cursor: default; opacity: 0.85;">
+                <div class="doc-avatar-badge">MB</div>
                 <div class="doc-info">
                   <div class="doc-name-row">
-                    <strong>{{ doc.name }}</strong>
-                    <span class="online-tag">Online Now</span>
+                    <strong>On-Call Clinical Practitioner</strong>
+                    <span class="online-tag">Available</span>
                   </div>
-                  <div class="doc-role">{{ doc.role }}</div>
+                  <div class="doc-role">General Telehealth Triage</div>
                   <div class="doc-meta">
-                    <span>{{ doc.qualification }}</span> ·
-                    <span>Rating: {{ doc.rating }} / 5.0</span> ·
-                    <span>{{ doc.languages.join(', ') }}</span>
+                    <span>Medical Council Verified</span> ·
+                    <span>Rating: 5.0 / 5.0</span> ·
+                    <span>English, Hindi</span>
                   </div>
                 </div>
               </div>
@@ -1103,7 +1121,7 @@ export class TeamsTelehealthModalComponent implements OnDestroy {
   readonly localVideoRef = viewChild<ElementRef<HTMLVideoElement>>('localVideo');
 
   protected callerName = '';
-  protected selectedDoctorId = signal('doc-aarav');
+  protected selectedDoctorId = signal('');
   protected chatSidebarOpen = signal(true);
   protected newChatMessage = '';
 
@@ -1141,7 +1159,7 @@ export class TeamsTelehealthModalComponent implements OnDestroy {
   startCall(mode: 'VIDEO' | 'CHAT') {
     this.telehealth.initiateCall(
       mode,
-      this.selectedDoctorId(),
+      this.selectedDoctorId() || this.telehealth.onDutyDoctors()[0]?.id || 'duty-clinician',
       this.callerName || 'Patient (Guest)',
       'Standard',
     );

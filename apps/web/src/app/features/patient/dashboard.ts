@@ -815,39 +815,8 @@ export class PatientDashboardPage implements OnInit {
       // Fall through to fallback
     }
 
-    // Default registered doctor recommendations if database has no active doctors yet
-    this.topDoctors.set([
-      {
-        id: 'top-1',
-        name: 'Dr. Aarav Mehta',
-        category: 'Senior Neuro-Psychiatrist',
-        yearsExperience: 14,
-        qualifications: ['MBBS', 'MD (Psychiatry) AIIMS'],
-        ratingAverage: 4.9,
-        avatar: 'AM',
-        languages: ['English', 'Hindi', 'Bengali'],
-      },
-      {
-        id: 'top-2',
-        name: 'Dr. Sunita Sen',
-        category: 'Clinical Psychologist & Trauma Specialist',
-        yearsExperience: 11,
-        qualifications: ['PhD Clinical Psychology', 'M.Phil'],
-        ratingAverage: 4.95,
-        avatar: 'SS',
-        languages: ['English', 'Bengali', 'Hindi'],
-      },
-      {
-        id: 'top-3',
-        name: 'Dr. Priya Sharma',
-        category: 'Consultant Psychiatrist & Anxiety Coach',
-        yearsExperience: 9,
-        qualifications: ['MBBS', 'DPM NIMHANS'],
-        ratingAverage: 4.88,
-        avatar: 'PS',
-        languages: ['English', 'Hindi'],
-      },
-    ]);
+    // When live database has 0 verified doctors, keep empty state
+    this.topDoctors.set([]);
   }
 
   openScheduleModal(doc: TopDoctor) {

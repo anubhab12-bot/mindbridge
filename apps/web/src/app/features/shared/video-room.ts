@@ -611,7 +611,7 @@ export class VideoRoomPage implements OnInit, OnDestroy {
 
   readonly localVideoEl = viewChild<ElementRef<HTMLVideoElement>>('localVideo');
 
-  readonly doctorName = signal('Dr. Aarav Mehta');
+  readonly doctorName = signal('Consulting Clinician');
   readonly patientName = signal('Patient');
   readonly sessionId = signal('');
   readonly myRole = signal<'PATIENT' | 'DOCTOR'>('PATIENT');

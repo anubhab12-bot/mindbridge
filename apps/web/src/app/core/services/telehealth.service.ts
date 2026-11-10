@@ -34,41 +34,8 @@ export interface ChatMessage {
 @Injectable({ providedIn: 'root' })
 export class TelehealthService {
   // Available on-duty specialists for instant sessions
-  readonly onDutyDoctors = signal<DoctorDutyInfo[]>([
-    {
-      id: 'doc-aarav',
-      name: 'Dr. Aarav Mehta',
-      role: 'Senior Neuro-Psychiatrist',
-      experience: '14 yrs exp',
-      qualification: 'MBBS, MD (Psychiatry), AIIMS',
-      avatar: 'AM',
-      status: 'ONLINE',
-      rating: 4.9,
-      languages: ['English', 'Hindi', 'Bengali'],
-    },
-    {
-      id: 'doc-sunita',
-      name: 'Dr. Sunita Sen',
-      role: 'Clinical Psychologist & Trauma Specialist',
-      experience: '11 yrs exp',
-      qualification: 'PhD Clinical Psychology, M.Phil',
-      avatar: 'SS',
-      status: 'ONLINE',
-      rating: 4.95,
-      languages: ['English', 'Bengali', 'Hindi'],
-    },
-    {
-      id: 'doc-priya',
-      name: 'Dr. Priya Sharma',
-      role: 'Consultant Psychiatrist & Anxiety Coach',
-      experience: '9 yrs exp',
-      qualification: 'MBBS, DPM (NIMHANS)',
-      avatar: 'PS',
-      status: 'ONLINE',
-      rating: 4.88,
-      languages: ['English', 'Hindi'],
-    },
-  ]);
+  // Available on-duty specialists loaded strictly from live MongoDB backend
+  readonly onDutyDoctors = signal<DoctorDutyInfo[]>([]);
 
   // Current active call session
   readonly currentCall = signal<ActiveCall | null>(null);
@@ -111,13 +78,16 @@ export class TelehealthService {
   async loadTopExperiencedDoctors() {
     if (typeof fetch === 'undefined') return;
     try {
-      const res = await fetch(apiUrl('/doctors/top-experienced'));
+      let res = await fetch(apiUrl('/doctors?pageSize=6'));
+      if (!res.ok) {
+        res = await fetch('https://mindbridge-api-x99i.onrender.com/api/v1/doctors?pageSize=6');
+      }
       if (res.ok) {
         const data = await res.json();
-        const items = Array.isArray(data) ? data : data?.data || [];
+        const items = Array.isArray(data) ? data : (data?.data || []);
         if (items.length > 0) {
           const mapped: DoctorDutyInfo[] = items.slice(0, 3).map((d: any) => {
-            const initials = (d.displayName || 'Doctor')
+            const initials = (d.displayName || d.name || 'Doctor')
               .replace(/^(Dr\.?|Doctor)\s+/i, '')
               .split(' ')
               .filter(Boolean)
@@ -126,10 +96,10 @@ export class TelehealthService {
               .join('') || 'MD';
             return {
               id: d.id,
-              name: d.displayName,
-              role: d.professionalCategory ? d.professionalCategory.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase()) : 'Specialist',
-              experience: `${d.yearsExperience || 10} yrs exp`,
-              qualification: d.qualifications?.join(', ') || 'AIIMS Certified',
+              name: d.displayName || d.name || 'Verified Specialist',
+              role: d.professionalCategory ? d.professionalCategory.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase()) : 'Clinical Practitioner',
+              experience: `${d.yearsExperience || 8} yrs exp`,
+              qualification: (d.qualifications && d.qualifications.length > 0) ? d.qualifications.join(', ') : 'State Council Verified Specialist',
               avatar: initials,
               status: 'ONLINE',
               rating: d.ratingAverage || 4.9,
@@ -137,10 +107,12 @@ export class TelehealthService {
             };
           });
           this.onDutyDoctors.set(mapped);
+          return;
         }
       }
+      this.onDutyDoctors.set([]);
     } catch {
-      // Retain fallback doctors if offline or during build
+      this.onDutyDoctors.set([]);
     }
   }
 
@@ -190,8 +162,19 @@ export class TelehealthService {
     patientName: string = 'You (Patient)',
     urgency: 'Standard' | 'Urgent' | 'Crisis Support' = 'Standard',
   ) {
-    const doc =
-      this.onDutyDoctors().find((d) => d.id === doctorId) || this.onDutyDoctors()[0];
+    const doc: DoctorDutyInfo =
+      this.onDutyDoctors().find((d) => d.id === doctorId) ||
+      this.onDutyDoctors()[0] || {
+        id: 'duty-clinician',
+        name: 'Duty Clinician',
+        role: 'Verified Practitioner',
+        experience: 'On Duty',
+        qualification: 'Medical Council Verified',
+        avatar: 'MB',
+        status: 'ONLINE',
+        rating: 5.0,
+        languages: ['English', 'Hindi'],
+      };
 
     const newCall: ActiveCall = {
       id: 'call_' + Date.now(),

@@ -145,26 +145,37 @@ interface RecoveryTrack {
           </div>
 
           <div class="telehealth-doctors-grid">
-            @for (doc of telehealth.onDutyDoctors(); track doc.id) {
-              <div class="on-duty-doc-card" [routerLink]="['/patient/dashboard']">
-                <div class="doc-card-top">
-                  <span class="doc-avatar-large">{{ doc.avatar }}</span>
-                  <div class="doc-card-headings">
-                    <strong>{{ doc.name }}</strong>
-                    <span class="doc-role-small">{{ doc.role }}</span>
+            @if (telehealth.onDutyDoctors().length > 0) {
+              @for (doc of telehealth.onDutyDoctors(); track doc.id) {
+                <div class="on-duty-doc-card" [routerLink]="['/patient/dashboard']">
+                  <div class="doc-card-top">
+                    <span class="doc-avatar-large">{{ doc.avatar }}</span>
+                    <div class="doc-card-headings">
+                      <strong>{{ doc.name }}</strong>
+                      <span class="doc-role-small">{{ doc.role }}</span>
+                    </div>
+                    <span class="exp-badge-pill">{{ doc.experience }}</span>
                   </div>
-                  <span class="exp-badge-pill">{{ doc.experience }}</span>
+                  <div class="doc-card-stats">
+                    <span>Rating: {{ doc.rating }} / 5.0</span> ·
+                    <span>{{ doc.experience }}</span> ·
+                    <span>{{ doc.languages.join(', ') }}</span>
+                  </div>
+                  <div class="doc-card-actions">
+                    <a routerLink="/patient/dashboard" class="btn-micro video">
+                      Book Consultation
+                    </a>
+                  </div>
                 </div>
-                <div class="doc-card-stats">
-                  <span>Rating: {{ doc.rating }} / 5.0</span> ·
-                  <span>{{ doc.experience }}</span> ·
-                  <span>{{ doc.languages.join(', ') }}</span>
-                </div>
-                <div class="doc-card-actions">
-                  <a routerLink="/patient/dashboard" class="btn-micro video">
-                    Book Consultation
-                  </a>
-                </div>
+              }
+            } @else {
+              <div class="on-duty-empty-card card-flat" style="padding: 24px; border: 1px dashed var(--mb-border); border-radius: var(--mb-radius); background: rgba(2, 132, 199, 0.04); text-align: center; grid-column: 1 / -1;">
+                <span class="badge" style="background: rgba(13, 148, 136, 0.15); color: #0d9488; font-weight: 700; margin-bottom: 8px;">CLINICAL COUNCIL VERIFICATION ACTIVE</span>
+                <h4 style="margin: 8px 0 6px; font-size: 1.05rem;">Practitioner Registration in Progress</h4>
+                <p class="muted small" style="margin: 0 auto 14px; max-width: 440px;">
+                  All dummy doctors were cleared from MongoDB. Real psychiatrists and licensed clinical psychologists registering on the platform will be listed here immediately once verified by our medical council.
+                </p>
+                <a routerLink="/professionals" class="btn btn-secondary btn-sm">Explore Specialists Directory →</a>
               </div>
             }
           </div>
