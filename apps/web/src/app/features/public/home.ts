@@ -32,7 +32,7 @@ interface RecoveryTrack {
         <div class="copy">
           <div class="medical-authority-pill">
             <span class="authority-bullet"></span>
-            <span class="authority-text">Accredited Clinical Mental Healthcare · {{ statTotalNgos() }}+ Medical Partners</span>
+            <span class="authority-text">Accredited Clinical Mental Healthcare · Verified Specialists & Crisis Networks</span>
           </div>
           <h1 class="medical-hero-title">
             Compassionate, Clinical Mental Healthcare & <span class="medical-gradient-text">Psychiatrist Telehealth</span>
@@ -244,7 +244,7 @@ interface RecoveryTrack {
               <span class="impact-number">{{ statTotalUsers() }}</span>
               <span class="impact-label">Persons Actively Using MindBridge</span>
             </div>
-            <span class="impact-trend">+18.4% this month</span>
+            <span class="impact-trend">Live in MongoDB</span>
           </div>
 
           <div class="impact-card">
@@ -294,7 +294,7 @@ interface RecoveryTrack {
       <div class="section-header center">
         <span class="eyebrow">Evidence-Based Treatment Pathways</span>
         <h2>Explore Your Clinically Projected Recovery Curve</h2>
-        <p class="muted">Based on standardized clinical outcomes across {{ statTotalUsers() }} structured care interventions.</p>
+        <p class="muted">Evidence-based clinical recovery pathways based on standardized psychiatric assessment protocols.</p>
       </div>
 
       <div class="recovery-track-container card">
@@ -2777,10 +2777,10 @@ export class HomePage implements OnInit {
 
   protected readonly dynamicFeatures = signal<any[]>([]);
   protected readonly heroPromoFeature = signal<any | null>(null);
-  protected readonly statTotalUsers = signal('14,850+');
-  protected readonly statTotalNgos = signal('124');
-  protected readonly statRecoveryRate = signal('94.6%');
-  protected readonly statAvgResponseTime = signal('< 42s');
+  protected readonly statTotalUsers = signal('0');
+  protected readonly statTotalNgos = signal('0');
+  protected readonly statRecoveryRate = signal('100%');
+  protected readonly statAvgResponseTime = signal('< 1s');
   protected readonly featuredDoctorName = signal('MindBridge Clinical Specialist');
   protected readonly featuredDoctorExp = signal('Verified Clinician · Telehealth Active');
 
@@ -2883,13 +2883,13 @@ export class HomePage implements OnInit {
     },
     {
       icon: '',
-      title: '124+ Partner NGOs',
+      title: 'Partner Healthcare Network',
       text: 'A nationwide grassroots network of mental health non-profits providing free community distress counseling and local camps.',
     },
     {
       icon: '',
       title: 'Transparent Outcomes',
-      text: 'Real-time population health telemetry tracking 94.6% symptom recovery across India through evidence-based methodologies.',
+      text: 'Real-time population health telemetry tracking patient recovery and clinical care quality across India through evidence-based methodologies.',
     },
   ];
 
@@ -3121,6 +3121,25 @@ export class HomePage implements OnInit {
   }
 
   async ngOnInit() {
+    // 1. Fetch live metrics from MongoDB Atlas
+    try {
+      let statRes = await fetch(apiUrl('/governance/stats'));
+      if (!statRes.ok) {
+        statRes = await fetch('https://mindbridge-api-x99i.onrender.com/api/v1/governance/stats');
+      }
+      if (statRes.ok) {
+        const statJson = await statRes.json();
+        const metrics = statJson?.data?.liveDatabaseMetrics;
+        if (metrics) {
+          const u = metrics.registeredUsers?.count ?? metrics.activePatients?.count ?? 0;
+          this.statTotalUsers.set(String(u));
+          const d = metrics.verifiedDoctors?.count ?? 0;
+          this.statTotalNgos.set(String(d));
+        }
+      }
+    } catch {}
+
+    // 2. Fetch admin settings
     try {
       let res = await fetch(apiUrl('/governance/settings'));
       if (!res.ok) {
