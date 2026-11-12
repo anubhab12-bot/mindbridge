@@ -14,7 +14,7 @@ import {
 
 const AppContext = createContext();
 
-const STORAGE_PREFIX = 'mindbridge_live_admin_v3_';
+const STORAGE_PREFIX = 'mindbridge_live_admin_v4_';
 
 function loadStorage(key, fallback) {
   try {
@@ -138,12 +138,8 @@ export function AppProvider({ children }) {
       setLiveDoctors(docsData.items || []);
       setLiveSettings(settingsData);
       setLiveStats(statsData);
-      if (bugsData && Array.isArray(bugsData) && bugsData.length > 0) {
-        setBugTickets(prev => {
-          const apiIds = new Set(bugsData.map(b => b.id));
-          const localOnly = (prev || []).filter(p => !apiIds.has(p.id));
-          return [...bugsData, ...localOnly];
-        });
+      if (bugsData && Array.isArray(bugsData)) {
+        setBugTickets(bugsData);
       }
       setIsLoadingLive(false);
     } catch (err) {
@@ -156,7 +152,7 @@ export function AppProvider({ children }) {
   // Listen for cross-window / in-app bug submissions
   useEffect(() => {
     const handleStorageChange = (e) => {
-      if (e.key === 'mindbridge_live_admin_v3_bugTickets' && e.newValue) {
+      if (e.key === `${STORAGE_PREFIX}bugTickets` && e.newValue) {
         try {
           const parsed = JSON.parse(e.newValue);
           setBugTickets(parsed);

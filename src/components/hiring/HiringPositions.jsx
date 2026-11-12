@@ -124,7 +124,12 @@ export default function HiringPositions() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {hiringPositions.map(pos => {
+          {hiringPositions.length === 0 ? (
+            <div className="p-8 text-center bg-slate-900/40 rounded-xl border border-slate-800 text-xs text-slate-400 col-span-full">
+              No active job requisitions. Use "Post New Position" to create vacancies for Specialist Doctors, Influencers, or QA Testers.
+            </div>
+          ) : (
+            hiringPositions.map(pos => {
             const linkedRole = roles.find(r => r.id === pos.roleId) || { name: pos.roleId, color: 'indigo' };
             const isSelected = selectedPositionFilter === pos.id;
             const applicantTotal = candidates.filter(c => c.positionId === pos.id).length;
@@ -166,7 +171,7 @@ export default function HiringPositions() {
                 </div>
               </div>
             );
-          })}
+          }))}
         </div>
       </div>
 
@@ -194,7 +199,12 @@ export default function HiringPositions() {
         </div>
 
         <div className="space-y-3">
-          {filteredCandidates.map(cand => {
+          {filteredCandidates.length === 0 ? (
+            <div className="p-8 text-center bg-slate-900/40 rounded-xl border border-slate-800 text-xs text-slate-400">
+              No applicant candidates currently in pipeline. Real candidates applying for vacancies will appear here for review and onboarding.
+            </div>
+          ) : (
+            filteredCandidates.map(cand => {
             const pos = hiringPositions.find(p => p.id === cand.positionId);
             const isHired = cand.stage === 'hired';
 
@@ -276,7 +286,7 @@ export default function HiringPositions() {
                 </div>
               </div>
             );
-          })}
+          }))}
         </div>
       </div>
 

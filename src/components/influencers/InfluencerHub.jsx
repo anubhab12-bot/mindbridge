@@ -178,7 +178,12 @@ export default function InfluencerHub() {
         </div>
 
         <div className="space-y-4">
-          {campaigns.map(camp => {
+          {campaigns.length === 0 ? (
+            <div className="p-8 text-center bg-slate-900/40 rounded-xl border border-slate-800 text-xs text-slate-400">
+              No active influencer campaigns yet. Click "Launch Campaign" to create a trackable partner link.
+            </div>
+          ) : (
+            campaigns.map(camp => {
             const liveUrl = `https://anubhab12-bot.github.io/mindbridge/?ref=${camp.slug}`;
             const isCopied = copiedId === camp.id;
 
@@ -270,7 +275,7 @@ export default function InfluencerHub() {
                 )}
               </div>
             );
-          })}
+          }))}
         </div>
       </div>
 

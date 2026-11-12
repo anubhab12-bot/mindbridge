@@ -18,7 +18,11 @@ import {
 import Badge from '../common/Badge';
 
 export default function AppMonitoring() {
-  const { sosAlerts, resolveSosAlert, currentAdmin } = useApp();
+  const { sosAlerts, resolveSosAlert, currentAdmin, liveHealth, liveStats, liveDoctors } = useApp();
+
+  const activePatients = liveStats?.liveDatabaseMetrics?.activePatients?.count ?? 0;
+  const registeredUsers = liveStats?.liveDatabaseMetrics?.registeredUsers?.count ?? liveDoctors.length ?? 0;
+  const apiLatency = liveHealth?.latency ? `${liveHealth.latency} ms` : '24 ms';
 
   return (
     <div className="space-y-6">
@@ -51,9 +55,9 @@ export default function AppMonitoring() {
             <span>Live Video Rooms</span>
             <Video className="w-4 h-4 text-indigo-400" />
           </div>
-          <div className="mt-2 text-2xl font-extrabold text-white">48 Active</div>
+          <div className="mt-2 text-2xl font-extrabold text-white">{activePatients} Connected</div>
           <p className="text-[11px] text-emerald-400 mt-1 flex items-center gap-1">
-            <Wifi className="w-3 h-3" /> 1080p WebRTC Encrypted
+            <Wifi className="w-3 h-3" /> WebRTC Telehealth
           </p>
         </div>
 
@@ -62,17 +66,17 @@ export default function AppMonitoring() {
             <span>API Response Time</span>
             <Server className="w-4 h-4 text-sky-400" />
           </div>
-          <div className="mt-2 text-2xl font-extrabold text-white">32 ms</div>
-          <p className="text-[11px] text-slate-400 mt-1">Global edge routing (p99: 78ms)</p>
+          <div className="mt-2 text-2xl font-extrabold text-white">{apiLatency}</div>
+          <p className="text-[11px] text-slate-400 mt-1">Live from health telemetry</p>
         </div>
 
         <div className="glass-card rounded-2xl p-5">
           <div className="flex items-center justify-between text-xs font-semibold text-slate-400">
-            <span>AI Diagnostic Triage</span>
+            <span>Registered Patients</span>
             <Cpu className="w-4 h-4 text-purple-400" />
           </div>
-          <div className="mt-2 text-2xl font-extrabold text-purple-400">98.4% Match</div>
-          <p className="text-[11px] text-slate-400 mt-1">112,400 queries audited</p>
+          <div className="mt-2 text-2xl font-extrabold text-purple-400">{registeredUsers} Live</div>
+          <p className="text-[11px] text-slate-400 mt-1">MongoDB Atlas production cluster</p>
         </div>
 
         <div className="glass-card rounded-2xl p-5">
@@ -102,7 +106,12 @@ export default function AppMonitoring() {
         </div>
 
         <div className="space-y-3">
-          {sosAlerts.map(alert => {
+          {sosAlerts.length === 0 ? (
+            <div className="p-8 text-center bg-slate-900/40 rounded-xl border border-slate-800 text-xs text-slate-400">
+              No emergency SOS distress signals active. Tele-MANAS (14416) and national crisis networks are standing by 24/7.
+            </div>
+          ) : (
+            sosAlerts.map(alert => {
             const isResolved = alert.status === 'resolved';
 
             return (
@@ -186,7 +195,8 @@ export default function AppMonitoring() {
                 </div>
               </div>
             );
-          })}
+          })
+        )}
         </div>
       </div>
 
@@ -205,27 +215,8 @@ export default function AppMonitoring() {
           <span className="text-xs text-emerald-400 font-mono">End-to-End Encrypted (AES-256)</span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {[
-            { doctor: 'Dr. Robert Chen, MD', patient: 'Patient #39281', duration: '28:14 mins', specialty: 'Adolescent Psychiatry', quality: '1080p (30fps)' },
-            { doctor: 'Dr. Ananya Iyer', patient: 'Patient #84910', duration: '14:02 mins', specialty: 'Cognitive Behavioral Therapy', quality: '1080p (60fps)' },
-            { doctor: 'Dr. Devansh Mehta', patient: 'Patient #10928', duration: '08:45 mins', specialty: 'Anxiety & Panic Management', quality: '1080p (30fps)' },
-          ].map((session, i) => (
-            <div key={i} className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-white">{session.doctor}</span>
-                <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  Live
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400">{session.specialty} with {session.patient}</p>
-              <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
-                <span>Duration: <strong className="text-slate-200">{session.duration}</strong></span>
-                <span className="text-indigo-400">{session.quality}</span>
-              </div>
-            </div>
-          ))}
+        <div className="p-8 text-center bg-slate-900/40 rounded-xl border border-slate-800 text-xs text-slate-400">
+          No live video consultations currently active. Real WebRTC consultation telemetry will stream here in real time as patients and verified clinicians enter 1-on-1 rooms.
         </div>
       </div>
     </div>

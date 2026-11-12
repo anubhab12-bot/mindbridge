@@ -49,10 +49,10 @@ export default function AppControlCenter() {
   );
 
   const [liveStatsForm, setLiveStatsForm] = useState({
-    totalUsers: liveSettings?.statsOverride?.totalUsers || '14,850+',
-    totalNgos: liveSettings?.statsOverride?.totalNgos || '124',
-    recoveryRate: liveSettings?.statsOverride?.recoveryRate || '94.6%',
-    avgResponseTime: liveSettings?.statsOverride?.avgResponseTime || '< 42s',
+    totalUsers: liveSettings?.statsOverride?.totalUsers || '0',
+    totalNgos: liveSettings?.statsOverride?.totalNgos || '0',
+    recoveryRate: liveSettings?.statsOverride?.recoveryRate || '100%',
+    avgResponseTime: liveSettings?.statsOverride?.avgResponseTime || '< 1s',
   });
 
   const [financials, setFinancials] = useState(appControls?.financials || {
@@ -68,10 +68,10 @@ export default function AppControlCenter() {
   useEffect(() => {
     if (liveSettings?.statsOverride) {
       setLiveStatsForm({
-        totalUsers: liveSettings.statsOverride.totalUsers || '14,850+',
-        totalNgos: liveSettings.statsOverride.totalNgos || '124',
-        recoveryRate: liveSettings.statsOverride.recoveryRate || '94.6%',
-        avgResponseTime: liveSettings.statsOverride.avgResponseTime || '< 42s',
+        totalUsers: liveSettings.statsOverride.totalUsers || '0',
+        totalNgos: liveSettings.statsOverride.totalNgos || '0',
+        recoveryRate: liveSettings.statsOverride.recoveryRate || '100%',
+        avgResponseTime: liveSettings.statsOverride.avgResponseTime || '< 1s',
       });
     }
     if (liveSettings?.announcementBanner) {

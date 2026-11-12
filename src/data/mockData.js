@@ -97,6 +97,7 @@ export const INITIAL_ROLES = [
   },
 ];
 
+// Real live admin accounts only. Zero mock personas.
 export const INITIAL_ADMINS = [
   {
     id: 'adm-01',
@@ -106,180 +107,22 @@ export const INITIAL_ADMINS = [
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     title: 'Super Creator & Founder',
     status: 'active',
-    lastActive: 'Just now',
+    lastActive: 'Online Now',
     joinedDate: 'Jan 15, 2026',
     twoFactor: true,
   },
-  {
-    id: 'adm-02',
-    name: 'Dr. Aris Thorne, MD',
-    email: 'dr.thorne@mindbridge.health',
-    roleId: 'specialist_doctor_verifier',
-    avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=150&auto=format&fit=crop&q=80',
-    title: 'Senior Specialist Doctor (Psychiatry)',
-    status: 'active',
-    lastActive: '8 mins ago',
-    joinedDate: 'Feb 02, 2026',
-    twoFactor: true,
-  },
-  {
-    id: 'adm-03',
-    name: 'Rohan Roy',
-    email: 'rohan.qa@mindbridge.health',
-    roleId: 'tester_user',
-    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-    title: 'Lead QA Engineer & Tester',
-    status: 'active',
-    lastActive: 'Just now',
-    joinedDate: 'Feb 10, 2026',
-    twoFactor: true,
-  },
-  {
-    id: 'adm-04',
-    name: 'Elena Rostova',
-    email: 'elena.rostova@mindbridge.health',
-    roleId: 'influencer_partner',
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
-    title: 'Global Growth Evangelist & Wellness Creator',
-    status: 'active',
-    lastActive: '23 mins ago',
-    joinedDate: 'Feb 19, 2026',
-    twoFactor: true,
-  },
-  {
-    id: 'adm-05',
-    name: 'Marcus Vance, MSW',
-    email: 'm.vance@mindbridge.health',
-    roleId: 'clinical_safety_lead',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    title: 'Crisis Intervention Director',
-    status: 'active',
-    lastActive: '1 hour ago',
-    joinedDate: 'Mar 01, 2026',
-    twoFactor: true,
-  },
 ];
 
-export const INITIAL_HIRING_POSITIONS = [
-  {
-    id: 'pos-101',
-    title: 'Specialist Doctor - Credentialing & Verification Board',
-    department: 'Medical Credentialing',
-    roleId: 'specialist_doctor_verifier',
-    type: 'Part-Time / Retainer',
-    compensation: '$95/hr + review bonus',
-    openings: 3,
-    status: 'active',
-    postedDate: 'Oct 28, 2026',
-    description: 'Board-certified psychiatrists or clinical psychologists responsible for verifying doctor registrations, validating medical licenses, and approving tele-physicians.',
-    requirements: ['MD in Psychiatry or PsyD', 'Valid State Medical Council Registration', 'Min 5+ years clinical experience'],
-    applicantsCount: 14,
-  },
-  {
-    id: 'pos-102',
-    title: 'Application QA & Bug Regression Tester',
-    department: 'Quality Assurance & Product',
-    roleId: 'tester_user',
-    type: 'Full-Time / Contract',
-    compensation: '$75,000 - $90,000 / yr',
-    openings: 2,
-    status: 'active',
-    postedDate: 'Nov 09, 2026',
-    description: 'Tests user journeys across patient booking, WebRTC video consultations, SOS beacons, and doctor credentialing. Raises structured bug tickets and retests fixes.',
-    requirements: ['Manual & Automated QA experience', 'Experience testing WebRTC and mobile web', 'Detail-oriented reporting skills'],
-    applicantsCount: 9,
-  },
-  {
-    id: 'pos-103',
-    title: 'Campus Wellness Influencer Ambassador',
-    department: 'Growth & Partnerships',
-    roleId: 'influencer_partner',
-    type: 'Affiliate / Creator',
-    compensation: '18% Commission on consultations + $1,500 monthly grant',
-    openings: 8,
-    status: 'active',
-    postedDate: 'Nov 02, 2026',
-    description: 'Promote MindBridge mental health resources across college campuses and online communities with trackable links.',
-    requirements: ['Active creator on Instagram, TikTok, or YouTube', 'Passionate about destigmatizing mental health'],
-    applicantsCount: 31,
-  },
-];
+// Dynamic vacancies created by Super Admin (zero demo positions)
+export const INITIAL_HIRING_POSITIONS = [];
 
-export const INITIAL_BUG_TICKETS = [
-  {
-    id: 'MB-BUG-101',
-    title: 'Doctor verification document preview renders white box on Safari mobile',
-    component: 'Doctor Verification',
-    severity: 'high',
-    status: 'in_progress', // 'open' | 'in_progress' | 'fixed' | 'cant_fix' | 'verified'
-    reportedBy: 'Rohan Roy (QA Tester)',
-    testerEmail: 'rohan.qa@mindbridge.health',
-    device: 'Mobile Safari (iOS 18.1)',
-    stepsToReproduce: '1. Log in as Specialist Doctor\n2. Open Doctor Verification queue\n3. Tap "Inspect Credentials"\n4. Tap PDF document preview',
-    expectedBehavior: 'PDF degree certificate should render in native iframe or viewer',
-    actualBehavior: 'White blank frame rendered with canvas error in console',
-    resolutionNotes: 'Currently patching PDF.js fallback viewer for iOS WebKit.',
-    createdAt: '2026-11-09 14:20',
-    updatedAt: '2026-11-09 17:15',
-  },
-  {
-    id: 'MB-BUG-102',
-    title: 'WebRTC teleconsultation audio indicator does not sync when external Bluetooth headset disconnects',
-    component: 'Video Telehealth',
-    severity: 'critical',
-    status: 'fixed',
-    reportedBy: 'Rohan Roy (QA Tester)',
-    testerEmail: 'rohan.qa@mindbridge.health',
-    device: 'Chrome 131 on Windows 11',
-    stepsToReproduce: '1. Join video consult room with Bluetooth headphones\n2. Turn off Bluetooth device while call is live\n3. Microphone mutes but UI still shows green active wave',
-    expectedBehavior: 'Microphone icon should switch to default audio device and show warning toast',
-    actualBehavior: 'UI wave froze on active, remote peer heard silence',
-    resolutionNotes: 'Fixed: Added ondevicechange event listener to audio stream context and reconnected default audio input.',
-    createdAt: '2026-11-08 11:05',
-    updatedAt: '2026-11-09 18:30',
-  },
-  {
-    id: 'MB-BUG-103',
-    title: 'Old Android 9 WebView cannot render CSS backdrop-filter blur',
-    component: 'UI & Mobile Styling',
-    severity: 'low',
-    status: 'cant_fix',
-    reportedBy: 'Rohan Roy (QA Tester)',
-    testerEmail: 'rohan.qa@mindbridge.health',
-    device: 'Android 9 (API 28)',
-    stepsToReproduce: '1. Open app on Android 9 Chrome 74\n2. Check glassmorphism cards on dashboard',
-    expectedBehavior: 'Frosted blur background should appear',
-    actualBehavior: 'Shows solid dark card without blur effect',
-    resolutionNotes: 'Cannot Fix: Hardware accelerated backdrop-filter is unsupported on Chrome < 76. Graceful solid background fallback applied as per design spec.',
-    createdAt: '2026-11-07 16:45',
-    updatedAt: '2026-11-08 09:12',
-  },
-];
+// Real QA bug tickets synchronized from live backend (zero demo tickets)
+export const INITIAL_BUG_TICKETS = [];
 
-export const INITIAL_INFLUENCER_CAMPAIGNS = [
-  {
-    id: 'camp-301',
-    name: 'MindBridge x Elena ZenSpring 2026',
-    influencerName: 'Elena Rostova',
-    influencerEmail: 'elena.rostova@mindbridge.health',
-    handle: '@elena_wellness',
-    platform: 'Instagram / YouTube',
-    slug: 'zen-spring',
-    promoCode: 'ZENSPRING',
-    targetAudience: 'College Students & Young Professionals',
-    commissionRate: 15,
-    discountPercent: 20,
-    clicks: 18450,
-    signups: 3420,
-    consultationsBooked: 890,
-    revenueGenerated: 57850,
-    commissionEarned: 8677.5,
-    payoutStatus: 'paid',
-    status: 'active',
-    createdDate: 'Oct 15, 2026',
-  },
-];
+// Real active creator campaigns (zero demo campaigns)
+export const INITIAL_INFLUENCER_CAMPAIGNS = [];
 
+// System feature flags and controls
 export const INITIAL_APP_CONTROLS = {
   maintenanceMode: false,
   maintenanceMessage: 'MindBridge is performing a scheduled database optimization. Emergency SOS services remain 100% active.',
@@ -323,7 +166,7 @@ export const INITIAL_APP_CONTROLS = {
   },
   banner: {
     enabled: true,
-    text: 'Notice: MindBridge v3.4 update is live. Specialist Doctor credential verification protocols have been upgraded to ISO-27799.',
+    text: '24/7 Verified Crisis Lines Active: Tele-MANAS (14416) & Kiran (1800-599-0019) are free and confidential across India.',
     type: 'info',
     audience: 'all',
   },
@@ -335,54 +178,8 @@ export const INITIAL_APP_CONTROLS = {
   },
 };
 
-export const INITIAL_SOS_ALERTS = [
-  {
-    id: 'sos-901',
-    patientName: 'Anonymous Patient #4810',
-    patientAge: 22,
-    severity: 'critical',
-    trigger: 'Self-Harm & Suicidal Ideation Keyphrase Detected in Chat',
-    assignedTo: 'Marcus Vance (Crisis Lead)',
-    status: 'in_triage',
-    timeElapsed: '3 mins ago',
-    location: 'Chicago, IL, USA',
-    phoneRelay: '+1 312-***-9128',
-    aiConfidence: '98.4%',
-  },
-  {
-    id: 'sos-902',
-    patientName: 'Sarah K. (Verified Patient)',
-    patientAge: 34,
-    severity: 'high',
-    trigger: 'Panic Attack SOS Beacon Activated via Apple Watch Heartrate (158 bpm)',
-    assignedTo: 'Dr. Aris Thorne',
-    status: 'dispatched',
-    timeElapsed: '12 mins ago',
-    location: 'Austin, TX, USA',
-    phoneRelay: '+1 512-***-4019',
-    aiConfidence: '91.0%',
-  },
-];
+// Real live crisis alerts only (zero demo alerts)
+export const INITIAL_SOS_ALERTS = [];
 
-export const INITIAL_AUDIT_LOGS = [
-  {
-    id: 'aud-001',
-    timestamp: '2026-11-09 17:42:10',
-    adminName: 'Dr. Anubhab Nandi',
-    adminRole: 'Super Administrator',
-    action: 'ROLE_CREATED',
-    details: 'Created dynamic position: Specialist Doctor Verification Lead with credentialing board privileges.',
-    ip: '192.168.1.1',
-    badge: 'rose',
-  },
-  {
-    id: 'aud-002',
-    timestamp: '2026-11-09 17:35:44',
-    adminName: 'Dr. Anubhab Nandi',
-    adminRole: 'Super Creator',
-    action: 'INVITATION_EMAIL_SENT',
-    details: 'Sent official platform access invitation from anubhabnandi12@gmail.com with Superadmin clearance.',
-    ip: '192.168.1.1',
-    badge: 'sky',
-  },
-];
+// Audit logs generated in real-time as administrative actions occur
+export const INITIAL_AUDIT_LOGS = [];
