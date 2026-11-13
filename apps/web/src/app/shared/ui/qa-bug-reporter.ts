@@ -293,34 +293,36 @@ import { apiUrl } from '../../core/api/api.service';
     .mb-qa-floating-trigger {
       position: fixed;
       bottom: 24px;
-      right: 24px;
-      z-index: 99998;
+      left: 24px;
+      right: auto;
+      z-index: 999999;
       transition: transform 0.2s ease, opacity 0.2s ease;
     }
 
     .qa-trigger-btn {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 10px 18px;
+      gap: 9px;
+      padding: 11px 20px;
       border-radius: 9999px;
-      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-      color: #38bdf8;
-      border: 1px solid rgba(56, 189, 248, 0.4);
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(56, 189, 248, 0.2);
+      background: linear-gradient(135deg, #0d9488 0%, #0f172a 60%, #4338ca 100%);
+      color: #5eead4;
+      border: 1.5px solid rgba(45, 212, 191, 0.6);
+      box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.6), 0 0 20px rgba(45, 212, 191, 0.35);
       font-family: inherit;
-      font-size: 0.85rem;
-      font-weight: 700;
+      font-size: 0.88rem;
+      font-weight: 800;
+      letter-spacing: -0.2px;
       cursor: pointer;
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(12px);
       transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .qa-trigger-btn:hover {
-      transform: translateY(-2px) scale(1.02);
-      background: linear-gradient(135deg, #1e293b 0%, #312e81 100%);
-      border-color: #38bdf8;
-      box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.4);
+      transform: translateY(-3px) scale(1.04);
+      background: linear-gradient(135deg, #14b8a6 0%, #1e1b4b 60%, #4f46e5 100%);
+      border-color: #2dd4bf;
+      box-shadow: 0 18px 36px -5px rgba(0, 0, 0, 0.7), 0 0 26px rgba(45, 212, 191, 0.5);
       color: #ffffff;
     }
 
@@ -859,6 +861,7 @@ export class QaBugReporterComponent implements OnInit, OnDestroy {
   private timerInterval: any = null;
   private recordSeconds = 0;
   private keydownListener: any = null;
+  private customOpenListener: any = null;
 
   ngOnInit() {
     // Open immediately if ?qa=true is in the query params
@@ -867,6 +870,9 @@ export class QaBugReporterComponent implements OnInit, OnDestroy {
       if (qp.get('qa') === 'true') {
         this.openModal();
       }
+
+      this.customOpenListener = () => this.openModal();
+      window.addEventListener('open_mb_qa_bug_reporter', this.customOpenListener);
 
       // Keyboard Shortcut: Ctrl + Shift + B (or Cmd + Shift + B)
       this.keydownListener = (e: KeyboardEvent) => {
@@ -880,8 +886,9 @@ export class QaBugReporterComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    if (typeof window !== 'undefined' && this.keydownListener) {
-      window.removeEventListener('keydown', this.keydownListener);
+    if (typeof window !== 'undefined') {
+      if (this.keydownListener) window.removeEventListener('keydown', this.keydownListener);
+      if (this.customOpenListener) window.removeEventListener('open_mb_qa_bug_reporter', this.customOpenListener);
     }
     this.stopTimer();
   }

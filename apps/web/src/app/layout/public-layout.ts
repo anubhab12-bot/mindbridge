@@ -108,6 +108,14 @@ import { ContactModalComponent } from '../shared/ui/contact-modal';
               <span>Book Consultation</span>
             </a>
           }
+          <button
+            type="button"
+            class="header-qa-btn"
+            (click)="openQaReporter()"
+            title="Open In-App QA Bug Reporter with Video & Screenshot Capture (Shortcut: Ctrl+Shift+B)"
+          >
+            <span>🐞 Raise Bug</span>
+          </button>
           <a routerLink="/crisis" class="header-crisis-btn" title="Emergency Crisis Helpline">Crisis: 14416</a>
           <button class="mobile-nav-toggle" (click)="toggleMobileNav()" aria-label="Toggle navigation">
             {{ mobileNavOpen() ? '✕' : '☰' }}
@@ -1238,6 +1246,70 @@ import { ContactModalComponent } from '../shared/ui/contact-modal';
       }
     }
 
+    .header-qa-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(13, 148, 136, 0.12);
+      border: 1px solid rgba(13, 148, 136, 0.4);
+      color: #0d9488;
+      font-size: 0.82rem;
+      font-weight: 750;
+      padding: 6px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      &:hover {
+        background: #0d9488;
+        color: #ffffff;
+        border-color: #0d9488;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+      }
+    }
+    :host-context([data-theme='dark']) .header-qa-btn {
+      background: rgba(45, 212, 191, 0.14);
+      border-color: rgba(45, 212, 191, 0.4);
+      color: #2dd4bf;
+      &:hover {
+        background: #14b8a6;
+        color: #042f2e;
+        border-color: #14b8a6;
+      }
+    }
+    .mobile-qa-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: var(--mb-radius);
+      border: 1.5px solid rgba(13, 148, 136, 0.5);
+      background: rgba(13, 148, 136, 0.12);
+      color: #0d9488;
+      font-size: 0.92rem;
+      font-weight: 750;
+      cursor: pointer;
+      margin-bottom: 8px;
+      font-family: inherit;
+      transition: all 0.15s ease;
+      &:hover {
+        background: #0d9488;
+        color: #ffffff;
+      }
+    }
+    :host-context([data-theme='dark']) .mobile-qa-btn {
+      color: #2dd4bf;
+      border-color: rgba(45, 212, 191, 0.45);
+      background: rgba(45, 212, 191, 0.12);
+      &:hover {
+        background: #14b8a6;
+        color: #042f2e;
+      }
+    }
+
     .nav-contact-btn {
       display: inline-flex;
       align-items: center;
@@ -1371,6 +1443,12 @@ export class PublicLayoutComponent implements OnInit {
 
   dismissFloatingPill() {
     this.floatingPill.set(null);
+  }
+
+  openQaReporter() {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('open_mb_qa_bug_reporter'));
+    }
   }
 
   cleanText(str?: string | null): string {
