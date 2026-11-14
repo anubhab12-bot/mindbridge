@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script>
-      // Clear any service worker that might interfere with admin assets
+      // Force unregister any service worker that might interfere with admin assets
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function(regs) {
           for (var r of regs) {
@@ -17,19 +17,49 @@
           }
         }).catch(function() {});
       }
+
+      // Auto-recovery fallback: If React has not mounted after 3.5 seconds
+      var autoRecoverTimer = setTimeout(function() {
+        var loader = document.getElementById('mb-admin-loader');
+        if (loader && loader.parentElement) {
+          loader.innerHTML = '<div style="max-width:380px;background:#0f172a;border:1px solid #6366f1;border-radius:18px;padding:32px 28px;box-shadow:0 20px 40px rgba(0,0,0,0.5);display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;">' +
+            '<div style="width:44px;height:44px;border-radius:12px;background:rgba(99,102,241,0.2);color:#818cf8;display:flex;align-items:center;justify-content:center;font-size:24px;">⚡</div>' +
+            '<div style="font-size:1.1rem;font-weight:700;color:#ffffff;">MindBridge Admin Portal</div>' +
+            '<p style="font-size:0.8rem;color:#94a3b8;line-height:1.4;">Live updates deployed. Click below to load your active admin console session.</p>' +
+            '<button onclick="localStorage.removeItem(\'mindbridge_live_admin_v4_isLoadingLive\');if(\'serviceWorker\' in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister()})}).finally(function(){window.location.reload(true)});}else{window.location.reload(true);}" style="background:#6366f1;color:#ffffff;border:none;padding:10px 22px;border-radius:12px;font-weight:700;font-size:12px;cursor:pointer;box-shadow:0 8px 16px rgba(99,102,241,0.3);">Open Live Admin Portal</button>' +
+          '</div>';
+        }
+      }, 3000);
+
+      // Dismiss recovery timer once React mounts
+      window.addEventListener('DOMContentLoaded', function() {
+        var root = document.getElementById('root');
+        if (root) {
+          var observer = new MutationObserver(function(mutations, obs) {
+            if (!document.getElementById('mb-admin-loader')) {
+              clearTimeout(autoRecoverTimer);
+              obs.disconnect();
+            }
+          });
+          observer.observe(root, { childList: true });
+        }
+      });
+
       // Catch global unhandled script failures
       window.addEventListener('error', function(e) {
         var loader = document.getElementById('mb-admin-loader');
-        if (loader) {
-          loader.innerHTML = '<div style="color:#f43f5e;font-size:28px;margin-bottom:8px;">⚠️</div>' +
-            '<div style="font-size:1rem;font-weight:700;color:#ffffff;margin-bottom:6px;">Portal Cache Recovery</div>' +
-            '<p style="font-size:0.78rem;color:#94a3b8;margin-bottom:14px;max-width:320px;">' + (e.message || 'Cached browser state detected.') + '</p>' +
-            '<button onclick="localStorage.clear();if(\'serviceWorker\' in navigator){navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(reg){reg.unregister()})})};window.location.reload(true);" style="background:#4f46e5;color:white;border:none;padding:8px 16px;border-radius:8px;font-weight:600;font-size:12px;cursor:pointer;">Clear Cache & Reload</button>';
+        if (loader && loader.parentElement) {
+          loader.innerHTML = '<div style="max-width:380px;background:#0f172a;border:1px solid #f43f5e;border-radius:18px;padding:32px 28px;box-shadow:0 20px 40px rgba(0,0,0,0.5);display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;">' +
+            '<div style="color:#f43f5e;font-size:28px;">⚠️</div>' +
+            '<div style="font-size:1rem;font-weight:700;color:#ffffff;">Portal Cache Recovery</div>' +
+            '<p style="font-size:0.78rem;color:#94a3b8;max-width:320px;">' + (e.message || 'Cached browser state detected.') + '</p>' +
+            '<button onclick="localStorage.clear();if(\'serviceWorker\' in navigator){navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(reg){reg.unregister()})})};window.location.reload(true);" style="background:#4f46e5;color:white;border:none;padding:8px 16px;border-radius:8px;font-weight:600;font-size:12px;cursor:pointer;">Clear Cache & Reload</button>' +
+          '</div>';
         }
-      });
+      }, true);
     </script>
-    <script type="module" crossorigin src="/mindbridge/admin/assets/index-C6-R1aTc.js"></script>
-    <link rel="stylesheet" crossorigin href="/mindbridge/admin/assets/index-Deb8SiM2.css">
+    <script type="module" crossorigin src="/mindbridge/admin/assets/index-tzA7tUMf.js"></script>
+    <link rel="stylesheet" crossorigin href="/mindbridge/admin/assets/index-MAKtT8J8.css">
   </head>
   <body class="bg-slate-950 text-slate-100 antialiased selection:bg-indigo-500 selection:text-white">
     <div id="root">
@@ -47,6 +77,6 @@
         </div>
         <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
       </div>
-    </div>
+    </div>
   </body>
 </html>
