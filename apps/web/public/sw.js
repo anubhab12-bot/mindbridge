@@ -31,7 +31,8 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   // Allow normal network requests, fallback to cache if offline
   if (event.request.method !== 'GET') return;
-  if (event.request.url.includes('/api/')) return;
+  // Completely bypass service worker for admin portal and backend APIs
+  if (event.request.url.includes('/admin') || event.request.url.includes('/api/')) return;
 
   event.respondWith(
     fetch(event.request).catch(() => {
