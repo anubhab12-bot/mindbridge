@@ -50,6 +50,9 @@ export default function RBACManagement() {
   const [aiTone, setAiTone] = useState('executive');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [directChannel, setDirectChannel] = useState('both'); // 'email', 'whatsapp', 'both'
+  const [reviewingConsentAdmin, setReviewingConsentAdmin] = useState(null);
+  const [consentAgreed, setConsentAgreed] = useState(false);
+  const [consentSignature, setConsentSignature] = useState('');
 
   // New Admin Form State
   const [newAdmin, setNewAdmin] = useState({
@@ -744,6 +747,152 @@ export default function RBACManagement() {
             </div>
           </div>
         )}
+      </Modal>
+
+
+      {/* Modal: Administrative Appointment Consent Agreement */}
+      <Modal
+        isOpen={!!reviewingConsentAdmin || !!pendingConsentAdmin}
+        onClose={() => {
+          setReviewingConsentAdmin(null);
+          if (setPendingConsentAdmin) setPendingConsentAdmin(null);
+        }}
+        title="Administrative Appointment & Consent Agreement"
+        subtitle="Mandatory Governance & Ethics Acceptance Protocol"
+        maxWidth="max-w-2xl"
+      >
+        {(() => {
+          const activeOffer = reviewingConsentAdmin || pendingConsentAdmin;
+          if (!activeOffer) return null;
+          const assignedRole = roles.find(r => r.id === activeOffer.roleId) || { name: activeOffer.roleId, permissions: [] };
+
+          return (
+            <div className="space-y-4">
+              {/* Creator Appointment Banner */}
+              <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-950/60 via-purple-950/40 to-slate-900 border border-indigo-500/30 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileSignature className="w-5 h-5 text-indigo-400" />
+                    <span className="text-xs font-bold text-white uppercase tracking-wider">Official Creator Appointment</span>
+                  </div>
+                  <Badge color="rose">Granted by Anubhab Nandi</Badge>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Super Creator <strong>{SUPER_CREATOR_NAME} ({SUPER_CREATOR_EMAIL})</strong> has provisioned administrative clearance for <strong>{activeOffer.name}</strong> on the MindBridge Healthcare Platform. To activate your access, please review and accept this charter.
+                </p>
+              </div>
+
+              {/* Offer Details Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+                <div>
+                  <span className="text-slate-400 block text-[11px]">Appointed Candidate:</span>
+                  <span className="text-white font-semibold">{activeOffer.name}</span>
+                  <span className="text-slate-400 block text-[11px] font-mono">{activeOffer.email}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[11px]">Assigned Role:</span>
+                  <span className="text-indigo-400 font-bold">{assignedRole.name}</span>
+                  <span className="text-slate-400 block text-[11px]">{activeOffer.title || 'Platform Administration'}</span>
+                </div>
+              </div>
+
+              {/* Proposed Permissions List */}
+              <div>
+                <span className="text-xs font-semibold text-slate-300 block mb-1.5">Authorized Administrative Permissions:</span>
+                <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto p-2 rounded-xl bg-slate-950 border border-slate-800/80">
+                  {(assignedRole.permissions || []).map(p => (
+                    <span key={p} className="text-[10px] bg-slate-800 text-indigo-300 px-2 py-0.5 rounded border border-slate-700/60 font-mono">
+                      • {p}
+                    </span>
+                  ))}
+                  {(!assignedRole.permissions || assignedRole.permissions.length === 0) && (
+                    <span className="text-[11px] text-slate-400">General Administrative Access</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Clinical Ethics & Data Privacy Undertaking */}
+              <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2 text-xs">
+                <span className="font-bold text-white flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  <span>Clinical Confidentiality & Platform Governance Pledge:</span>
+                </span>
+                <ul className="text-slate-300 text-[11px] space-y-1.5 list-disc pl-4 leading-relaxed">
+                  <li><strong>Patient Privacy (Tele-MANAS & AES-256):</strong> I will never disclose patient medical records, session journals, or mental health telemetry to unauthorized third parties.</li>
+                  <li><strong>Integrity in Operations:</strong> I agree to use doctor verification, QA bug reporting, and feature controls solely for authorized healthcare purposes.</li>
+                  <li><strong>Super Creator Oversight:</strong> I acknowledge that Super Creator Anubhab Nandi maintains audit logging and may adjust or revoke privileges if protocols are breached.</li>
+                </ul>
+              </div>
+
+              {/* Consent Signature & Acceptance Checkbox */}
+              <div className="space-y-3 pt-1">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">Electronic Signature (Full Legal Name) *</label>
+                  <input
+                    type="text"
+                    value={consentSignature}
+                    onChange={e => setConsentSignature(e.target.value)}
+                    placeholder="Type your full name to sign"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={consentAgreed}
+                    onChange={e => setConsentAgreed(e.target.checked)}
+                    className="mt-0.5 rounded border-slate-700 text-indigo-600 focus:ring-0 bg-slate-950"
+                  />
+                  <span className="text-xs text-slate-300 leading-relaxed">
+                    I have read, understood, and solemnly accept this administrative appointment. I consent to all responsibilities and agree to uphold MindBridge patient safety standards.
+                  </span>
+                </label>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => {
+                    declineAdminOffer(activeOffer.id, 'Declined by recipient');
+                    setReviewingConsentAdmin(null);
+                    if (setPendingConsentAdmin) setPendingConsentAdmin(null);
+                  }}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors"
+                >
+                  Decline Appointment Offer
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReviewingConsentAdmin(null);
+                      if (setPendingConsentAdmin) setPendingConsentAdmin(null);
+                    }}
+                    className="px-4 py-2 rounded-xl text-xs text-slate-400 hover:bg-slate-800 transition-colors"
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!consentAgreed || !consentSignature.trim()}
+                    onClick={() => {
+                      acceptAdminOffer(activeOffer.id, { signature: consentSignature });
+                      setReviewingConsentAdmin(null);
+                      if (setPendingConsentAdmin) setPendingConsentAdmin(null);
+                    }}
+                    className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold shadow-lg shadow-emerald-600/25 flex items-center gap-1.5 transition-all"
+                  >
+                    <Check className="w-4 h-4" />
+                    <span>Accept & Activate Admin Privileges</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
       </Modal>
 
       {/* Modal: Create Dynamic Custom Role */}

@@ -371,20 +371,96 @@ export function AppProvider({ children }) {
     addAuditLog('FINANCIALS_UPDATED', 'Updated financial matrix', 'amber');
   };
 
-  // Admin Management
+  // Admin Management & Appointment Consent Workflow
+  const [pendingConsentAdmin, setPendingConsentAdmin] = useState(null);
+
+  // Check URL query parameters for consent offer links (?action=accept_offer&token=...)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const action = params.get('action');
+      const token = params.get('token');
+      const email = params.get('email');
+      if (action === 'accept_offer' && (token || email)) {
+        const found = (admins || []).find(a => (token && a.consentToken === token) || (email && a.email?.toLowerCase() === email.toLowerCase()));
+        if (found) {
+          setPendingConsentAdmin(found);
+        }
+      }
+    } catch (e) {
+      console.warn('Consent URL check warning:', e);
+    }
+  }, [admins]);
+
   const addAdmin = (data) => {
+    const token = data.consentToken || ('OFFER-' + Math.random().toString(36).substring(2, 9).toUpperCase());
     const newAdmin = {
       id: 'adm-' + Date.now().toString().slice(-4),
-      status: 'active',
+      status: 'pending_consent', // Requires invitee consent before becoming active
+      consentStatus: 'pending',
+      consentToken: token,
+      offeredAt: new Date().toISOString(),
+      offeredBy: 'Anubhab Nandi (Super Creator)',
+      consentAcceptedAt: null,
       joinedDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      lastActive: 'Just now',
+      lastActive: 'Pending Acceptance',
       avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
       twoFactor: false,
       ...data,
     };
     setAdmins(prev => [newAdmin, ...prev]);
-    addAuditLog('ADMIN_CREATED', `Superadmin created admin account for ${data.name} with role ${data.roleId}. Invitation email formatted from anubhabnandi12@gmail.com`, 'rose');
+    addAuditLog('ADMIN_OFFER_DISPATCHED', `Super Creator Anubhab Nandi dispatched administrative appointment offer to ${data.name} (${data.email}) for role ${data.roleId}. Awaiting invitee consent.`, 'amber');
     return newAdmin;
+  };
+
+  // Invitee Accepts Appointment Offer
+  const acceptAdminOffer = (adminIdOrToken, consentDetails = {}) => {
+    let acceptedAdmin = null;
+    setAdmins(prev => prev.map(a => {
+      if (a.id === adminIdOrToken || a.consentToken === adminIdOrToken) {
+        acceptedAdmin = {
+          ...a,
+          status: 'active',
+          consentStatus: 'accepted',
+          consentAcceptedAt: new Date().toISOString(),
+          consentSignature: consentDetails.signature || a.name,
+          lastActive: 'Online Now',
+        };
+        return acceptedAdmin;
+      }
+      return a;
+    }));
+
+    if (acceptedAdmin) {
+      addAuditLog('APPOINTMENT_CONSENT_ACCEPTED', `${acceptedAdmin.name} formally consented to administrative appointment as ${acceptedAdmin.roleId}. Administrative privileges activated.`, 'emerald');
+      setPendingConsentAdmin(null);
+    }
+    return acceptedAdmin;
+  };
+
+  // Invitee Declines Appointment Offer
+  const declineAdminOffer = (adminIdOrToken, reason = '') => {
+    let declinedAdmin = null;
+    setAdmins(prev => prev.map(a => {
+      if (a.id === adminIdOrToken || a.consentToken === adminIdOrToken) {
+        declinedAdmin = {
+          ...a,
+          status: 'declined',
+          consentStatus: 'declined',
+          declinedReason: reason || 'Declined by invitee',
+          declinedAt: new Date().toISOString(),
+        };
+        return declinedAdmin;
+      }
+      return a;
+    }));
+
+    if (declinedAdmin) {
+      addAuditLog('APPOINTMENT_DECLINED', `${declinedAdmin.name} declined administrative appointment as ${declinedAdmin.roleId}.`, 'rose');
+      setPendingConsentAdmin(null);
+    }
+    return declinedAdmin;
   };
 
   const deleteAdmin = (id) => {
@@ -528,6 +604,10 @@ export function AppProvider({ children }) {
         admins,
         addAdmin,
         deleteAdmin,
+        acceptAdminOffer,
+        declineAdminOffer,
+        pendingConsentAdmin,
+        setPendingConsentAdmin,
         createRole,
         deleteRole,
         hiringPositions,

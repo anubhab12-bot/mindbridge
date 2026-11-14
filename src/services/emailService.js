@@ -38,7 +38,7 @@ export const emailService = {
     const subject = `Welcome to MindBridge: Administrative Access Granted by ${SUPER_CREATOR_NAME}`;
     
     const permissionsText = permissions.length > 0 
-      ? permissions.map(p => `  • ${p}`).join('\n')
+      ? permissions.map(p => `  • ${p}`).join('\r\n')
       : '  • General Administrative Management';
 
     const body = `Dear ${recipientName},
@@ -56,7 +56,7 @@ Granted By: ${SUPER_CREATOR_NAME} (${SUPER_CREATOR_EMAIL})
 YOUR ACTIVE PERMISSIONS:
 ${permissionsText}
 
-${customNote ? `PERSONAL MESSAGE FROM ANUBHAB NANDI:\n"${customNote}"\n\n` : ''}INSTRUCTIONS TO GET STARTED:
+${customNote ? `PERSONAL MESSAGE FROM ANUBHAB NANDI:\r\n"${customNote}"\r\n\r\n` : ''}INSTRUCTIONS TO GET STARTED:
 1. Open the MindBridge Admin Portal: ${loginUrl}
 2. Sign in with your registered email: ${toEmail}
 3. Configure your 2FA (Two-Factor Authentication) under Account Security
