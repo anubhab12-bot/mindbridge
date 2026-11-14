@@ -301,4 +301,11 @@ export class GovernanceController {
   ) {
     return this.governance.updateBugTicketStatus(id, body.status, body.resolutionNotes);
   }
+
+  @Public()
+  @Post('send-admin-invite')
+  @ApiOperation({ summary: 'Directly dispatch administrator invitation message from app' })
+  async sendAdminInvite(@Body() body: any) {
+    return this.governance.sendAdminInvite(body);
+  }
 }

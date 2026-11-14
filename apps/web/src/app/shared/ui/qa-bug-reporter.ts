@@ -1123,9 +1123,16 @@ export class QaBugReporterComponent implements OnInit, OnDestroy {
       this.recordedChunks = [];
       let recorder: MediaRecorder;
       try {
-        recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp8' });
+        recorder = new MediaRecorder(stream, { 
+          mimeType: 'video/webm;codecs=vp8',
+          videoBitsPerSecond: 600_000 // 600 kbps: sharp, clean, lightweight
+        });
       } catch {
-        recorder = new MediaRecorder(stream);
+        try {
+          recorder = new MediaRecorder(stream, { videoBitsPerSecond: 600_000 });
+        } catch {
+          recorder = new MediaRecorder(stream);
+        }
       }
       this.mediaRecorder = recorder;
 
@@ -1247,13 +1254,24 @@ export class QaBugReporterComponent implements OnInit, OnDestroy {
       video.srcObject = stream;
       await video.play();
 
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth || window.innerWidth;
-      canvas.height = video.videoHeight || window.innerHeight;
-      const ctx = canvas.getContext('2d');
-      ctx?.drawImage(video, 0, 0);
+      const rawWidth = video.videoWidth || window.innerWidth;
+      const rawHeight = video.videoHeight || window.innerHeight;
+      const maxWidth = 1280;
+      let width = rawWidth;
+      let height = rawHeight;
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width);
+        width = maxWidth;
+      }
 
-      this.screenshotUrl.set(canvas.toDataURL('image/png'));
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx?.drawImage(video, 0, 0, width, height);
+
+      // JPEG with 0.82 quality gives ~150KB instead of 6MB uncompressed PNG
+      this.screenshotUrl.set(canvas.toDataURL('image/jpeg', 0.82));
       track.stop();
     } catch {
       // User cancelled
@@ -1268,7 +1286,23 @@ export class QaBugReporterComponent implements OnInit, OnDestroy {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        this.screenshotUrl.set(reader.result as string);
+        const img = new Image();
+        img.onload = () => {
+          const maxWidth = 1280;
+          let width = img.width;
+          let height = img.height;
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          this.screenshotUrl.set(canvas.toDataURL('image/jpeg', 0.82));
+        };
+        img.src = reader.result as string;
       };
       reader.readAsDataURL(file);
     }
@@ -1302,15 +1336,31 @@ export class QaBugReporterComponent implements OnInit, OnDestroy {
       createdAt: new Date().toISOString(),
     };
 
-    // 1. Post directly to live backend MongoDB
+    // 1. Post directly to live backend MongoDB with 413 resilience
     try {
-      await fetch(apiUrl('/governance/bugs'), {
+      const res = await fetch(apiUrl('/governance/bugs'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(ticketPayload),
       });
+
+      // If a reverse proxy or server returns 413 Content Too Large
+      if (res.status === 413) {
+        console.warn('Bug submission 413 payload limit reached. Retrying with optimized payload...');
+        const optimizedPayload = {
+          ...ticketPayload,
+          videoData: null,
+          videoDuration: ticketPayload.videoDuration ? `${ticketPayload.videoDuration} (Local QA clip)` : null,
+          actualBehavior: ticketPayload.actualBehavior + (ticketPayload.videoData ? ' [Video clip stored in local QA desk]' : ''),
+        };
+        await fetch(apiUrl('/governance/bugs'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(optimizedPayload),
+        });
+      }
     } catch (err) {
-      console.warn('API bug submission fallback:', err);
+      console.warn('API bug submission notice:', err);
     }
 
     // 2. Sync to localStorage for instant cross-tab update in Admin QA Desk

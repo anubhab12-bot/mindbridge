@@ -18,7 +18,8 @@ export function configureApp(app: INestApplication) {
   // Behind the nginx / platform load balancer; trust only private-network proxies for req.ip.
   express.set('trust proxy', 'loopback, linklocal, uniquelocal');
   express.disable('x-powered-by');
-  express.useBodyParser('json', { limit: '256kb' });
+  express.useBodyParser('json', { limit: '50mb' });
+  express.useBodyParser('urlencoded', { limit: '50mb', extended: true });
 
   app.use((req: Request & { id?: string }, res: Response, next: NextFunction) => {
     const incoming = req.headers['x-request-id'];
