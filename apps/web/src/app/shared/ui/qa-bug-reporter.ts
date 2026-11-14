@@ -24,8 +24,57 @@ import { apiUrl } from '../../core/api/api.service';
       </button>
     </div>
 
+    <!-- Minimized Floating Recording Control Dock -->
+    @if (isMinimized()) {
+      <aside class="qa-recording-dock animated-slide-down" role="region" aria-label="Screen Recording in Progress">
+        <div class="qa-dock-inner">
+          <div class="qa-dock-status">
+            @if (isRecording()) {
+              <span class="qa-pulse-dot"></span>
+              <span class="qa-dock-timer">REC {{ recordTimer() }}</span>
+            } @else {
+              <span class="qa-badge-icon">🐞</span>
+              <span class="qa-dock-label">Bug Reporter Minimized</span>
+            }
+          </div>
+
+          <div class="qa-dock-actions">
+            @if (isRecording()) {
+              <button 
+                type="button" 
+                class="qa-btn-dock-finish"
+                (click)="finishRecordingAndRestore()"
+                title="Finish recording and open bug reporter"
+              >
+                <span>⏹️ Finish & Review Bug</span>
+              </button>
+            } @else {
+              <button 
+                type="button" 
+                class="qa-btn-dock-finish"
+                (click)="restoreModal()"
+                title="Restore Bug Reporter pop-up"
+              >
+                <span>↗️ Restore Form</span>
+              </button>
+            }
+
+            <button 
+              type="button" 
+              class="qa-btn-dock-cancel"
+              (click)="cancelRecording()"
+              title="Cancel recording / close dock"
+              aria-label="Cancel"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      </aside>
+    }
+
     <!-- Modal Backdrop & Drawer -->
-    @if (isOpen()) {
+    @if (isOpen() && !isMinimized()) {
       <div class="qa-modal-backdrop" (click)="closeOnBackdrop($event)">
         <div class="qa-modal-container animated-scale-up" (click)="$event.stopPropagation()">
           
@@ -38,7 +87,18 @@ import { apiUrl } from '../../core/api/api.service';
                 <p class="qa-modal-subtitle">Directly registers issues into Admin QA Bug Desk & Task Bar</p>
               </div>
             </div>
-            <button type="button" class="qa-close-btn" (click)="closeModal()" aria-label="Close modal">✕</button>
+            <div class="qa-header-controls">
+              <button 
+                type="button" 
+                class="qa-minimize-btn" 
+                (click)="minimizeModal()" 
+                title="Minimize pop-up to inspect or navigate app" 
+                aria-label="Minimize modal"
+              >
+                ─
+              </button>
+              <button type="button" class="qa-close-btn" (click)="closeModal()" aria-label="Close modal">✕</button>
+            </div>
           </div>
 
           <!-- Body Form View -->
@@ -343,6 +403,140 @@ import { apiUrl } from '../../core/api/api.service';
     @keyframes pulseRec {
       0% { opacity: 0.6; transform: scale(0.95); }
       100% { opacity: 1; transform: scale(1.05); }
+    }
+
+    /* Minimized Floating Control Dock */
+    .qa-recording-dock {
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999999;
+      pointer-events: auto;
+      animation: slideDownDock 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideDownDock {
+      0% { opacity: 0; transform: translate(-50%, -15px); }
+      100% { opacity: 1; transform: translate(-50%, 0); }
+    }
+
+    .qa-dock-inner {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: #090d16;
+      border: 1.5px solid #ef4444;
+      box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.75), 0 0 24px rgba(239, 68, 68, 0.4);
+      padding: 8px 16px;
+      border-radius: 9999px;
+      backdrop-filter: blur(16px);
+      color: #ffffff;
+      font-family: inherit;
+    }
+
+    .qa-dock-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: #f87171;
+    }
+
+    .qa-pulse-dot {
+      width: 10px;
+      height: 10px;
+      background: #ef4444;
+      border-radius: 50%;
+      animation: pulseRecordDot 1s infinite alternate;
+    }
+
+    @keyframes pulseRecordDot {
+      0% { opacity: 0.4; transform: scale(0.85); }
+      100% { opacity: 1; transform: scale(1.3); }
+    }
+
+    .qa-dock-timer {
+      font-family: monospace;
+      letter-spacing: 0.5px;
+    }
+
+    .qa-dock-label {
+      color: #e2e8f0;
+      font-size: 0.82rem;
+      font-weight: 650;
+    }
+
+    .qa-dock-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .qa-btn-dock-finish {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, #0d9488 0%, #10b981 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: 999px;
+      padding: 7px 16px;
+      font-size: 0.82rem;
+      font-weight: 750;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+      transition: all 0.15s ease;
+      &:hover {
+        transform: scale(1.04);
+        background: linear-gradient(135deg, #14b8a6 0%, #059669 100%);
+      }
+    }
+
+    .qa-btn-dock-cancel {
+      background: rgba(255, 255, 255, 0.12);
+      color: #94a3b8;
+      border: none;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      font-size: 0.82rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+      &:hover {
+        background: rgba(239, 68, 68, 0.25);
+        color: #ef4444;
+      }
+    }
+
+    .qa-header-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .qa-minimize-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #94a3b8;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.1rem;
+      line-height: 1;
+      transition: all 0.15s ease;
+      &:hover {
+        background: rgba(255, 255, 255, 0.16);
+        color: #ffffff;
+      }
     }
 
     /* Modal Styles */
@@ -832,6 +1026,7 @@ import { apiUrl } from '../../core/api/api.service';
 export class QaBugReporterComponent implements OnInit, OnDestroy {
   // Modal & Widget Visibility
   protected readonly isOpen = signal<boolean>(false);
+  protected readonly isMinimized = signal<boolean>(false);
   protected readonly isWidgetVisible = signal<boolean>(true);
   protected readonly activeTab = signal<'form' | 'success'>('form');
 
@@ -895,14 +1090,16 @@ export class QaBugReporterComponent implements OnInit, OnDestroy {
 
   openModal() {
     this.isOpen.set(true);
+    this.isMinimized.set(false);
     this.activeTab.set('form');
   }
 
   closeModal() {
     if (this.isRecording()) {
-      this.stopScreenRecording();
+      this.cancelRecording();
     }
     this.isOpen.set(false);
+    this.isMinimized.set(false);
   }
 
   closeOnBackdrop(e: MouseEvent) {
@@ -944,6 +1141,8 @@ export class QaBugReporterComponent implements OnInit, OnDestroy {
         const reader = new FileReader();
         reader.onloadend = () => {
           this.recordedVideoUrl.set(reader.result as string);
+          this.isMinimized.set(false); // Auto-restore modal once recording finishes
+          this.isOpen.set(true);
         };
         reader.readAsDataURL(blob);
         this.stopTimer();
@@ -952,6 +1151,7 @@ export class QaBugReporterComponent implements OnInit, OnDestroy {
       recorder.start(1000);
       this.isRecording.set(true);
       this.activeRecording.set(true);
+      this.isMinimized.set(true); // Auto-minimize modal so tester can interact freely with app
       this.startTimer();
 
       // If user stops sharing via browser chrome bar
@@ -973,6 +1173,32 @@ export class QaBugReporterComponent implements OnInit, OnDestroy {
       this.isRecording.set(false);
       this.activeRecording.set(false);
     }
+  }
+
+  finishRecordingAndRestore() {
+    this.stopScreenRecording();
+  }
+
+  cancelRecording() {
+    if (this.mediaRecorder && this.isRecording()) {
+      this.mediaRecorder.stop();
+      this.recordedChunks = [];
+      this.recordedVideoUrl.set(null);
+      this.isRecording.set(false);
+      this.activeRecording.set(false);
+      this.stopTimer();
+    }
+    this.isMinimized.set(false);
+    this.isOpen.set(true);
+  }
+
+  minimizeModal() {
+    this.isMinimized.set(true);
+  }
+
+  restoreModal() {
+    this.isMinimized.set(false);
+    this.isOpen.set(true);
   }
 
   removeVideo() {
@@ -1009,6 +1235,10 @@ export class QaBugReporterComponent implements OnInit, OnDestroy {
         alert('Screen capture not supported in this browser. Please upload an image file.');
         return;
       }
+      // Minimize modal first so the clean app interface is captured
+      this.isMinimized.set(true);
+      await new Promise((r) => setTimeout(r, 200));
+
       const stream = await navigator.mediaDevices.getDisplayMedia({
         video: { displaySurface: 'browser' },
       });
@@ -1027,6 +1257,9 @@ export class QaBugReporterComponent implements OnInit, OnDestroy {
       track.stop();
     } catch {
       // User cancelled
+    } finally {
+      this.isMinimized.set(false);
+      this.isOpen.set(true);
     }
   }
 
