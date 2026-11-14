@@ -19,11 +19,13 @@ import {
   Layers, 
   RotateCcw,
   ShieldCheck,
-  UserCheck
+  UserCheck,
+  RefreshCw
 } from 'lucide-react';
 import Badge from '../common/Badge';
 import Modal from '../common/Modal';
 import { emailService, SUPER_CREATOR_EMAIL, SUPER_CREATOR_NAME } from '../../services/emailService';
+import { apiService } from '../../services/apiService';
 
 export default function BugTicketDesk() {
   const { 
@@ -115,10 +117,27 @@ export default function BugTicketDesk() {
     }
   };
 
-  const handleConfirmEmailAndStatus = () => {
+  const [isSendingBugEmail, setIsSendingBugEmail] = useState(false);
+
+  const handleConfirmEmailAndStatus = async () => {
     if (!selectedTicketForEmail || !pendingStatusChange) return;
 
+    setIsSendingBugEmail(true);
+    // Dispatch direct SMTP email to tester
+    if (emailNotificationData && emailNotificationData.to) {
+      try {
+        await apiService.sendDirectEmail({
+          to: emailNotificationData.to,
+          subject: emailNotificationData.subject,
+          text: emailNotificationData.body,
+        });
+      } catch (err) {
+        console.warn('Bug notification direct SMTP dispatch notice:', err);
+      }
+    }
+
     updateBugStatus(selectedTicketForEmail.id, pendingStatusChange, resolutionInput);
+    setIsSendingBugEmail(false);
     setSelectedTicketForEmail(null);
     setEmailNotificationData(null);
     setPendingStatusChange(null);
@@ -636,11 +655,21 @@ export default function BugTicketDesk() {
                 </button>
                 <button
                   type="button"
+                  disabled={isSendingBugEmail}
                   onClick={handleConfirmEmailAndStatus}
-                  className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold shadow-lg shadow-teal-600/20 transition-all flex items-center gap-1.5"
+                  className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold shadow-lg shadow-teal-600/20 transition-all flex items-center gap-1.5 disabled:opacity-50"
                 >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>Update Task Bar & Log Dispatch</span>
+                  {isSendingBugEmail ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Throwing Email via SMTP & Updating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" />
+                      <span>🚀 Direct SMTP Throw to Tester & Update Status</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>

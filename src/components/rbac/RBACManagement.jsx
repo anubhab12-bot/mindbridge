@@ -25,7 +25,10 @@ import {
   RefreshCw,
   FileSignature,
   FileCheck,
-  FileText
+  FileText,
+  Settings,
+  Server,
+  Save
 } from 'lucide-react';
 import Badge from '../common/Badge';
 import Modal from '../common/Modal';
@@ -58,6 +61,76 @@ export default function RBACManagement() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [directChannel, setDirectChannel] = useState('both'); // 'email', 'whatsapp', 'both'
   const [reviewingConsentAdmin, setReviewingConsentAdmin] = useState(null);
+  
+  // Direct SMTP Gateway State (.env / Dynamic)
+  const [smtpConfig, setSmtpConfig] = useState(() => {
+    try {
+      const saved = localStorage.getItem('mb_admin_smtp_config');
+      return saved ? JSON.parse(saved) : {
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        user: 'anubhabnandi12@gmail.com',
+        password: '',
+        from: 'Anubhab Nandi <anubhabnandi12@gmail.com>',
+      };
+    } catch {
+      return {
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        user: 'anubhabnandi12@gmail.com',
+        password: '',
+        from: 'Anubhab Nandi <anubhabnandi12@gmail.com>',
+      };
+    }
+  });
+  const [isConfiguringSmtp, setIsConfiguringSmtp] = useState(false);
+  const [isSendingSmtp, setIsSendingSmtp] = useState(false);
+  const [smtpSendResult, setSmtpSendResult] = useState(null);
+  const [isSavingSmtp, setIsSavingSmtp] = useState(false);
+  const [smtpSavedSuccess, setSmtpSavedSuccess] = useState(false);
+
+  const handleSaveSmtpConfig = async () => {
+    setIsSavingSmtp(true);
+    setSmtpSavedSuccess(false);
+    try {
+      localStorage.setItem('mb_admin_smtp_config', JSON.stringify(smtpConfig));
+      await apiService.updateSmtpConfig(smtpConfig);
+      setSmtpSavedSuccess(true);
+      setTimeout(() => setSmtpSavedSuccess(false), 4000);
+    } catch (err) {
+      console.warn('Failed saving SMTP config:', err);
+    } finally {
+      setIsSavingSmtp(false);
+    }
+  };
+
+  const handleDirectSmtpSend = async (info) => {
+    const targetInfo = info || sentInvitationInfo;
+    if (!targetInfo) return;
+    setIsSendingSmtp(true);
+    setSmtpSendResult(null);
+
+    const emailPayload = {
+      to: targetInfo.to,
+      subject: targetInfo.subject,
+      text: targetInfo.body,
+      smtpConfig: smtpConfig.password ? smtpConfig : undefined,
+    };
+
+    try {
+      const result = await apiService.sendDirectEmail(emailPayload);
+      setSmtpSendResult(result);
+    } catch (err) {
+      setSmtpSendResult({
+        success: false,
+        error: err.message || 'Direct SMTP dispatch request failed',
+      });
+    } finally {
+      setIsSendingSmtp(false);
+    }
+  };
   const [consentAgreed, setConsentAgreed] = useState(false);
   const [consentSignature, setConsentSignature] = useState('');
 
@@ -139,6 +212,19 @@ export default function RBACManagement() {
       invitationPayload.receipt = receipt;
     } catch (err) {
       console.warn('Direct message dispatch notice:', err);
+    }
+
+    // Automatically throw email directly via SMTP server to recipient inbox
+    try {
+      const directSmtpResult = await apiService.sendDirectEmail({
+        to: newAdmin.email,
+        subject: invitationPayload.subject,
+        text: invitationPayload.body,
+        smtpConfig: smtpConfig.password ? smtpConfig : undefined,
+      });
+      setSmtpSendResult(directSmtpResult);
+    } catch (err) {
+      console.warn('Direct SMTP auto-throw notice:', err);
     }
 
     setIsSubmitting(false);
@@ -669,38 +755,207 @@ export default function RBACManagement() {
               </div>
             </div>
 
-            {/* Direct 1-Click Multi-Channel Dispatch Bar */}
-            <div className="p-3.5 rounded-xl bg-gradient-to-r from-indigo-950/60 to-purple-950/50 border border-indigo-500/30 space-y-2">
+            {/* 🚀 DIRECT SMTP EMAIL DISPATCH (Hero Action - No External Apps Needed) */}
+            <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-950/80 via-blue-950/60 to-slate-900 border-2 border-indigo-500/40 space-y-3 shadow-xl">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                  <Send className="w-3.5 h-3.5 text-indigo-400" />
-                  <span>Direct 1-Click Channels (No Desktop App Required):</span>
-                </span>
-                <span className="text-[10px] text-slate-400">Direct from Browser</span>
+                <div className="flex items-center gap-2">
+                  <Send className="w-4 h-4 text-sky-400 animate-pulse" />
+                  <span className="text-xs font-bold text-white tracking-wide">Direct SMTP Email Dispatch</span>
+                  <span className="text-[10px] bg-sky-500/20 text-sky-300 border border-sky-500/30 px-2 py-0.5 rounded font-mono">
+                    Direct To Inbox
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsConfiguringSmtp(!isConfiguringSmtp)}
+                  className="text-[11px] text-slate-300 hover:text-white flex items-center gap-1.5 bg-slate-900/90 border border-slate-700/80 px-2.5 py-1 rounded-lg transition-all"
+                  title="Configure SMTP Host, Port, and Password"
+                >
+                  <Settings className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>{isConfiguringSmtp ? 'Hide SMTP Settings' : '⚙️ SMTP Settings (.env)'}</span>
+                </button>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                {/* 1-Click Web Gmail Direct Compose */}
+
+              {/* Hero Action: Throw Email Directly to Recipient Inbox */}
+              <div className="pt-1">
+                <button
+                  type="button"
+                  disabled={isSendingSmtp}
+                  onClick={() => handleDirectSmtpSend(sentInvitationInfo)}
+                  className="w-full px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-sky-600 to-indigo-600 hover:from-indigo-500 hover:to-sky-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                >
+                  {isSendingSmtp ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin text-sky-200" />
+                      <span>Connecting to SMTP Server & Throwing Email to {sentInvitationInfo.to}...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 text-sky-300" />
+                      <span>🚀 Throw Email Directly to {sentInvitationInfo.to} via SMTP</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Real-time SMTP Delivery Status */}
+              {smtpSendResult && (
+                <div className={`p-3 rounded-xl text-xs space-y-1.5 transition-all ${
+                  smtpSendResult.success 
+                    ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-200' 
+                    : 'bg-amber-500/20 border border-amber-500/40 text-amber-200'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 font-bold">
+                      {smtpSendResult.success ? (
+                        <>
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                          <span>Direct Email Successfully Thrown to {sentInvitationInfo.to}!</span>
+                        </>
+                      ) : (
+                        <>
+                          <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                          <span>SMTP Dispatch Notice</span>
+                        </>
+                      )}
+                    </div>
+                    {smtpSendResult.dispatchedAt && (
+                      <span className="text-[10px] font-mono opacity-80">
+                        {new Date(smtpSendResult.dispatchedAt).toLocaleTimeString()}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] leading-relaxed opacity-95">
+                    {smtpSendResult.success
+                      ? `Delivered directly into ${sentInvitationInfo.to}'s inbox via SMTP server. Message ID: ${smtpSendResult.messageId || 'DELIVERED-SMTP-LIVE'}.`
+                      : (smtpSendResult.error || 'Server attempted delivery. If using Gmail SMTP without environment credentials, please open SMTP Settings below and input your 16-character Google App Password.')}
+                  </p>
+                </div>
+              )}
+
+              {/* Expandable SMTP Server Configuration Panel */}
+              {isConfiguringSmtp && (
+                <div className="p-3.5 rounded-xl bg-slate-950/95 border border-slate-800 space-y-3 text-xs mt-2">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <div className="flex items-center gap-2">
+                      <Server className="w-4 h-4 text-sky-400" />
+                      <span className="font-semibold text-white">SMTP Email Gateway Settings (.env / Custom)</span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-mono">smtp.gmail.com:465</span>
+                  </div>
+
+                  <p className="text-[11px] text-slate-300 leading-relaxed">
+                    Set your email host credentials to throw mails directly from the server. You can add these in your Render deployment <code>.env</code> (as <code>SMTP_HOST</code>, <code>SMTP_PORT</code>, <code>SMTP_USER</code>, <code>SMTP_PASSWORD</code>), or enter them below to store them securely in the live database:
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="text-[11px] text-slate-400 block mb-0.5">SMTP Host *</label>
+                      <input
+                        type="text"
+                        value={smtpConfig.host}
+                        onChange={e => setSmtpConfig({ ...smtpConfig, host: e.target.value })}
+                        placeholder="smtp.gmail.com"
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-slate-400 block mb-0.5">SMTP Port *</label>
+                      <input
+                        type="number"
+                        value={smtpConfig.port}
+                        onChange={e => setSmtpConfig({ ...smtpConfig, port: Number(e.target.value) })}
+                        placeholder="465"
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-slate-400 block mb-0.5">SMTP Username / Email *</label>
+                      <input
+                        type="email"
+                        value={smtpConfig.user}
+                        onChange={e => setSmtpConfig({ ...smtpConfig, user: e.target.value })}
+                        placeholder="anubhabnandi12@gmail.com"
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-slate-400 block mb-0.5">Google App Password / SMTP Password *</label>
+                      <input
+                        type="password"
+                        value={smtpConfig.password}
+                        onChange={e => setSmtpConfig({ ...smtpConfig, password: e.target.value })}
+                        placeholder="16-character App Password"
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="text-[11px] text-slate-400 block mb-0.5">Sender From Header *</label>
+                      <input
+                        type="text"
+                        value={smtpConfig.from}
+                        onChange={e => setSmtpConfig({ ...smtpConfig, from: e.target.value })}
+                        placeholder="Anubhab Nandi <anubhabnandi12@gmail.com>"
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+                    <span className="text-[10px] text-slate-400">
+                      {smtpSavedSuccess ? (
+                        <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Saved to Live Server & Browser!</span>
+                        </span>
+                      ) : (
+                        'Tip: For Gmail, use an App Password from myaccount.google.com/apppasswords'
+                      )}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={isSavingSmtp}
+                      onClick={handleSaveSmtpConfig}
+                      className="px-3.5 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md shadow-sky-600/20"
+                    >
+                      {isSavingSmtp ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                      <span>Save SMTP Settings</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Optional Fallback Channels */}
+            <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1.5">
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Alternative Manual Fallback Channels (Optional):</span>
+                </span>
+                <span className="text-[10px] text-slate-500">Secondary Backup</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
                 <a
                   href={sentInvitationInfo.webGmailUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-3.5 py-2.5 rounded-xl bg-rose-600/90 hover:bg-rose-500 text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-lg shadow-rose-600/20 transition-all"
+                  className="px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 text-xs font-medium flex items-center justify-center gap-2 transition-all"
                 >
-                  <Mail className="w-4 h-4" />
-                  <span>Open in Web Gmail (1-Click)</span>
-                  <ExternalLink className="w-3 h-3 opacity-70" />
+                  <Mail className="w-3.5 h-3.5 text-rose-400" />
+                  <span>Open in Web Gmail</span>
+                  <ExternalLink className="w-3 h-3 opacity-60" />
                 </a>
 
-                {/* 1-Click Direct WhatsApp Message */}
                 <a
                   href={sentInvitationInfo.whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-3.5 py-2.5 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 transition-all"
+                  className="px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 text-xs font-medium flex items-center justify-center gap-2 transition-all"
                 >
-                  <MessageSquare className="w-4 h-4" />
-                  <span>Send via WhatsApp Direct</span>
-                  <ExternalLink className="w-3 h-3 opacity-70" />
+                  <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Send via WhatsApp</span>
+                  <ExternalLink className="w-3 h-3 opacity-60" />
                 </a>
               </div>
             </div>

@@ -287,4 +287,43 @@ export const apiService = {
       gateway: 'MindBridge Direct In-App Gateway (Verified)',
     };
   },
+
+  // Direct SMTP Email Dispatch to Recipient's Inbox (Throws email straight to inbox without external app)
+  async sendDirectEmail({ to, subject, text, html, smtpConfig }) {
+    try {
+      const res = await fetch(`${API_BASE}/governance/send-direct-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to, subject, text, html, smtpConfig }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return {
+          success: false,
+          error: errorData?.message || `HTTP ${res.status}: Failed to deliver email via SMTP`,
+        };
+      }
+      const data = await res.json();
+      return data?.data || data;
+    } catch (err) {
+      console.warn('Failed direct SMTP dispatch via API:', err);
+      return { success: false, error: err.message };
+    }
+  },
+
+  // Save / Update dynamic SMTP Configuration in live MongoDB settings
+  async updateSmtpConfig(config) {
+    try {
+      const res = await fetch(`${API_BASE}/governance/smtp-config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config),
+      });
+      const data = await res.json();
+      return data?.data || data;
+    } catch (err) {
+      console.warn('Failed saving SMTP config in API:', err);
+      return { success: false, error: err.message };
+    }
+  },
 };
