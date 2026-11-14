@@ -11,6 +11,7 @@ import InfluencerHub from './components/influencers/InfluencerHub';
 import AppControlCenter from './components/appControl/AppControlCenter';
 import AppMonitoring from './components/monitoring/AppMonitoring';
 import AuditLogs from './components/audit/AuditLogs';
+import UserManagement from './components/users/UserManagement';
 import { AlertCircle, Info, RotateCcw } from 'lucide-react';
 
 export class ErrorBoundary extends React.Component {
@@ -92,6 +93,7 @@ function MainContent() {
         {activeTab === 'dashboard' && <OverviewDashboard />}
         {activeTab === 'bugs' && <BugTicketDesk />}
         {activeTab === 'doctors' && <DoctorVerification />}
+        {activeTab === 'users' && <UserManagement />}
         {activeTab === 'rbac' && <RBACManagement />}
         {activeTab === 'hiring' && <HiringPositions />}
         {activeTab === 'influencers' && <InfluencerHub />}

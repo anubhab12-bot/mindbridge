@@ -22,7 +22,10 @@ import {
   Share2,
   Globe,
   CheckCircle2,
-  RefreshCw
+  RefreshCw,
+  FileSignature,
+  FileCheck,
+  FileText
 } from 'lucide-react';
 import Badge from '../common/Badge';
 import Modal from '../common/Modal';
@@ -39,7 +42,11 @@ export default function RBACManagement() {
     deleteRole, 
     AVAILABLE_PERMISSIONS, 
     isSuperAdmin,
-    currentAdmin 
+    currentAdmin,
+    acceptAdminOffer,
+    declineAdminOffer,
+    pendingConsentAdmin,
+    setPendingConsentAdmin
   } = useApp();
 
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);

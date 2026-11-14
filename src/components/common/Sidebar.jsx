@@ -40,6 +40,13 @@ const NAVIGATION_ITEMS = [
     badgeKey: 'pendingDocs',
   },
   {
+    id: 'users',
+    label: 'User & Patient Management',
+    icon: Users,
+    desc: 'Live registered patients & accounts',
+    permission: 'patients.manage',
+  },
+  {
     id: 'rbac',
     label: 'Admins & RBAC Matrix',
     icon: ShieldCheck,
