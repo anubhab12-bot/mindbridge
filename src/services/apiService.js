@@ -188,6 +188,21 @@ export const apiService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(ticket),
       });
+      if (res.status === 413) {
+        console.warn('Bug ticket 413 payload limit exceeded. Retrying with optimized lightweight payload...');
+        const optimized = {
+          ...ticket,
+          videoData: null,
+          videoDuration: ticket.videoDuration ? `${ticket.videoDuration} (Clip in local QA desk)` : null,
+          actualBehavior: (ticket.actualBehavior || '') + (ticket.videoData ? ' [Video clip stored in local QA desk]' : ''),
+        };
+        const retryRes = await fetch(`${API_BASE}/governance/bugs`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(optimized),
+        });
+        return await retryRes.json();
+      }
       return await res.json();
     } catch (err) {
       console.warn('Failed creating bug ticket in API:', err);
