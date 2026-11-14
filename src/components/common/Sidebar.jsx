@@ -11,7 +11,8 @@ import {
   FileText, 
   Lock,
   ChevronRight,
-  Bug
+  Bug,
+  Users
 } from 'lucide-react';
 import Badge from './Badge';
 
